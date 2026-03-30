@@ -16,8 +16,18 @@
       <canvas id="overlay"></canvas>
     </div>
 
-    <!-- Camera error message -->
-    <div id="errorMsg" class="error-msg" hidden></div>
+    <!-- Pre-permission hint (shown while browser dialog is pending) -->
+    <div id="permBanner" class="perm-banner" hidden>
+      <span class="perm-banner-icon">📷</span>
+      <span>瀏覽器即將詢問相機權限，請點擊「<strong>允許</strong>」以繼續</span>
+    </div>
+
+    <!-- Camera error message + recovery steps + retry -->
+    <div id="errorMsg" class="error-msg" hidden>
+      <p id="errorText"></p>
+      <ol id="permSteps" class="perm-steps" hidden></ol>
+      <button id="retryBtn" class="btn btn-retry" hidden>🔄 重試</button>
+    </div>
 
     <!-- Start / Stop + Flip Camera -->
     <div class="controls">
