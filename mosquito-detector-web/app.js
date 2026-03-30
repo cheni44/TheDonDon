@@ -20,6 +20,9 @@ const PROC_W       = 96;           // processing canvas width  (px)
 const PROC_H       = 72;           // processing canvas height (px)
 const FRAME_AREA   = PROC_W * PROC_H;
 const SILENCE_MS   = 1000;         // ms of no detection before audio fades to 0
+const STABLE_MS    = 1000;         // ms a blob must persist before being shown/heard
+const EVICT_MS     = 500;          // ms since last seen before evicting from tracker
+const TRACKER_GRID = 8;            // centroid quantisation grid size (px, processing res)
 
 // Mutable app state
 let stream            = null;      // MediaStream from getUserMedia
@@ -29,7 +32,8 @@ let facingMode        = 'environment'; // current camera side
 let sensitivity       = 0.5;       // detection sensitivity [0, 1]
 let prevBlobs         = [];        // blobs from the previous frame (motion filter)
 let audioAlert        = null;      // { ctx, proximityGain } or null
-let lastDetectionTime = 0;         // timestamp of last positive detection
+let lastDetectionTime = 0;         // timestamp of last stable detection
+let stableTracker     = new Map(); // Map<key, {firstSeenMs, lastSeenMs, blob}>
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 2. DOM references
@@ -369,6 +373,8 @@ function detect(imageData, sens, prev) {
   confirmed.sort((a, b) => b.area - a.area);
 
   const detections = confirmed.map(b => ({
+    cx:        b.cx,
+    cy:        b.cy,
     bbox:      b.bbox,
     proximity: computeProximity(b.area, FRAME_AREA),
   }));
@@ -377,7 +383,52 @@ function detect(imageData, sens, prev) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 5. Audio alert (Web Audio API)
+// 5. Stable detection tracker
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Grid-quantised identity key for a detection blob. */
+function trackerKey(det) {
+  return `${Math.round(det.cx / TRACKER_GRID)},${Math.round(det.cy / TRACKER_GRID)}`;
+}
+
+/**
+ * Upsert each detected blob in stableTracker, then evict stale entries.
+ * An entry is evicted when it has not been seen for more than EVICT_MS.
+ */
+function updateTracker(detectedBlobs) {
+  const now = Date.now();
+  for (const blob of detectedBlobs) {
+    const key = trackerKey(blob);
+    if (stableTracker.has(key)) {
+      const entry = stableTracker.get(key);
+      entry.lastSeenMs = now;
+      entry.blob       = blob;
+    } else {
+      stableTracker.set(key, { firstSeenMs: now, lastSeenMs: now, blob });
+    }
+  }
+  // Evict entries not seen recently
+  for (const [key, entry] of stableTracker) {
+    if (now - entry.lastSeenMs > EVICT_MS) stableTracker.delete(key);
+  }
+}
+
+/**
+ * Returns tracker entries that have been continuously present for >= STABLE_MS,
+ * sorted by blob proximity descending.
+ */
+function getStableDetections() {
+  const now    = Date.now();
+  const stable = [];
+  for (const entry of stableTracker.values()) {
+    if (now - entry.firstSeenMs >= STABLE_MS) stable.push(entry);
+  }
+  stable.sort((a, b) => b.blob.proximity - a.blob.proximity);
+  return stable;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 6. Audio alert (Web Audio API)
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
@@ -447,7 +498,7 @@ function updateAudio(alert, score) {
 
 /**
  * Main per-frame loop.
- * Captures a frame, runs detection, updates audio and UI, then schedules itself.
+ * Captures a frame, runs detection, updates stable tracker, then updates audio and UI.
  */
 function animationLoop() {
   const imageData = captureFrame();
@@ -456,11 +507,14 @@ function animationLoop() {
     const result = detect(imageData, sensitivity, prevBlobs);
     prevBlobs = result.prevBlobs;
 
-    const { detections } = result;
-    const topScore = detections.length > 0 ? detections[0].proximity : 0;
+    // Update stable tracker with this frame's detections
+    updateTracker(result.detections);
+    const stableDetections = getStableDetections();
+
+    const topScore = stableDetections.length > 0 ? stableDetections[0].blob.proximity : 0;
 
     // ── Audio ──────────────────────────────────────────────────────────────
-    if (detections.length > 0) {
+    if (stableDetections.length > 0) {
       lastDetectionTime = Date.now();
       updateAudio(audioAlert, topScore);
     } else if (Date.now() - lastDetectionTime > SILENCE_MS) {
@@ -468,37 +522,35 @@ function animationLoop() {
     }
 
     // ── Visuals ────────────────────────────────────────────────────────────
-    renderOverlay(detections);
-    updateProximityUI(topScore);
+    renderOverlay(stableDetections);
+    updateProximityUI(stableDetections.length > 0 ? topScore : 0);
   }
 
   rafId = requestAnimationFrame(animationLoop);
 }
 
 /**
- * Clear the overlay canvas and draw red bounding boxes for each detection,
+ * Clear the overlay canvas and draw a red circle for each stable detection,
  * scaling from processing resolution (PROC_W × PROC_H) to display size.
  */
-function renderOverlay(detections) {
+function renderOverlay(stableEntries) {
   const w = overlay.width;
   const h = overlay.height;
   overlayCtx.clearRect(0, 0, w, h);
-  if (!detections.length) return;
+  if (!stableEntries.length) return;
 
   const scaleX = w / PROC_W;
   const scaleY = h / PROC_H;
 
   overlayCtx.strokeStyle = 'rgba(255, 40, 40, 0.9)';
-  overlayCtx.lineWidth   = 2.5;
+  overlayCtx.lineWidth   = 3;
 
-  for (const det of detections) {
-    const { x, y, w: bw, h: bh } = det.bbox;
-    overlayCtx.strokeRect(
-      x  * scaleX,
-      y  * scaleY,
-      bw * scaleX,
-      bh * scaleY,
-    );
+  for (const entry of stableEntries) {
+    const { cx, cy, bbox } = entry.blob;
+    const radius = Math.max(bbox.w, bbox.h) / 2 * 1.3 * Math.max(scaleX, scaleY);
+    overlayCtx.beginPath();
+    overlayCtx.arc(cx * scaleX, cy * scaleY, radius, 0, Math.PI * 2);
+    overlayCtx.stroke();
   }
 }
 
@@ -554,6 +606,7 @@ startBtn.addEventListener('click', async () => {
     stream  = null;
     running = false;
     prevBlobs = [];
+    stableTracker.clear();
     updateAudio(audioAlert, 0);
     updateProximityUI(0);
     overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
@@ -573,6 +626,7 @@ flipBtn.addEventListener('click', async () => {
 
   facingMode = facingMode === 'environment' ? 'user' : 'environment';
   prevBlobs  = [];
+  stableTracker.clear();
   overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
 
   stream = await startCamera(facingMode);
