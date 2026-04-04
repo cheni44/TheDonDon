@@ -28,11 +28,13 @@ jobs:
       # Build the unified site:
       #   portal/          → _site/          (landing page at /)
       #   mosquito-detector-web/ → _site/mosquito-detector-web/
+      #   rainy-drive/     → _site/rainy-drive/
       - name: Build unified site
         run: |
           mkdir -p _site
           cp -r portal/. _site/
           cp -r mosquito-detector-web _site/mosquito-detector-web
+          cp -r rainy-drive _site/rainy-drive
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

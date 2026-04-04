@@ -1,0 +1,127 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #000;
+  overflow: hidden;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  user-select: none;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  touch-action: none;
+}
+
+/* ─── Overlays ─────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 10, 20, 0.80);
+  z-index: 10;
+}
+.overlay.hidden { display: none; }
+
+.card {
+  text-align: center;
+  padding: 44px 52px;
+  background: rgba(8, 20, 35, 0.92);
+  border: 1px solid rgba(80, 160, 240, 0.25);
+  border-radius: 16px;
+  color: #e8f4ff;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 0 60px rgba(40, 100, 200, 0.15);
+}
+
+.card h1 { font-size: 2.4rem; font-weight: 700; margin-bottom: 18px; letter-spacing: 0.02em; }
+.card p  { font-size: 1.05rem; line-height: 1.75; color: #a0c4e8; margin-bottom: 10px; }
+
+.hint {
+  font-size: 0.85rem !important;
+  color: #607a94 !important;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 14px;
+  line-height: 1.9 !important;
+}
+.hint strong { color: #88b8e0; }
+
+.card button {
+  margin-top: 28px;
+  padding: 13px 38px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: #1a5fa0;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  letter-spacing: 0.04em;
+}
+.card button:hover  { background: #2272c0; }
+.card button:active { transform: scale(0.97); }
+
+/* ─── On-screen game controls ──────────────────────────────── */
+.onscreen-controls {
+  position: fixed;
+  bottom: 22px;
+  right: 18px;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  z-index: 5;
+}
+
+.ctrl-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.ctrl-label {
+  font-size: 0.70rem;
+  color: rgba(160, 210, 255, 0.62);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.ctrl-row { display: flex; gap: 9px; }
+
+.ctrl-sep {
+  width: 1px;
+  height: 58px;
+  background: rgba(80, 150, 220, 0.18);
+  align-self: flex-end;
+  margin-bottom: 10px;
+}
+
+.ctrl-btn {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(12, 26, 50, 0.82);
+  border: 1.5px solid rgba(80, 155, 235, 0.32);
+  color: rgba(175, 220, 255, 0.92);
+  font-size: 1.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  transition: background 0.15s, border-color 0.15s;
+  line-height: 1;
+  padding: 0;
+}
+.ctrl-btn:hover  { background: rgba(22, 48, 90, 0.88); border-color: rgba(100,180,255,0.50); }
+.ctrl-btn:active { background: rgba(30, 62, 118, 0.92); border-color: rgba(120,200,255,0.65); }

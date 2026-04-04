@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>暴雨開車</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Start screen -->
+  <div id="startScreen" class="overlay">
+    <div class="card">
+      <h1>🌧 暴雨開車</h1>
+      <p>在傾盆大雨中閃避來車<br>存活越久越好！</p>
+      <p class="hint">
+        ← → 方向鍵 / A D 鍵 &nbsp; 左右移動<br>
+        手機：點左右半邊 或 <strong>傾斜手機</strong><br>
+        右下角按鈕：調整速度 &amp; 雨刷速度
+      </p>
+      <button id="startBtn">開始遊戲</button>
+    </div>
+  </div>
+
+  <!-- Game over screen -->
+  <div id="gameOverScreen" class="overlay hidden">
+    <div class="card">
+      <h1>💥 撞車了！</h1>
+      <p id="finalScore"></p>
+      <p id="bestScore"></p>
+      <button id="restartBtn">再試一次</button>
+    </div>
+  </div>
+
+  <!-- On-screen game controls (bottom-right corner) -->
+  <div id="onscreenControls" class="onscreen-controls hidden">
+    <div class="ctrl-group">
+      <div class="ctrl-label">速度 <span id="throttleVal">1.0×</span></div>
+      <div class="ctrl-row">
+        <button class="ctrl-btn" id="speedDown">－</button>
+        <button class="ctrl-btn" id="speedUp">＋</button>
+      </div>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="ctrl-group">
+      <div class="ctrl-label">雨刷 <span id="wiperVal">1.0×</span></div>
+      <div class="ctrl-row">
+        <button class="ctrl-btn" id="wiperDown">－</button>
+        <button class="ctrl-btn" id="wiperUp">＋</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

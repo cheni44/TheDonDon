@@ -160,6 +160,7 @@ h1 {
 .tag-ios    { background: rgba(99, 182, 255, 0.15); color: #63b6ff; border-color: rgba(99,182,255,0.3); }
 .tag-python { background: rgba(250, 204, 21, 0.15); color: #facc15; border-color: rgba(250,204,21,0.3); }
 .tag-wip    { background: rgba(156, 163, 175, 0.15); color: #9ca3af; border-color: rgba(156,163,175,0.3); }
+.tag-game   { background: rgba(52, 211, 153, 0.15);  color: #34d399; border-color: rgba(52,211,153,0.3); }
 
 /* ── Card body ───────────────────────────────────────────────────────────── */
 .card-desc {
