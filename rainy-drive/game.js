@@ -1,23 +1,44 @@
 'use strict';
 
 // ─── Canvas ──────────────────────────────────────────────────────────────────
-const canvas = document.getElementById('gameCanvas');
-const ctx    = canvas.getContext('2d');
-function resize() {
-  // On portrait touch devices the canvas is CSS-rotated to landscape;
-  // swap buffer dimensions so the game renders in landscape coordinates.
+const canvas  = document.getElementById('gameCanvas');
+const ctx     = canvas.getContext('2d');
+const wrapper = document.getElementById('gameWrapper');
+
+// applyLayout: positions wrapper and sets canvas buffer dimensions.
+// On portrait mobile we rotate the wrapper -90° using exact pixel values so
+// the game always renders landscape — more reliable than CSS media queries on
+// iOS Safari where vw/vh inside a transformed fixed element misbehave.
+function applyLayout() {
   const isMobile = navigator.maxTouchPoints > 0;
-  const portrait = window.innerHeight > window.innerWidth;
+  const W = window.innerWidth, H = window.innerHeight;
+  const portrait = H > W;
+
   if (isMobile && portrait) {
-    canvas.width  = window.innerHeight;
-    canvas.height = window.innerWidth;
+    // Wrapper: landscape box (H × W) rotated to fill the portrait screen
+    Object.assign(wrapper.style, {
+      position: 'fixed', top: H + 'px', left: '0px',
+      right: 'auto',     bottom: 'auto',
+      width: H + 'px',   height: W + 'px',
+      transformOrigin: 'left top',
+      transform: 'rotate(-90deg)',
+    });
+    canvas.width  = H;   // landscape width  = portrait height
+    canvas.height = W;   // landscape height = portrait width
   } else {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
+    Object.assign(wrapper.style, {
+      position: 'fixed', top: '0', left: '0',
+      right: '0',        bottom: '0',
+      width: '',         height: '',
+      transformOrigin: '', transform: '',
+    });
+    canvas.width  = W;
+    canvas.height = H;
   }
 }
-window.addEventListener('resize', resize);
-resize();
+window.addEventListener('resize', applyLayout);
+window.addEventListener('orientationchange', () => setTimeout(applyLayout, 150));
+applyLayout();
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
 const lerp  = (a, b, t) => a + (b - a) * t;
@@ -216,7 +237,7 @@ function initGame() {
     score: 0, speed: 1, throttle: 1.0, wiperSpeedMult: 1.0,
     rainIntensity: 1.6, intensityTarget: 1.6, intensityTimer: 0,
     alive: true, time: 0, spawnT: 0,
-    wiperA: -0.6, wiperDir: 1,
+    wiperA: -0.45, wiperDir: 1,
     lightning: 0, lightningNext: rand(3, 8),
     keys: {},
   };
@@ -399,11 +420,12 @@ function updateWindshield(dt) {
 }
 
 function clearWiperDrops() {
-  const W = canvas.width, piv = botY() - 2, len = W * 0.26;
+  const W = canvas.width, H = canvas.height;
+  const pivY = botY() + H * 0.020, len = W * 0.44;
   for (const d of g.wsDrop) {
     if (d.phase === 'streak') continue;
-    if (isNearBlade(d.x, d.y, W*0.28, piv,  g.wiperA, len) ||
-        isNearBlade(d.x, d.y, W*0.72, piv, -g.wiperA, len))
+    if (isNearBlade(d.x, d.y, W*0.14, pivY,  g.wiperA, len) ||
+        isNearBlade(d.x, d.y, W*0.86, pivY, -g.wiperA, len))
       { d.phase = 'streak'; d.vy = rand(150, 320); }
   }
 }
@@ -416,10 +438,11 @@ function isNearBlade(px, py, bx, by, angle, len) {
 }
 
 function updateWipers(dt) {
-  const spd = Math.PI * 1.2 * Math.sqrt(g.speed) * g.wiperSpeedMult;
+  // Sweep from -0.45 (outer edge, behind A-pillar) to +0.85 (past centre)
+  const spd = Math.PI * 1.1 * Math.sqrt(g.speed) * g.wiperSpeedMult;
   g.wiperA += g.wiperDir * spd * dt;
-  if (g.wiperA >  0.62) { g.wiperA =  0.62; g.wiperDir = -1; }
-  if (g.wiperA < -0.62) { g.wiperA = -0.62; g.wiperDir =  1; }
+  if (g.wiperA >  0.85) { g.wiperA =  0.85; g.wiperDir = -1; }
+  if (g.wiperA < -0.45) { g.wiperA = -0.45; g.wiperDir =  1; }
 }
 
 function updateLightning(dt) {
@@ -661,19 +684,40 @@ function drawWsSheets() {
 }
 
 // ─── Draw: Wipers ─────────────────────────────────────────────────────────────
+// Pivots sit just below the glass bottom (hidden behind dashboard).
+// Arms sweep from behind the A-pillars across to past centre, covering
+// the full windshield width.
 function drawWipers() {
-  const W = canvas.width, piv = botY()-2, len = W*0.26;
-  drawOneWiper(W*0.28, piv, len,  g.wiperA);
-  drawOneWiper(W*0.72, piv, len, -g.wiperA);
+  const W = canvas.width, H = canvas.height;
+  const pivY  = botY() + H  * 0.020;   // slightly below glass edge
+  const len   = W * 0.44;              // long enough to reach centre
+  drawOneWiper(W * 0.14, pivY, len,  g.wiperA);
+  drawOneWiper(W * 0.86, pivY, len, -g.wiperA);
 }
 function drawOneWiper(px, py, len, angle) {
-  const ex = px+Math.sin(angle)*len, ey = py-Math.cos(angle)*len;
-  const bx = px+Math.sin(angle)*len*0.17, by_ = py-Math.cos(angle)*len*0.17;
-  ctx.save(); ctx.lineCap = 'round';
-  ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(ex,ey); ctx.stroke();
-  ctx.strokeStyle = '#2e2e2e'; ctx.lineWidth = 4.5;
-  ctx.beginPath(); ctx.moveTo(bx,by_); ctx.lineTo(ex,ey); ctx.stroke();
+  const sin = Math.sin(angle), cos = Math.cos(angle);
+  // Arm connector (short, thin metal)
+  const ax = px + sin * len * 0.08, ay = py - cos * len * 0.08;
+  // Blade tip
+  const ex = px + sin * len,        ey = py - cos * len;
+
+  ctx.save();
+  ctx.lineCap = 'round';
+
+  // Metal arm
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ax, ay); ctx.stroke();
+
+  // Rubber blade — dark body + reflective highlight so it's visible on dark glass
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#303030';
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ex, ey); ctx.stroke();
+
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = 'rgba(150, 185, 220, 0.65)';
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ex, ey); ctx.stroke();
+
   ctx.restore();
 }
 

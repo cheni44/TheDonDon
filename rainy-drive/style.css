@@ -6,19 +6,8 @@
   background: #000;
 }
 
-/* Portrait touch devices: rotate the whole wrapper to landscape */
-@media (orientation: portrait) and (pointer: coarse) {
-  #gameWrapper {
-    top: 100vh;
-    left: 0;
-    right: auto;
-    bottom: auto;
-    width: 100vh;    /* portrait height becomes landscape width  */
-    height: 100vw;   /* portrait width  becomes landscape height */
-    transform-origin: left top;
-    transform: rotate(-90deg);
-  }
-}
+/* Rotation is handled entirely by JS (applyLayout in game.js).
+   No CSS media-query rotation — avoids iOS Safari sizing quirks. */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
