@@ -34,23 +34,30 @@
     </div>
   </div>
 
-  <!-- On-screen game controls (bottom-right corner) -->
-  <div id="onscreenControls" class="onscreen-controls hidden">
-    <div class="ctrl-group">
-      <div class="ctrl-label">速度 <span id="throttleVal">1.0×</span></div>
-      <div class="ctrl-row">
-        <button class="ctrl-btn" id="speedDown">－</button>
-        <button class="ctrl-btn" id="speedUp">＋</button>
-      </div>
-    </div>
-    <div class="ctrl-sep"></div>
-    <div class="ctrl-group">
-      <div class="ctrl-label">雨刷 <span id="wiperVal">1.0×</span></div>
-      <div class="ctrl-row">
-        <button class="ctrl-btn" id="wiperDown">－</button>
-        <button class="ctrl-btn" id="wiperUp">＋</button>
-      </div>
-    </div>
+  <!-- Left side controls: Brake / Left / Wiper slower -->
+  <div id="leftControls" class="side-controls side-left hidden">
+    <button class="ctrl-btn ctrl-brake" id="btnBrake">
+      <div class="btn-icon">▼</div><div class="btn-label">煞車</div>
+    </button>
+    <button class="ctrl-btn ctrl-steer" id="btnLeft">
+      <div class="btn-icon">◀</div><div class="btn-label">往左</div>
+    </button>
+    <button class="ctrl-btn ctrl-wiper" id="btnWiperSlow">
+      <div class="btn-icon">≈</div><div class="btn-label">刷 ↓</div>
+    </button>
+  </div>
+
+  <!-- Right side controls: Accelerate / Right / Wiper faster -->
+  <div id="rightControls" class="side-controls side-right hidden">
+    <button class="ctrl-btn ctrl-accel" id="btnAccel">
+      <div class="btn-icon">▲</div><div class="btn-label">加速</div>
+    </button>
+    <button class="ctrl-btn ctrl-steer" id="btnRight">
+      <div class="btn-icon">▶</div><div class="btn-label">往右</div>
+    </button>
+    <button class="ctrl-btn ctrl-wiper" id="btnWiperFast">
+      <div class="btn-icon">≋</div><div class="btn-label">刷 ↑</div>
+    </button>
   </div>
 
   <script src="game.js"></script>

@@ -731,9 +731,7 @@ function drawHUD() {
     ctx.fillText(tiltX > 0 ? '→ 傾斜' : '傾斜 ←', W*0.5, H*0.105);
   }
   const tv = document.getElementById('throttleVal');
-  const wv = document.getElementById('wiperVal');
   if (tv) tv.textContent = g.throttle.toFixed(1) + '×';
-  if (wv) wv.textContent = g.wiperSpeedMult.toFixed(1) + '×';
   ctx.restore();
 }
 
@@ -768,8 +766,8 @@ function loop(ts) {
 
 function startGame() {
   document.getElementById('gameOverScreen').classList.add('hidden');
-  document.getElementById('onscreenControls').classList.remove('hidden');
-  // Try to lock screen to landscape (works on Android Chrome; silently fails elsewhere)
+  document.getElementById('leftControls').classList.remove('hidden');
+  document.getElementById('rightControls').classList.remove('hidden');
   if (screen.orientation?.lock) screen.orientation.lock('landscape').catch(() => {});
   initGame();
   running = true; lastTime = performance.now();
@@ -777,7 +775,8 @@ function startGame() {
 }
 function showGameOver() {
   running = false;
-  document.getElementById('onscreenControls').classList.add('hidden');
+  document.getElementById('leftControls').classList.add('hidden');
+  document.getElementById('rightControls').classList.add('hidden');
   if (g.score > bestScore) bestScore = g.score;
   document.getElementById('finalScore').textContent = `本次距離：${g.score} 公尺`;
   document.getElementById('bestScore').textContent  = `最佳紀錄：${bestScore} 公尺`;
@@ -795,39 +794,29 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', e => { if (g?.keys) g.keys[e.key] = false; });
 
-canvas.addEventListener('touchstart', e => {
-  e.preventDefault();
-  if (!g?.keys) return;
-  for (const t of e.changedTouches) {
-    if (t.clientX > canvas.width*0.60 && t.clientY > canvas.height*0.72) continue;
-    if (t.clientX < canvas.width/2) g.keys.touchLeft  = true;
-    else                             g.keys.touchRight = true;
-  }
-}, { passive: false });
-canvas.addEventListener('touchend', e => {
-  e.preventDefault();
-  if (!g?.keys) return;
-  g.keys.touchLeft = g.keys.touchRight = false;
-}, { passive: false });
-
-function bindCtrlBtn(id, keyName) {
+// ─── Side button bindings ─────────────────────────────────────────────────────
+function bindSideBtn(id, keyName) {
   const btn = document.getElementById(id);
   if (!btn) return;
-  ['mousedown','touchstart'].forEach(evt =>
-    btn.addEventListener(evt, e => {
-      e.preventDefault(); e.stopPropagation();
-      if (g?.keys) g.keys[keyName] = true;
-    }, { passive: false })
-  );
-  ['mouseup','mouseleave','touchend','touchcancel'].forEach(evt =>
-    btn.addEventListener(evt, e => {
-      e.stopPropagation();
-      if (g?.keys) g.keys[keyName] = false;
-    })
-  );
+  const press = e => {
+    e.preventDefault(); e.stopPropagation();
+    if (g?.keys) g.keys[keyName] = true;
+    btn.classList.add('pressing');
+  };
+  const release = e => {
+    e.stopPropagation();
+    if (g?.keys) g.keys[keyName] = false;
+    btn.classList.remove('pressing');
+  };
+  ['mousedown','touchstart'].forEach(evt => btn.addEventListener(evt, press,   { passive: false }));
+  ['mouseup','mouseleave','touchend','touchcancel'].forEach(evt => btn.addEventListener(evt, release));
 }
-bindCtrlBtn('speedDown','speedDown'); bindCtrlBtn('speedUp','speedUp');
-bindCtrlBtn('wiperDown','wiperDown'); bindCtrlBtn('wiperUp','wiperUp');
+bindSideBtn('btnBrake',     'speedDown');
+bindSideBtn('btnLeft',      'touchLeft');
+bindSideBtn('btnWiperSlow', 'wiperDown');
+bindSideBtn('btnAccel',     'speedUp');
+bindSideBtn('btnRight',     'touchRight');
+bindSideBtn('btnWiperFast', 'wiperUp');
 
 document.getElementById('startBtn').addEventListener('click', async () => {
   document.getElementById('startScreen').classList.add('hidden');
