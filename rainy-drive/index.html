@@ -7,58 +7,60 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
+  <div id="gameWrapper">
 
+    <canvas id="gameCanvas"></canvas>
 
-  <!-- Start screen -->
-  <div id="startScreen" class="overlay">
-    <div class="card">
-      <h1>🌧 暴雨開車</h1>
-      <p>在傾盆大雨中閃避來車<br>存活越久越好！</p>
-      <p class="hint">
-        ← → 方向鍵 / A D 鍵 &nbsp; 左右移動<br>
-        手機：點左右半邊 或 <strong>傾斜手機</strong><br>
-        右下角按鈕：調整速度 &amp; 雨刷速度
-      </p>
-      <button id="startBtn">開始遊戲</button>
+    <!-- Start screen -->
+    <div id="startScreen" class="overlay">
+      <div class="card">
+        <h1>🌧 暴雨開車</h1>
+        <p>在傾盆大雨中閃避來車<br>存活越久越好！</p>
+        <p class="hint">
+          ← → 方向鍵 / A D 鍵 &nbsp; 左右移動<br>
+          手機：左右側按鍵 或 <strong>傾斜手機</strong>
+        </p>
+        <button id="startBtn">開始遊戲</button>
+      </div>
     </div>
-  </div>
 
-  <!-- Game over screen -->
-  <div id="gameOverScreen" class="overlay hidden">
-    <div class="card">
-      <h1>💥 撞車了！</h1>
-      <p id="finalScore"></p>
-      <p id="bestScore"></p>
-      <button id="restartBtn">再試一次</button>
+    <!-- Game over screen -->
+    <div id="gameOverScreen" class="overlay hidden">
+      <div class="card">
+        <h1>💥 撞車了！</h1>
+        <p id="finalScore"></p>
+        <p id="bestScore"></p>
+        <button id="restartBtn">再試一次</button>
+      </div>
     </div>
-  </div>
 
-  <!-- Left side controls: Brake / Left / Wiper slower -->
-  <div id="leftControls" class="side-controls side-left hidden">
-    <button class="ctrl-btn ctrl-brake" id="btnBrake">
-      <div class="btn-icon">▼</div><div class="btn-label">煞車</div>
-    </button>
-    <button class="ctrl-btn ctrl-steer" id="btnLeft">
-      <div class="btn-icon">◀</div><div class="btn-label">往左</div>
-    </button>
-    <button class="ctrl-btn ctrl-wiper" id="btnWiperSlow">
-      <div class="btn-icon">≈</div><div class="btn-label">刷 ↓</div>
-    </button>
-  </div>
+    <!-- Left side controls: Brake / Left / Wiper slower -->
+    <div id="leftControls" class="side-controls side-left hidden">
+      <button class="ctrl-btn ctrl-brake" id="btnBrake">
+        <div class="btn-icon">▼</div><div class="btn-label">煞車</div>
+      </button>
+      <button class="ctrl-btn ctrl-steer" id="btnLeft">
+        <div class="btn-icon">◀</div><div class="btn-label">往左</div>
+      </button>
+      <button class="ctrl-btn ctrl-wiper" id="btnWiperSlow">
+        <div class="btn-icon">≈</div><div class="btn-label">刷 ↓</div>
+      </button>
+    </div>
 
-  <!-- Right side controls: Accelerate / Right / Wiper faster -->
-  <div id="rightControls" class="side-controls side-right hidden">
-    <button class="ctrl-btn ctrl-accel" id="btnAccel">
-      <div class="btn-icon">▲</div><div class="btn-label">加速</div>
-    </button>
-    <button class="ctrl-btn ctrl-steer" id="btnRight">
-      <div class="btn-icon">▶</div><div class="btn-label">往右</div>
-    </button>
-    <button class="ctrl-btn ctrl-wiper" id="btnWiperFast">
-      <div class="btn-icon">≋</div><div class="btn-label">刷 ↑</div>
-    </button>
-  </div>
+    <!-- Right side controls: Accelerate / Right / Wiper faster -->
+    <div id="rightControls" class="side-controls side-right hidden">
+      <button class="ctrl-btn ctrl-accel" id="btnAccel">
+        <div class="btn-icon">▲</div><div class="btn-label">加速</div>
+      </button>
+      <button class="ctrl-btn ctrl-steer" id="btnRight">
+        <div class="btn-icon">▶</div><div class="btn-label">往右</div>
+      </button>
+      <button class="ctrl-btn ctrl-wiper" id="btnWiperFast">
+        <div class="btn-icon">≋</div><div class="btn-label">刷 ↑</div>
+      </button>
+    </div>
+
+  </div><!-- /#gameWrapper -->
 
   <script src="game.js"></script>
 </body>
