@@ -1,6 +1,37 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* ─── Landscape / orientation warning ─────────────────────────── */
+.rotate-warning {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 8, 18, 0.97);
+  color: #e8f4ff;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  text-align: center;
+  gap: 0;
+}
+@media (orientation: portrait) {
+  .rotate-warning { display: flex; }
+}
+.rotate-content { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.rotate-icon {
+  font-size: 3.2rem;
+  animation: spin-hint 2.4s ease-in-out infinite;
+  display: inline-block;
+}
+.rotate-content p        { font-size: 1.3rem; font-weight: 600; margin: 0; }
+.rotate-content .rotate-sub { font-size: 0.88rem; color: #506070; }
+@keyframes spin-hint {
+  0%, 30% { transform: rotate(0deg);  }
+  55%, 80% { transform: rotate(90deg); }
+  100%     { transform: rotate(0deg);  }
+}
 
-body {
+
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
   background: #000;
   overflow: hidden;
   font-family: 'Helvetica Neue', Arial, sans-serif;

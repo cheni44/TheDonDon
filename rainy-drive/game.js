@@ -47,7 +47,7 @@ function initAudio() {
   try {
     audioCtx       = new (window.AudioContext || window.webkitAudioContext)();
     masterGainNode = audioCtx.createGain();
-    masterGainNode.gain.value = 0.75;
+    masterGainNode.gain.value = 0.82;
     masterGainNode.connect(audioCtx.destination);
 
     // Long noise buffer for variety
@@ -57,8 +57,24 @@ function initAudio() {
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
 
     rainGainNode = audioCtx.createGain();
-    rainGainNode.gain.value = 1.2;
-    rainGainNode.connect(masterGainNode);
+    rainGainNode.gain.value = 1.1;
+
+    // ── Car-cabin reverb: small-room delay + feedback ──────────────────────
+    // Simulates the enclosed resonance of the car interior
+    const cabDelay = audioCtx.createDelay(0.20);
+    cabDelay.delayTime.value = 0.058;   // 58 ms room reflection
+    const cabFB    = audioCtx.createGain(); cabFB.gain.value = 0.20; // 20% feedback
+    const cabWet   = audioCtx.createGain(); cabWet.gain.value = 0.30; // wet mix
+    cabDelay.connect(cabFB); cabFB.connect(cabDelay); // feedback loop
+    cabDelay.connect(cabWet); cabWet.connect(masterGainNode);
+
+    // Low-cut to remove sub-bass rumble that muddies indoor sound
+    const hiPass = audioCtx.createBiquadFilter();
+    hiPass.type = 'highpass'; hiPass.frequency.value = 55;
+
+    rainGainNode.connect(hiPass);
+    hiPass.connect(cabDelay);          // wet path → reverb
+    hiPass.connect(masterGainNode);    // dry path
 
     function addLayer(type, freq, Q, vol) {
       const src = audioCtx.createBufferSource();
@@ -66,15 +82,37 @@ function initAudio() {
       const flt = audioCtx.createBiquadFilter();
       flt.type = type; flt.frequency.value = freq;
       if (Q !== null) flt.Q.value = Q;
-      const g = audioCtx.createGain(); g.gain.value = vol;
-      src.connect(flt); flt.connect(g); g.connect(rainGainNode);
+      const gn = audioCtx.createGain(); gn.gain.value = vol;
+      src.connect(flt); flt.connect(gn); gn.connect(rainGainNode);
       src.start();
     }
-    addLayer('bandpass', 4000, 0.7, 0.26);   // glass hiss
-    addLayer('bandpass', 1100, 1.3, 0.24);   // roof patter
-    addLayer('bandpass',  380, 1.6, 0.16);   // distant patter
-    addLayer('lowpass',   180, null, 0.12);  // deep rumble
+    // In-car rain profile (heard through metal roof & glass, muffled):
+    addLayer('bandpass',  340, 2.8, 0.42);   // heavy drumming on metal roof
+    addLayer('bandpass',  620, 2.2, 0.30);   // secondary hood/pillars tap
+    addLayer('bandpass',  950, 3.0, 0.18);   // muffled windshield glass patter
+    addLayer('lowpass',   160, null, 0.22);  // cabin ambient low-frequency body
+    addLayer('lowpass',    55, null, 0.10);  // wind pressure buffet (sub-bass)
   } catch(e) { console.warn('Audio unavailable:', e); }
+}
+
+// Single heavy raindrop thudding on metal roof
+function playRoofDrop() {
+  if (!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const env = audioCtx.createGain();
+    const flt = audioCtx.createBiquadFilter();
+    flt.type = 'lowpass'; flt.frequency.value = 480;
+    osc.type = 'sine';
+    const t = audioCtx.currentTime;
+    osc.frequency.setValueAtTime(260, t);
+    osc.frequency.exponentialRampToValueAtTime(75, t + 0.14);
+    env.gain.setValueAtTime(0, t);
+    env.gain.linearRampToValueAtTime(0.45 + (g?.rainIntensity ?? 1) * 0.25, t + 0.006);
+    env.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    osc.connect(flt); flt.connect(env); env.connect(masterGainNode);
+    osc.start(t); osc.stop(t + 0.28);
+  } catch(_) {}
 }
 
 function updateAudioIntensity() {
@@ -288,23 +326,28 @@ function updateCars(dt) {
 
 function updateRain(dt) {
   const sp = g.speed * g.throttle, ri = g.rainIntensity;
+
+  // Wrap horizontally instead of random-respawn, so rain stays evenly distributed
   for (const r of g.rainFar) {
     r.x += wind.vx * dt * 60 * 0.22;
     r.y += r.vy * dt * 60 * sp * ri * 0.50;
-    if (r.y > canvas.height * (VP_Y + 0.12) || r.x < -50 || r.x > canvas.width + 50)
-      Object.assign(r, newRainFar());
+    if      (r.y > canvas.height * (VP_Y + 0.12)) { Object.assign(r, newRainFar()); }
+    else if (r.x < -50)                { r.x = canvas.width  + 50; }
+    else if (r.x > canvas.width + 50)  { r.x = -50; }
   }
   for (const r of g.rainMid) {
     r.x += wind.vx * dt * 60 * 0.58;
     r.y += r.vy * dt * 60 * sp * ri;
-    if (r.y > canvas.height + 30 || r.x < -60 || r.x > canvas.width + 60)
-      Object.assign(r, newRainMid());
+    if      (r.y > canvas.height + 30) { Object.assign(r, newRainMid()); }
+    else if (r.x < -60)                { r.x = canvas.width  + 60; }
+    else if (r.x > canvas.width + 60)  { r.x = -60; }
   }
   for (const r of g.rainNear) {
     r.x += wind.vx * dt * 60;
     r.y += r.vy * dt * 60 * sp * ri * 1.1;
-    if (r.y > canvas.height + 45 || r.x < -80 || r.x > canvas.width + 80)
-      Object.assign(r, newRainNear());
+    if      (r.y > canvas.height + 45) { Object.assign(r, newRainNear()); }
+    else if (r.x < -80)                { r.x = canvas.width  + 80; }
+    else if (r.x > canvas.width + 80)  { r.x = -80; }
   }
   for (const c of g.rainCurtains) {
     c.x += c.speed * dt;
@@ -313,6 +356,9 @@ function updateRain(dt) {
   }
   if (Math.random() < dt * 28 * ri)
     g.splashes.push({ x: rand(-0.88, 0.88), z: rand(0.18, 0.95), t: 0, life: rand(0.14, 0.38) });
+
+  // Random heavy drops thumping on metal roof
+  if (Math.random() < dt * 3.5 * ri) playRoofDrop();
 }
 
 function updateWindshield(dt) {
@@ -711,6 +757,8 @@ function loop(ts) {
 function startGame() {
   document.getElementById('gameOverScreen').classList.add('hidden');
   document.getElementById('onscreenControls').classList.remove('hidden');
+  // Try to lock screen to landscape (works on Android Chrome; silently fails elsewhere)
+  if (screen.orientation?.lock) screen.orientation.lock('landscape').catch(() => {});
   initGame();
   running = true; lastTime = performance.now();
   requestAnimationFrame(loop);
