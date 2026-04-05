@@ -47,9 +47,12 @@ const rand  = (a, b)      => a + Math.random() * (b - a);
 const pick  = arr         => arr[Math.floor(Math.random() * arr.length)];
 
 // ─── Layout (fractions of screen) ────────────────────────────────────────────
-const VP_Y        = 0.36;
-const ROAD_BOTTOM = 0.88;
-const ROAD_HW     = 0.52;
+// VP_Y=0.30 → horizon higher up, more road visible (closer driver POV)
+// ROAD_HW=0.64 → wider perspective, more enveloping highway feel
+// ROAD_BOTTOM=0.84 → slightly larger dashboard, more cabin immersion
+const VP_Y        = 0.30;
+const ROAD_BOTTOM = 0.84;
+const ROAD_HW     = 0.64;
 
 const vpX  = () => canvas.width  / 2;
 const vpY  = () => canvas.height * VP_Y;
@@ -71,6 +74,37 @@ const CAR_COLORS   = [
   '#16a085','#1abc9c','#8e44ad','#9b59b6',
   '#d35400','#e67e22','#7f8c8d','#95a5a6',
 ];
+
+// ─── Vehicle type definitions (個性化車輛) ────────────────────────────────────
+// minLaneIdx: 0=可用全部車道, 1=不能用最左側車道(大卡車/遊覽車)
+const VEHICLE_TYPES = [
+  { type:'sedan',    label:'轎車',   baseKph:100, kphRange:10, minLaneIdx:0,
+    wMult:1.00, hMult:1.00, weight:5,
+    colors:['#c0392b','#e74c3c','#2980b9','#3498db','#16a085','#8e44ad','#d35400','#1a1a2e','#2c3e50'],
+    brands:['Toyota','Honda','BMW','Benz','Audi','Nissan','Lexus','Kia'] },
+  { type:'sports',   label:'跑車',   baseKph:120, kphRange:20, minLaneIdx:0,
+    wMult:1.18, hMult:0.70, weight:2,
+    colors:['#c0392b','#e74c3c','#f39c12','#8e44ad','#e67e22','#f1c40f','#1a1a2e'],
+    brands:['Ferrari','Porsche','Lambo','BMW M','Benz AMG','Audi R8'] },
+  { type:'van',      label:'貨車',   baseKph:90,  kphRange:5,  minLaneIdx:0,
+    wMult:1.12, hMult:1.40, weight:3,
+    colors:['#bdc3c7','#95a5a6','#7f8c8d','#d5d8dc','#aab7b8','#e8e8e8'],
+    brands:['Ford','Isuzu','Toyota','Mercedes','Mitsubishi'] },
+  { type:'bigtruck', label:'大卡車', baseKph:100, kphRange:10, minLaneIdx:1,
+    wMult:1.52, hMult:2.20, weight:2,
+    colors:['#aab7b8','#85929e','#626567','#d5d8dc','#f0b27a','#2c3e50'],
+    brands:['Volvo','Scania','MAN','Benz','DAF'] },
+  { type:'bus',      label:'遊覽車', baseKph:95,  kphRange:15, minLaneIdx:1,
+    wMult:1.38, hMult:2.05, weight:2,
+    colors:['#d4e6f1','#a9cce3','#f1948a','#82e0aa','#f8c471','#85c1e9','#eeeeee'],
+    brands:['Mercedes','MAN','Setra','Volvo','NEOPLAN'] },
+];
+function pickVehicleType() {
+  const total = VEHICLE_TYPES.reduce((s, t) => s + t.weight, 0);
+  let r = Math.random() * total;
+  for (const t of VEHICLE_TYPES) { r -= t.weight; if (r <= 0) return t; }
+  return VEHICLE_TYPES[0];
+}
 
 // ─── Web Audio rain & thunder ────────────────────────────────────────────────
 let audioCtx = null, rainGainNode = null, masterGainNode = null, noiseBuf = null;
@@ -177,6 +211,23 @@ function playThunder() {
   } catch(_) {}
 }
 
+// ─── Blinker sound (方向燈聲音) ───────────────────────────────────────────────
+function playBlinkerTick(highTone) {
+  if (!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const env = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = highTone ? 1320 : 880;
+    const t = audioCtx.currentTime;
+    env.gain.setValueAtTime(0, t);
+    env.gain.linearRampToValueAtTime(0.10, t + 0.004);
+    env.gain.exponentialRampToValueAtTime(0.001, t + 0.065);
+    osc.connect(env); env.connect(masterGainNode);
+    osc.start(t); osc.stop(t + 0.08);
+  } catch(_) {}
+}
+
 // ─── Tilt control ─────────────────────────────────────────────────────────────
 let tiltX = 0, tiltEnabled = false;
 function handleTilt(e) {
@@ -239,6 +290,8 @@ function initGame() {
     alive: true, time: 0, spawnT: 0,
     wiperA: -0.45, wiperDir: 1,
     lightning: 0, lightningNext: rand(3, 8),
+    blinkerDir: 0, blinkerFlash: 0, blinkerOn: false,
+    blinkerFlashCount: 0, blinkerAutoOff: 0,
     keys: {},
   };
 
@@ -292,9 +345,22 @@ function newRainCurtain(init = false) {
   };
 }
 function spawnCar() {
-  const lane = pick(LANES);
+  const vtype = pickVehicleType();
+  // 大卡車/遊覽車 不占最左側車道 (minLaneIdx=1 → 只能用 LANES[1], LANES[2])
+  const availableLanes = LANES.slice(vtype.minLaneIdx);
+  const lane = pick(availableLanes);
   if (g.cars.some(c => Math.abs(c.x - lane) < 0.05 && c.z < 0.18)) return;
-  g.cars.push({ x: lane, z: 0.02, color: pick(CAR_COLORS) });
+  const kph = vtype.baseKph + (Math.random() * 2 - 1) * vtype.kphRange;
+  g.cars.push({
+    x: lane, z: 0.02,
+    color: pick(vtype.colors),
+    brand: pick(vtype.brands),
+    type:  vtype.type,
+    label: vtype.label,
+    kph,
+    wMult: vtype.wMult,
+    hMult: vtype.hMult,
+  });
 }
 
 // ─── Update ───────────────────────────────────────────────────────────────────
@@ -331,10 +397,37 @@ function update(dt) {
 function updatePlayer(dt) {
   const ACCEL = 5.0, DECEL = 6;
   let ax = 0;
-  // FIX: keys are set correctly; arrow key preventDefault in keydown ensures no scroll interference
-  if (g.keys['ArrowLeft']  || g.keys['a'] || g.keys['A'] || g.keys.touchLeft)  ax -= ACCEL;
-  if (g.keys['ArrowRight'] || g.keys['d'] || g.keys['D'] || g.keys.touchRight) ax += ACCEL;
+  const goLeft  = g.keys['ArrowLeft']  || g.keys['a'] || g.keys['A'] || g.keys.touchLeft;
+  const goRight = g.keys['ArrowRight'] || g.keys['d'] || g.keys['D'] || g.keys.touchRight;
+  if (goLeft)  ax -= ACCEL;
+  if (goRight) ax += ACCEL;
   ax += tiltX * ACCEL * 1.1;
+
+  // ── 方向燈邏輯 ──────────────────────────────────────────────────────────────
+  const wantLeft  = goLeft  || tiltX < -0.22;
+  const wantRight = goRight || tiltX >  0.22;
+  if (wantLeft && !wantRight) {
+    if (g.blinkerDir !== -1) { g.blinkerDir = -1; g.blinkerFlash = 0; g.blinkerFlashCount = 0; }
+    g.blinkerAutoOff = 1.5;
+  } else if (wantRight && !wantLeft) {
+    if (g.blinkerDir !== 1)  { g.blinkerDir =  1; g.blinkerFlash = 0; g.blinkerFlashCount = 0; }
+    g.blinkerAutoOff = 1.5;
+  } else {
+    if (g.blinkerAutoOff > 0) {
+      g.blinkerAutoOff = Math.max(0, g.blinkerAutoOff - dt);
+      if (g.blinkerAutoOff === 0) g.blinkerDir = 0;
+    }
+  }
+  if (g.blinkerDir !== 0) {
+    const CYCLE = 0.72;
+    g.blinkerFlash += dt;
+    const wasOn = g.blinkerOn;
+    g.blinkerOn = (g.blinkerFlash % CYCLE) < CYCLE * 0.5;
+    if (g.blinkerOn && !wasOn) { g.blinkerFlashCount++; playBlinkerTick(g.blinkerFlashCount % 2 === 1); }
+  } else {
+    g.blinkerOn = false;
+  }
+
   g.playerVX += ax * dt;
   g.playerVX *= Math.exp(-DECEL * dt);
   g.playerX   = clamp(g.playerX + g.playerVX * dt, -0.78, 0.78);
@@ -346,11 +439,17 @@ function updateCars(dt) {
     spawnCar();
     g.spawnT = Math.max(0.4, rand(1.4, 2.4) / (g.speed * g.throttle));
   }
-  const carSpd = 0.52 * g.speed * g.throttle;
+  // 玩家目前車速 (km/h)，用於計算與其他車輛的相對速度
+  const playerKph = (80 + g.speed * 38) * g.throttle;
   for (let i = g.cars.length - 1; i >= 0; i--) {
     const c = g.cars[i];
-    c.z += carSpd * dt;
-    if (c.z >= HIT_Z_MIN && c.z <= HIT_Z_MAX && Math.abs(c.x - g.playerX) < HIT_X_THRESH) {
+    // 速差越大 → 相對接近越快；跑車接近較慢，貨車/慢車接近較快
+    const baseSpd = 0.52 * g.speed * g.throttle;
+    const speedFactor = clamp(1 + (playerKph - c.kph) / 60, 0.12, 3.0);
+    c.z += baseSpd * speedFactor * dt;
+    // 碰撞閾值依車寬縮放
+    const hitThresh = CAR_HALF_W * c.wMult + CAR_HALF_W * 0.85;
+    if (c.z >= HIT_Z_MIN && c.z <= HIT_Z_MAX && Math.abs(c.x - g.playerX) < hitThresh) {
       g.alive = false; showGameOver(); return;
     }
     if (c.z > 1.15) g.cars.splice(i, 1);
@@ -595,12 +694,12 @@ function drawRainCurtains() {
 
 // ─── Draw: Car spray (fan widening toward camera) ────────────────────────────
 function drawCarSpray(c) {
-  const { x: rx, z } = c;
+  const { x: rx, z, wMult, hMult } = c;
   if (z < 0.10) return;
   const pOff = g.playerX;
   const cx = projX(rx - pOff, z), cy = projY(z);
-  const w  = CAR_HALF_W * 2 * canvas.width * ROAD_HW * z;
-  const h  = CAR_H_PX * z;
+  const w  = CAR_HALF_W * 2 * canvas.width * ROAD_HW * z * wMult;
+  const h  = CAR_H_PX * z * hMult;
   const op = Math.min(1,(z-0.10)/0.35) * 0.55 * g.rainIntensity * Math.min(g.throttle, 1.6);
   if (op < 0.01) return;
   ctx.save();
@@ -616,31 +715,222 @@ function drawCarSpray(c) {
   ctx.closePath(); ctx.fill(); ctx.restore();
 }
 
-// ─── Draw: Cars (FIX: offset by playerX for correct first-person perspective)
+// ─── Per-type car draw helpers ────────────────────────────────────────────────
+// Shared: draw brand label on rear of vehicle
+function drawBrandLabel(cx, cy, w, h, brand, yFrac) {
+  if (w < 18) return;
+  ctx.save();
+  const fs = clamp(Math.round(w * 0.20), 7, 26);
+  ctx.font          = `bold ${fs}px Arial, sans-serif`;
+  ctx.textAlign     = 'center';
+  ctx.textBaseline  = 'middle';
+  ctx.shadowColor   = 'rgba(0,0,0,0.95)';
+  ctx.shadowBlur    = 3;
+  ctx.fillStyle     = 'rgba(225,225,225,0.82)';
+  ctx.fillText(brand, cx, cy - h * yFrac);
+  ctx.restore();
+}
+
+function drawSedan(cx, cy, w, h, color, z, brand) {
+  // ── Trunk (lower ~35%) ─────────────────────────────────────────────────────
+  ctx.fillStyle = color;
+  ctx.fillRect(cx-w/2, cy-h, w, h);
+  // Slightly darker roof panel (upper 32%)
+  ctx.fillStyle = 'rgba(0,0,0,0.14)';
+  ctx.fillRect(cx-w*0.36, cy-h, w*0.72, h*0.32);
+  // Rear window (dark glass)
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.fillRect(cx-w*0.30, cy-h*0.98, w*0.60, h*0.22);
+  ctx.fillStyle = 'rgba(100,165,225,0.40)';
+  ctx.fillRect(cx-w*0.26, cy-h*0.95, w*0.52, h*0.15);
+  // Trunk panel divider line
+  ctx.strokeStyle = 'rgba(0,0,0,0.22)';
+  ctx.lineWidth = Math.max(0.5, z * 1.2);
+  ctx.beginPath(); ctx.moveTo(cx-w*0.50, cy-h*0.38); ctx.lineTo(cx+w*0.50, cy-h*0.38); ctx.stroke();
+  // Taillights
+  ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 14*z*(1+g.rainIntensity*0.4);
+  ctx.fillStyle = '#ff2200';
+  ctx.fillRect(cx-w*0.50, cy-h*0.22, w*0.16, h*0.10);
+  ctx.fillRect(cx+w*0.34, cy-h*0.22, w*0.16, h*0.10);
+  // Center brake line
+  ctx.fillStyle = 'rgba(255,50,0,0.55)';
+  ctx.fillRect(cx-w*0.15, cy-h*0.20, w*0.30, h*0.04);
+  ctx.shadowBlur = 0;
+  // Chrome bumper strip
+  ctx.fillStyle = 'rgba(200,200,200,0.32)';
+  ctx.fillRect(cx-w*0.46, cy-h*0.04, w*0.92, h*0.03);
+  // Roof shine
+  const shine = ctx.createLinearGradient(cx, cy-h, cx, cy-h*0.58);
+  shine.addColorStop(0, 'rgba(255,255,255,0.22)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shine; ctx.fillRect(cx-w/2, cy-h, w, h*0.44);
+  drawBrandLabel(cx, cy, w, h, brand, 0.56);
+}
+
+function drawSportsCar(cx, cy, w, h, color, z, brand) {
+  // Main body (very low, wide)
+  ctx.fillStyle = color;
+  ctx.fillRect(cx-w/2, cy-h, w, h);
+  // Tiny rear windshield slot
+  ctx.fillStyle = 'rgba(0,0,0,0.42)';
+  ctx.fillRect(cx-w*0.42, cy-h, w*0.84, h*0.26);
+  ctx.fillStyle = 'rgba(100,185,255,0.50)';
+  ctx.fillRect(cx-w*0.34, cy-h*0.97, w*0.68, h*0.14);
+  // Ducktail spoiler
+  ctx.fillStyle = 'rgba(0,0,0,0.50)';
+  ctx.fillRect(cx-w*0.48, cy-h*1.00, w*0.96, h*0.06);
+  // Wide LED-style taillight strip
+  ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 18*z*(1+g.rainIntensity*0.4);
+  ctx.fillStyle = '#ff2200';
+  ctx.fillRect(cx-w*0.50, cy-h*0.18, w*0.24, h*0.08);
+  ctx.fillRect(cx+w*0.26, cy-h*0.18, w*0.24, h*0.08);
+  // LED connector strip
+  ctx.fillStyle = 'rgba(255,40,0,0.70)';
+  ctx.fillRect(cx-w*0.26, cy-h*0.17, w*0.52, h*0.04);
+  ctx.shadowBlur = 0;
+  // Diffuser (black bottom panel)
+  ctx.fillStyle = 'rgba(10,10,10,0.70)';
+  ctx.fillRect(cx-w*0.48, cy-h*0.11, w*0.96, h*0.11);
+  // Exhaust pipes
+  ctx.fillStyle = '#888';
+  ctx.beginPath(); ctx.ellipse(cx-w*0.22, cy-h*0.05, w*0.04, h*0.03, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+w*0.22, cy-h*0.05, w*0.04, h*0.03, 0, 0, Math.PI*2); ctx.fill();
+  const shine = ctx.createLinearGradient(cx, cy-h, cx, cy-h*0.62);
+  shine.addColorStop(0, 'rgba(255,255,255,0.32)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shine; ctx.fillRect(cx-w/2, cy-h, w, h*0.38);
+  drawBrandLabel(cx, cy, w, h, brand, 0.46);
+}
+
+function drawVan(cx, cy, w, h, color, z, brand) {
+  // Cargo body (upper ~58%) – plain box
+  ctx.fillStyle = color;
+  ctx.fillRect(cx-w*0.46, cy-h, w*0.92, h*0.58);
+  // Cargo rear door seam (center vertical)
+  ctx.strokeStyle = 'rgba(0,0,0,0.30)';
+  ctx.lineWidth = Math.max(0.5, z * 1.2);
+  ctx.beginPath(); ctx.moveTo(cx, cy-h); ctx.lineTo(cx, cy-h*0.42); ctx.stroke();
+  // Cargo door handle
+  ctx.strokeStyle = 'rgba(180,180,180,0.50)';
+  ctx.lineWidth = Math.max(0.5, z * 1.5);
+  ctx.beginPath(); ctx.moveTo(cx-w*0.08, cy-h*0.55); ctx.lineTo(cx+w*0.08, cy-h*0.55); ctx.stroke();
+  // Cab body (lower ~42%)
+  ctx.fillStyle = color;
+  ctx.fillRect(cx-w/2, cy-h*0.44, w, h*0.44);
+  // Cab window
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.fillRect(cx-w*0.38, cy-h*0.43, w*0.76, h*0.24);
+  ctx.fillStyle = 'rgba(100,165,225,0.42)';
+  ctx.fillRect(cx-w*0.30, cy-h*0.41, w*0.60, h*0.17);
+  // Divider bar between cab and cargo
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fillRect(cx-w/2, cy-h*0.45, w, h*0.04);
+  // Taillights
+  ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 11*z*(1+g.rainIntensity*0.4);
+  ctx.fillStyle = '#ff2200';
+  ctx.fillRect(cx-w*0.50, cy-h*0.14, w*0.15, h*0.10);
+  ctx.fillRect(cx+w*0.35, cy-h*0.14, w*0.15, h*0.10);
+  ctx.shadowBlur = 0;
+  const shine = ctx.createLinearGradient(cx, cy-h, cx, cy-h*0.56);
+  shine.addColorStop(0, 'rgba(255,255,255,0.17)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shine; ctx.fillRect(cx-w/2, cy-h, w, h*0.44);
+  drawBrandLabel(cx, cy, w, h, brand, 0.76);
+}
+
+function drawBigTruck(cx, cy, w, h, color, z, brand) {
+  // ── Trailer (far / upper 65%) ─────────────────────────────────────────────
+  ctx.fillStyle = '#6b7880';
+  ctx.fillRect(cx-w*0.46, cy-h, w*0.92, h*0.65);
+  // Trailer door seams
+  ctx.strokeStyle = 'rgba(30,30,30,0.60)';
+  ctx.lineWidth = Math.max(0.6, z * 1.8);
+  ctx.beginPath(); ctx.moveTo(cx, cy-h); ctx.lineTo(cx, cy-h*0.35); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-w*0.44, cy-h*0.50); ctx.lineTo(cx+w*0.44, cy-h*0.50); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-w*0.44, cy-h*0.76); ctx.lineTo(cx+w*0.44, cy-h*0.76); ctx.stroke();
+  // Trailer reflector strips (orange/white)
+  ctx.fillStyle = 'rgba(255,165,0,0.60)';
+  ctx.fillRect(cx-w*0.44, cy-h*0.685, w*0.92, h*0.014);
+  ctx.fillRect(cx-w*0.44, cy-h*0.825, w*0.92, h*0.014);
+  // Brand text on trailer door
+  drawBrandLabel(cx, cy, w, h, brand, 0.82);
+  // ── Cab (near / lower 36%) ────────────────────────────────────────────────
+  ctx.fillStyle = color;
+  ctx.fillRect(cx-w/2, cy-h*0.37, w, h*0.37);
+  // Cab top air deflector
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(cx-w*0.42, cy-h*0.37, w*0.84, h*0.06);
+  // Cab windshield
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.fillRect(cx-w*0.32, cy-h*0.33, w*0.64, h*0.18);
+  ctx.fillStyle = 'rgba(100,165,225,0.40)';
+  ctx.fillRect(cx-w*0.25, cy-h*0.31, w*0.50, h*0.13);
+  // Big taillights
+  ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 20*z*(1+g.rainIntensity*0.4);
+  ctx.fillStyle = '#ff2200';
+  ctx.fillRect(cx-w*0.50, cy-h*0.15, w*0.18, h*0.12);
+  ctx.fillRect(cx+w*0.32, cy-h*0.15, w*0.18, h*0.12);
+  ctx.shadowBlur = 0;
+  // Mudflaps
+  ctx.fillStyle = 'rgba(20,20,20,0.65)';
+  ctx.fillRect(cx-w*0.50, cy-h*0.08, w*0.18, h*0.08);
+  ctx.fillRect(cx+w*0.32, cy-h*0.08, w*0.18, h*0.08);
+}
+
+function drawBus(cx, cy, w, h, color, z, brand) {
+  // Main body
+  ctx.fillStyle = color;
+  ctx.fillRect(cx-w/2, cy-h, w, h);
+  // Roof radius hint (slightly darker top strip)
+  ctx.fillStyle = 'rgba(0,0,0,0.14)';
+  ctx.fillRect(cx-w/2, cy-h, w, h*0.06);
+  // Two rows of windows
+  const winW = w * 0.13, winH = h * 0.14;
+  for (let row = 0; row < 2; row++) {
+    const winTop = cy - h * (0.94 - row * 0.20);
+    for (let i = 0; i < 5; i++) {
+      const wx = cx - w*0.44 + i * (w*0.88/4) - winW/2;
+      ctx.fillStyle = 'rgba(0,0,0,0.38)';   ctx.fillRect(wx,   winTop,   winW,   winH);
+      ctx.fillStyle = 'rgba(100,165,225,0.35)'; ctx.fillRect(wx+1, winTop+1, winW-2, winH-2);
+    }
+  }
+  // Horizontal brand stripe
+  ctx.fillStyle = 'rgba(255,255,255,0.20)';
+  ctx.fillRect(cx-w*0.48, cy-h*0.52, w*0.96, h*0.06);
+  // Brand
+  drawBrandLabel(cx, cy, w, h, brand, 0.66);
+  // Taillights (wide, bus-style)
+  ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 15*z*(1+g.rainIntensity*0.4);
+  ctx.fillStyle = '#ff2200';
+  ctx.fillRect(cx-w*0.50, cy-h*0.18, w*0.22, h*0.10);
+  ctx.fillRect(cx+w*0.28, cy-h*0.18, w*0.22, h*0.10);
+  ctx.fillStyle = 'rgba(255,80,0,0.55)';
+  ctx.fillRect(cx-w*0.28, cy-h*0.17, w*0.56, h*0.04);
+  ctx.shadowBlur = 0;
+  const shine = ctx.createLinearGradient(cx, cy-h, cx, cy-h*0.66);
+  shine.addColorStop(0, 'rgba(255,255,255,0.18)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shine; ctx.fillRect(cx-w/2, cy-h, w, h*0.35);
+}
+
+// ─── Draw: Cars (offset by playerX for correct first-person perspective) ──────
 function drawCars() {
   const sorted = [...g.cars].sort((a, b) => a.z - b.z);
   for (const c of sorted) { drawCarSpray(c); drawCar(c); }
 }
-function drawCar({ x, z, color }) {
+function drawCar(c) {
+  const { x, z, color, type, wMult, hMult, brand } = c;
   if (z < 0.02) return;
   const pOff = g.playerX;
   const cx = projX(x - pOff, z), cy = projY(z);
-  const w  = CAR_HALF_W * 2 * canvas.width * ROAD_HW * z;
-  const h  = CAR_H_PX * z;
+  const w  = CAR_HALF_W * 2 * canvas.width * ROAD_HW * z * wMult;
+  const h  = CAR_H_PX * z * hMult;
   if (w < 1 || h < 1) return;
   const fogAlpha = Math.min(1, z*1.1) / (1 + (1-z)*g.rainIntensity*0.9);
   ctx.save(); ctx.globalAlpha = Math.max(0.12, fogAlpha);
-  ctx.fillStyle = color; ctx.fillRect(cx-w/2, cy-h, w, h);
-  ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(cx-w*0.38, cy-h, w*0.76, h*0.44);
-  ctx.fillStyle = 'rgba(100,165,225,0.45)'; ctx.fillRect(cx-w*0.30, cy-h*0.96, w*0.60, h*0.27);
-  ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 13*z*(1+g.rainIntensity*0.4);
-  ctx.fillStyle = '#ff2200';
-  ctx.fillRect(cx-w*0.50, cy-h*0.20, w*0.15, h*0.10);
-  ctx.fillRect(cx+w*0.35, cy-h*0.20, w*0.15, h*0.10);
-  ctx.shadowBlur = 0;
-  const shine = ctx.createLinearGradient(cx, cy-h, cx, cy-h*0.55);
-  shine.addColorStop(0, 'rgba(255,255,255,0.22)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = shine; ctx.fillRect(cx-w/2, cy-h, w, h*0.44);
+  switch (type) {
+    case 'sports':   drawSportsCar(cx, cy, w, h, color, z, brand); break;
+    case 'van':      drawVan     (cx, cy, w, h, color, z, brand); break;
+    case 'bigtruck': drawBigTruck(cx, cy, w, h, color, z, brand); break;
+    case 'bus':      drawBus     (cx, cy, w, h, color, z, brand); break;
+    default:         drawSedan   (cx, cy, w, h, color, z, brand); break;
+  }
   ctx.restore();
 }
 
@@ -673,7 +963,7 @@ function drawWindshieldDrops() {
 function drawWsSheets() {
   ctx.save();
   for (const s of g.wsSheets) {
-    const wL = canvas.width*0.055, wR = canvas.width*0.945;
+    const wL = canvas.width*0.07, wR = canvas.width*0.93;
     const gr = ctx.createLinearGradient(0, s.y-2, 0, s.y+s.h+2);
     gr.addColorStop(0,   'rgba(126,192,255,0)');
     gr.addColorStop(0.5, `rgba(126,192,255,${s.alpha})`);
@@ -722,33 +1012,97 @@ function drawOneWiper(px, py, len, angle) {
 }
 
 // ─── Draw: Windshield frame & dashboard ──────────────────────────────────────
+// Thicker A-pillars + rearview mirror = closer, more enclosed driver POV
 function drawWindshieldFrame() {
   const W = canvas.width, H = canvas.height, by = botY();
-  ctx.fillStyle = '#0b0b0b'; ctx.fillRect(0, 0, W, H*0.05);
-  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(W*0.13,H*0.05); ctx.lineTo(W*0.055,by); ctx.lineTo(0,by); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(W,0); ctx.lineTo(W*0.87,H*0.05); ctx.lineTo(W*0.945,by); ctx.lineTo(W,by); ctx.closePath(); ctx.fill();
-  const vig = ctx.createRadialGradient(W/2, H*0.5, H*0.18, W/2, H*0.5, H*0.72);
-  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.30)');
+  // Top header bar (ceiling)
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, W, H * 0.065);
+  // Left A-pillar (wider at top → feels like you're sitting inside)
+  ctx.fillStyle = '#0b0b0b';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(W*0.17, H*0.065);
+  ctx.lineTo(W*0.068, by);
+  ctx.lineTo(0, by);
+  ctx.closePath(); ctx.fill();
+  // Right A-pillar
+  ctx.beginPath();
+  ctx.moveTo(W, 0);
+  ctx.lineTo(W*0.83, H*0.065);
+  ctx.lineTo(W*0.932, by);
+  ctx.lineTo(W, by);
+  ctx.closePath(); ctx.fill();
+  // Subtle A-pillar sheen (painted metal highlight)
+  ctx.fillStyle = 'rgba(60,60,60,0.28)';
+  ctx.beginPath();
+  ctx.moveTo(W*0.14, H*0.065);
+  ctx.lineTo(W*0.17, H*0.065);
+  ctx.lineTo(W*0.068, by);
+  ctx.lineTo(W*0.058, by);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(W*0.86, H*0.065);
+  ctx.lineTo(W*0.83, H*0.065);
+  ctx.lineTo(W*0.932, by);
+  ctx.lineTo(W*0.942, by);
+  ctx.closePath(); ctx.fill();
+  // ── Rearview mirror (center top) ──────────────────────────────────────────
+  const mirW = W * 0.082, mirH = H * 0.028;
+  const mirX = W / 2,     mirY = H * 0.076;
+  // Bracket
+  ctx.fillStyle = '#181818';
+  ctx.fillRect(mirX - W*0.004, H*0.042, W*0.008, mirY - H*0.042);
+  // Mirror housing
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(mirX - mirW/2, mirY - mirH/2, mirW, mirH);
+  // Mirror glass (dark blue-grey tint)
+  ctx.fillStyle = 'rgba(75,95,130,0.35)';
+  ctx.fillRect(mirX - mirW/2 + 2, mirY - mirH/2 + 2, mirW - 4, mirH - 4);
+  // Vignette around windshield edges
+  const vig = ctx.createRadialGradient(W/2, H*0.48, H*0.16, W/2, H*0.48, H*0.70);
+  vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.35)');
   ctx.fillStyle = vig; ctx.fillRect(0, 0, W, by);
 }
 function drawDashboard() {
   const W = canvas.width, H = canvas.height, top = botY();
-  const hood = ctx.createLinearGradient(0, top-H*0.04, 0, top);
-  hood.addColorStop(0,'rgba(8,8,8,0)'); hood.addColorStop(1,'rgba(8,8,8,0.55)');
-  ctx.fillStyle = hood; ctx.fillRect(0, top-H*0.04, W, H*0.04);
+  // Hood shadow fade just below glass
+  const hood = ctx.createLinearGradient(0, top - H*0.05, 0, top);
+  hood.addColorStop(0, 'rgba(8,8,8,0)'); hood.addColorStop(1, 'rgba(8,8,8,0.60)');
+  ctx.fillStyle = hood; ctx.fillRect(0, top - H*0.05, W, H*0.05);
+  // Dashboard surface
   const dash = ctx.createLinearGradient(0, top, 0, H);
-  dash.addColorStop(0,'#181818'); dash.addColorStop(1,'#0a0a0a');
-  ctx.fillStyle = dash; ctx.fillRect(0, top, W, H-top);
-  const sx=W/2, sy=H*0.97, sr=W*0.068;
-  ctx.strokeStyle='#282828'; ctx.lineWidth=W*0.013;
-  ctx.beginPath(); ctx.arc(sx,sy,sr,0,Math.PI*2); ctx.stroke();
-  ctx.fillStyle='#1e1e1e'; ctx.beginPath(); ctx.arc(sx,sy,sr*0.14,0,Math.PI*2); ctx.fill();
-  ctx.lineCap='round'; ctx.lineWidth=W*0.009;
-  for (let i=0;i<3;i++) {
-    const a=(i/3)*Math.PI*2-Math.PI/2; ctx.strokeStyle='#242424';
-    ctx.beginPath(); ctx.moveTo(sx+Math.cos(a)*sr*0.14,sy+Math.sin(a)*sr*0.14);
-    ctx.lineTo(sx+Math.cos(a)*sr*0.87,sy+Math.sin(a)*sr*0.87); ctx.stroke();
+  dash.addColorStop(0, '#1c1c1c'); dash.addColorStop(1, '#0a0a0a');
+  ctx.fillStyle = dash; ctx.fillRect(0, top, W, H - top);
+  // Steering wheel
+  const sx = W/2, sy = H*0.97, sr = W*0.072;
+  ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = W*0.014;
+  ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle = '#1e1e1e';
+  ctx.beginPath(); ctx.arc(sx, sy, sr*0.14, 0, Math.PI*2); ctx.fill();
+  ctx.lineCap = 'round'; ctx.lineWidth = W*0.009;
+  for (let i = 0; i < 3; i++) {
+    const a = (i/3)*Math.PI*2 - Math.PI/2; ctx.strokeStyle = '#252525';
+    ctx.beginPath();
+    ctx.moveTo(sx + Math.cos(a)*sr*0.14, sy + Math.sin(a)*sr*0.14);
+    ctx.lineTo(sx + Math.cos(a)*sr*0.88, sy + Math.sin(a)*sr*0.88);
+    ctx.stroke();
   }
+  // Speedometer cluster (left of steering wheel)
+  const kmph = Math.round((80 + g.speed*38) * g.throttle);
+  const spX = W*0.28, spY = sy - sr*0.2, spR = W*0.042;
+  ctx.strokeStyle = '#252525'; ctx.lineWidth = W*0.010;
+  ctx.beginPath(); ctx.arc(spX, spY, spR, 0, Math.PI*2); ctx.stroke();
+  // Needle
+  const needleAngle = -Math.PI*0.75 + (Math.min(kmph, 220)/220) * Math.PI*1.5;
+  ctx.strokeStyle = '#dd4422'; ctx.lineWidth = W*0.005;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(spX, spY);
+  ctx.lineTo(spX + Math.cos(needleAngle)*spR*0.76, spY + Math.sin(needleAngle)*spR*0.76);
+  ctx.stroke();
+  ctx.fillStyle = '#202020';
+  ctx.beginPath(); ctx.arc(spX, spY, spR*0.12, 0, Math.PI*2); ctx.fill();
 }
 
 function drawRainHaze() {
@@ -756,6 +1110,68 @@ function drawRainHaze() {
   if (a <= 0) return;
   ctx.fillStyle = `rgba(8,18,32,${a})`;
   ctx.fillRect(0, 0, canvas.width, canvas.height * ROAD_BOTTOM);
+}
+
+// ─── Draw: Blinker indicator (方向燈) ─────────────────────────────────────────
+function drawBlinker() {
+  if (g.blinkerDir === 0) return;
+  const W = canvas.width, H = canvas.height;
+  const isLeft = g.blinkerDir === -1;
+
+  // ── HUD 大箭頭 (上方顯示) ──────────────────────────────────────────────────
+  ctx.save();
+  const litAlpha  = g.blinkerOn ? 0.96 : 0.18;
+  const sz   = W * 0.034;
+  const ay   = H * 0.108;
+  const ax1  = isLeft ? W * 0.300 : W * 0.700;
+  const ax2  = isLeft ? W * 0.340 : W * 0.660;
+
+  function arrowTri(ax, flip) {
+    ctx.beginPath();
+    if (flip) {
+      ctx.moveTo(ax - sz,  ay);
+      ctx.lineTo(ax,       ay - sz * 0.56);
+      ctx.lineTo(ax,       ay + sz * 0.56);
+    } else {
+      ctx.moveTo(ax + sz,  ay);
+      ctx.lineTo(ax,       ay - sz * 0.56);
+      ctx.lineTo(ax,       ay + sz * 0.56);
+    }
+    ctx.closePath();
+  }
+  // 前箭頭 (全亮)
+  ctx.globalAlpha = litAlpha;
+  ctx.fillStyle = '#f5a520';
+  if (g.blinkerOn) { ctx.shadowColor = '#f5a520'; ctx.shadowBlur = sz * 1.4; }
+  arrowTri(ax1, isLeft); ctx.fill();
+  ctx.shadowBlur = 0;
+  // 後箭頭 (半透)
+  ctx.globalAlpha = litAlpha * 0.55;
+  arrowTri(ax2, isLeft); ctx.fill();
+  ctx.restore();
+
+  // ── Dashboard 小指示燈 ─────────────────────────────────────────────────────
+  const dashTop = botY();
+  const dashY   = dashTop + (H - dashTop) * 0.18;
+  const dashX   = isLeft ? W * 0.42 : W * 0.58;
+  const ds      = W * 0.016;
+  ctx.save();
+  ctx.globalAlpha = g.blinkerOn ? 0.92 : 0.14;
+  ctx.fillStyle = '#f5a520';
+  if (g.blinkerOn) { ctx.shadowColor = '#f5a520'; ctx.shadowBlur = 10; }
+  ctx.beginPath();
+  if (isLeft) {
+    ctx.moveTo(dashX - ds, dashY);
+    ctx.lineTo(dashX,      dashY - ds * 0.56);
+    ctx.lineTo(dashX,      dashY + ds * 0.56);
+  } else {
+    ctx.moveTo(dashX + ds, dashY);
+    ctx.lineTo(dashX,      dashY - ds * 0.56);
+    ctx.lineTo(dashX,      dashY + ds * 0.56);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.restore();
 }
 
 // ─── Draw: HUD ───────────────────────────────────────────────────────────────
@@ -796,6 +1212,7 @@ function render() {
   drawWipers();
   drawWindshieldFrame();
   drawDashboard();
+  drawBlinker();
   drawHUD();
 }
 
