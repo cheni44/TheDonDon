@@ -19,8 +19,7 @@
 const PROC_W          = 128;        // processing canvas width  (px)
 const PROC_H          = 96;         // processing canvas height (px)
 const FRAME_AREA      = PROC_W * PROC_H;
-const SILENCE_MS      = 1000;       // ms of no detection before audio fades to 0
-const STABLE_MS       = 1000;       // ms a blob must persist before being shown/heard
+const STABLE_MS       = 1000;       // ms a blob must persist before being shown
 const EVICT_MS        = 500;        // ms since last seen before evicting from tracker
 const TRACKER_GRID    = 8;          // centroid quantisation grid size (px, processing res)
 const OPTICAL_ZOOM_CAP = 5;         // max optical zoom to apply (prevents digital zoom on Android)
@@ -40,7 +39,6 @@ let rafId             = null;      // requestAnimationFrame handle
 let running           = false;     // whether the camera loop is active
 let facingMode        = 'environment'; // current camera side
 let sensitivity       = 0.5;       // detection sensitivity [0, 1]
-let audioAlert        = null;      // { ctx, proximityGain } or null
 let lastDetectionTime = 0;         // timestamp of last stable detection
 let stableTracker     = new Map(); // Map<key, {firstSeenMs, lastSeenMs, blob}>
 
@@ -483,71 +481,6 @@ function getStableDetections() {
   }
   stable.sort((a, b) => b.blob.proximity - a.blob.proximity);
   return stable;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 6. Audio alert (Web Audio API)
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Build the synthesised buzz audio graph.
- * Must be called inside a user-gesture handler (browser autoplay policy).
- *
- * Signal graph:
- *   carrier (600 Hz saw) ──► proximityGain ──► masterGain ──► destination
- *   lfo     (150 Hz sin) ──► lfoGain ──► proximityGain.gain  (AM modulation)
- *
- * Returns { ctx, proximityGain }
- */
-function createAudioAlert() {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-
-  // Carrier: 600 Hz sawtooth wave (buzzy timbre)
-  const carrier = ctx.createOscillator();
-  carrier.type           = 'sawtooth';
-  carrier.frequency.value = 600;
-
-  // LFO: 150 Hz sine — simulates wing-beat amplitude modulation
-  const lfo = ctx.createOscillator();
-  lfo.type           = 'sine';
-  lfo.frequency.value = 150;
-
-  // LFO depth gain (fixed — controls how strongly the LFO modulates the carrier)
-  const lfoGain = ctx.createGain();
-  lfoGain.gain.value = 0.5;
-
-  // Proximity gain: updated each frame, starts silent
-  const proximityGain = ctx.createGain();
-  proximityGain.gain.value = 0;
-
-  // Master output gain
-  const masterGain = ctx.createGain();
-  masterGain.gain.value = 0.8;
-
-  // Connect
-  carrier.connect(proximityGain);
-  proximityGain.connect(masterGain);
-  masterGain.connect(ctx.destination);
-  lfo.connect(lfoGain);
-  lfoGain.connect(proximityGain.gain);   // LFO modulates the proximity gain value
-
-  carrier.start();
-  lfo.start();
-
-  return { ctx, proximityGain };
-}
-
-/**
- * Smoothly set the proximity gain to `score` using a 50 ms time constant.
- */
-function updateAudio(alert, score) {
-  if (!alert) return;
-  const { ctx, proximityGain } = alert;
-  proximityGain.gain.setTargetAtTime(
-    Math.max(0, score),
-    ctx.currentTime,
-    0.05   // ~50 ms time constant → smooth, no clicks
-  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
