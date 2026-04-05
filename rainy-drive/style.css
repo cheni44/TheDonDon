@@ -30,13 +30,13 @@ body {
 
 /* ─── Overlays (absolute inside wrapper) ──────────────────────── */
 .overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 10, 20, 0.80);
-  z-index: 10;
+  background: rgba(0, 10, 20, 0.88);
+  z-index: 100;
 }
 .overlay.hidden { display: none; }
 

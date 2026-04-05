@@ -466,7 +466,8 @@ function updatePlayer(dt) {
   g.prevLeft  = nowLeft;
   g.prevRight = nowRight;
 
-  const LANE_SPD = 2.2; // 換道速度 (fraction/秒 ≈ 0.45 秒完成)
+  const LANE_CHANGE_SPD = 1 / 3.0; // 換道需 3 秒（方向燈閃 3+ 下）
+  const LANE_CANCEL_SPD = 2.2;     // 取消換道快速退回
 
   // ── 車道狀態機 ──────────────────────────────────────────────────────────────
   if (g.laneState === 'idle') {
@@ -486,7 +487,7 @@ function updatePlayer(dt) {
     if ((tapRight && g.laneDir === -1) || (tapLeft && g.laneDir === 1)) {
       g.laneState = 'canceling';
     } else {
-      g.laneProgress = Math.min(1, g.laneProgress + dt * LANE_SPD);
+      g.laneProgress = Math.min(1, g.laneProgress + dt * LANE_CHANGE_SPD);
       if (g.laneProgress >= 1) {
         g.laneIdx      = g.targetLaneIdx;
         g.laneProgress = 0;
@@ -495,7 +496,7 @@ function updatePlayer(dt) {
     }
   } else if (g.laneState === 'canceling') {
     // 退回原始車道
-    g.laneProgress = Math.max(0, g.laneProgress - dt * LANE_SPD);
+    g.laneProgress = Math.max(0, g.laneProgress - dt * LANE_CANCEL_SPD);
     if (g.laneProgress <= 0) {
       g.targetLaneIdx = g.laneIdx;
       g.laneState     = 'idle';

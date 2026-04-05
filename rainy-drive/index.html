@@ -7,45 +7,44 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="gameWrapper">
+  <!-- Start/GameOver overlays: outside #gameWrapper so they stay in portrait orientation -->
+  <!-- Start screen -->
+  <div id="startScreen" class="overlay">
+    <div class="card">
+      <h1>🌧 暴雨開車</h1>
+      <p>在傾盆大雨中閃避來車<br>存活越久越好！</p>
+      <div class="scene-selector">
+        <label for="sceneSelect">從哪個路段上國道一號？</label>
+        <select id="sceneSelect">
+          <option value="urban_north">🏙 北部都市段（基隆 ↔ 三重）</option>
+          <option value="suburban">🌿 桃竹苗段（楊梅 ↔ 苗栗）</option>
+          <option value="plains" selected>🌾 中部平原段（豐原 ↔ 彰化）</option>
+          <option value="flatlands">🌻 雲嘉平原段（斗南 ↔ 水上）</option>
+          <option value="tropical">🌴 南部都市段（台南 ↔ 高雄）</option>
+        </select>
+      </div>
+      <p class="hint">
+        ← → 方向鍵 / A D 鍵 &nbsp; 切換車道<br>
+        手機：左右側按鍵 &nbsp;（按反向 = 取消換道）
+      </p>
+      <button id="startBtn">開始遊戲</button>
+    </div>
+  </div>
 
+  <!-- Game over screen -->
+  <div id="gameOverScreen" class="overlay hidden">
+    <div class="card">
+      <h1>💥 撞車了！</h1>
+      <p id="finalScore"></p>
+      <p id="bestScore"></p>
+      <button id="restartBtn">再試一次</button>
+    </div>
+  </div>
+
+  <div id="gameWrapper">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Start screen -->
-    <div id="startScreen" class="overlay">
-      <div class="card">
-        <h1>🌧 暴雨開車</h1>
-        <p>在傾盆大雨中閃避來車<br>存活越久越好！</p>
-        <div class="scene-selector">
-          <label for="sceneSelect">從哪個路段上國道一號？</label>
-          <select id="sceneSelect">
-            <option value="urban_north">🏙 北部都市段（基隆 ↔ 三重）</option>
-            <option value="suburban">🌿 桃竹苗段（楊梅 ↔ 苗栗）</option>
-            <option value="plains" selected>🌾 中部平原段（豐原 ↔ 彰化）</option>
-            <option value="flatlands">🌻 雲嘉平原段（斗南 ↔ 水上）</option>
-            <option value="tropical">🌴 南部都市段（台南 ↔ 高雄）</option>
-          </select>
-        </div>
-        <p class="hint">
-          ← → 方向鍵 / A D 鍵 &nbsp; 切換車道<br>
-          手機：左右側按鍵 &nbsp;（按反向 = 取消換道）
-        </p>
-        <button id="startBtn">開始遊戲</button>
-      </div>
-    </div>
-
-    <!-- Game over screen -->
-    <div id="gameOverScreen" class="overlay hidden">
-      <div class="card">
-        <h1>💥 撞車了！</h1>
-        <p id="finalScore"></p>
-        <p id="bestScore"></p>
-        <button id="restartBtn">再試一次</button>
-      </div>
-    </div>
-
     <!-- Left side controls: Brake / Left / Wiper slower -->
-    <div id="leftControls" class="side-controls side-left hidden">
       <button class="ctrl-btn ctrl-brake" id="btnBrake">
         <div class="btn-icon">▼</div><div class="btn-label">煞車</div>
       </button>
