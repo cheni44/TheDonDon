@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mosquito Detector</title>
+  <title>🦟 蚊子偵測器</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>🦟 Mosquito Detector</h1>
+    <h1>🦟 蚊子偵測器</h1>
 
     <!-- Live preview + bounding-box overlay -->
     <div class="preview-wrapper">
@@ -16,23 +16,16 @@
       <canvas id="overlay"></canvas>
     </div>
 
-    <!-- Pre-permission hint (shown while browser dialog is pending) -->
-    <div id="permBanner" class="perm-banner" hidden>
-      <span class="perm-banner-icon">📷</span>
-      <span>瀏覽器即將詢問相機權限，請點擊「<strong>允許</strong>」以繼續</span>
-    </div>
-
-    <!-- Camera error message + recovery steps + retry -->
+    <!-- Camera error message + retry -->
     <div id="errorMsg" class="error-msg" hidden>
       <p id="errorText"></p>
-      <ol id="permSteps" class="perm-steps" hidden></ol>
       <button id="retryBtn" class="btn btn-retry" hidden>🔄 重試</button>
     </div>
 
     <!-- Start / Stop + Flip Camera -->
     <div class="controls">
-      <button id="startBtn">▶ Start</button>
-      <button id="flipBtn" disabled>🔄 Flip Camera</button>
+      <button id="startBtn">▶ 開始</button>
+      <button id="flipBtn" disabled>🔄 翻轉鏡頭</button>
     </div>
 
     <!-- Proximity meter (visual blobs) -->
@@ -54,7 +47,7 @@
     <!-- Sensitivity slider -->
     <div class="sensitivity-section">
       <label for="sensitivitySlider">
-        Sensitivity: <span id="sensitivityValue">50%</span>
+        靈敏度：<span id="sensitivityValue">50%</span>
       </label>
       <input
         type="range"

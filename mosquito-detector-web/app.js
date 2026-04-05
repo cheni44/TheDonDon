@@ -68,9 +68,7 @@ const proximityText    = document.getElementById('proximityText');
 const proxBar          = document.getElementById('proxBar');
 const errorMsg         = document.getElementById('errorMsg');
 const errorText        = document.getElementById('errorText');
-const permSteps        = document.getElementById('permSteps');
 const retryBtn         = document.getElementById('retryBtn');
-const permBanner       = document.getElementById('permBanner');
 
 // Offscreen canvas for pixel capture at processing resolution
 const offscreen = document.createElement('canvas');
@@ -82,76 +80,17 @@ const offCtx = offscreen.getContext('2d', { willReadFrequently: true });
 // 3. Camera capture + permission handling
 // ═══════════════════════════════════════════════════════════════════════════
 
-/** Browser-specific recovery steps when camera permission is denied. */
-const BROWSER_STEPS = {
-  'safari-ios': [
-    '開啟 iPhone／iPad 的「設定」App',
-    '捲動找到「Safari」，點擊進入',
-    '點擊「相機」→ 選擇「允許」',
-    '回到瀏覽器，點擊下方「重試」按鈕',
-  ],
-  'safari-mac': [
-    '點擊上方選單列「Safari」→「設定」（或「偏好設定」）',
-    '選擇「網站」標籤 → 左側點「相機」',
-    '找到此網站，將權限改為「允許」',
-    '點擊下方「重試」按鈕',
-  ],
-  'chrome-desktop': [
-    '點擊網址列左側的 🔒 或 📷 圖示',
-    '找到「相機」→ 將選項改為「允許」',
-    '頁面會自動重新整理，再按「Start」即可',
-  ],
-  'chrome-android': [
-    '點擊網址列右側的 ⋮ 選單 → 「網站設定」',
-    '點擊「相機」→ 選擇「允許」',
-    '點擊下方「重試」按鈕',
-  ],
-  'firefox': [
-    '點擊網址列左側的相機 🎥 或 🔒 圖示',
-    '在相機欄位選擇「允許」',
-    '點擊下方「重試」按鈕',
-  ],
-  'edge': [
-    '點擊網址列左側的 🔒 或 📷 圖示',
-    '找到「相機」→ 將選項改為「允許」',
-    '頁面會自動重新整理，再按「Start」即可',
-  ],
-  'generic': [
-    '在瀏覽器網址列附近找到相機或鎖頭圖示',
-    '將相機權限改為「允許」',
-    '點擊下方「重試」按鈕',
-  ],
-};
-
-/** Detect the current browser to show the right recovery steps. */
-function detectBrowser() {
-  const ua = navigator.userAgent;
-  if (/iPad|iPhone|iPod/.test(ua) && /WebKit/.test(ua)) return 'safari-ios';
-  if (/Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome/.test(ua)) return 'safari-mac';
-  if (/Firefox/.test(ua)) return 'firefox';
-  if (/Edg\//.test(ua)) return 'edge';
-  if (/Chrome/.test(ua) && /Android/.test(ua)) return 'chrome-android';
-  if (/Chrome/.test(ua)) return 'chrome-desktop';
-  return 'generic';
-}
-
 /** Query the current camera permission state without triggering a prompt. */
 async function checkPermissionState() {
   if (!navigator.permissions) return 'unknown';
   try {
     const result = await navigator.permissions.query({ name: 'camera' });
-    return result.state; // 'granted' | 'denied' | 'prompt'
+    return result.state;
   } catch {
     return 'unknown';
   }
 }
 
-/**
- * Start the camera stream with the given facingMode.
- * Shows a pre-permission banner while the browser dialog is pending.
- * On denial, shows browser-specific recovery steps + retry button.
- * Returns the MediaStream, or null on error.
- */
 async function startCamera(facing) {
   hideError();
 
@@ -160,15 +99,11 @@ async function startCamera(facing) {
     return null;
   }
 
-  // If permission is already denied, skip getUserMedia and show guide immediately
   const permState = await checkPermissionState();
   if (permState === 'denied') {
-    showPermissionDeniedGuide();
+    showError('🔒 相機權限被拒絕，請在瀏覽器設定中允許相機存取後點「重試」。', true);
     return null;
   }
-
-  // Show the pre-permission banner while the browser dialog is open
-  if (permState !== 'granted') showPermBanner();
 
   try {
     const s = await navigator.mediaDevices.getUserMedia({
@@ -178,7 +113,6 @@ async function startCamera(facing) {
         height: { ideal: 480 },
       },
     });
-    hidePermBanner();
     video.srcObject = s;
     await video.play();
     applyMaxZoom(s);
@@ -186,12 +120,9 @@ async function startCamera(facing) {
     return s;
 
   } catch (err) {
-    hidePermBanner();
-
     if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      showPermissionDeniedGuide();
+      showError('🔒 相機權限被拒絕，請在瀏覽器設定中允許相機存取後點「重試」。', true);
     } else if (err.name === 'OverconstrainedError') {
-      // Retry with minimal constraints as fallback
       return startCameraFallback(facing);
     } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
       showError('📷 找不到相機，請確認裝置上有相機且未被停用。', true);
@@ -754,34 +685,14 @@ window.addEventListener('resize', () => {
 
 // ── Error / banner helpers ────────────────────────────────────────────────
 
-/** Show a plain error message, with optional retry button. */
 function showError(msg, withRetry = false) {
   errorText.textContent = msg;
-  permSteps.hidden      = true;
-  permSteps.innerHTML   = '';
   retryBtn.hidden       = !withRetry;
   errorMsg.hidden       = false;
 }
 
-/** Show browser-specific permission-denied guide with numbered steps + retry. */
-function showPermissionDeniedGuide() {
-  const browser = detectBrowser();
-  const steps   = BROWSER_STEPS[browser] || BROWSER_STEPS['generic'];
-
-  errorText.textContent = '🔒 相機權限被拒絕，請依照以下步驟開啟：';
-  permSteps.innerHTML   = steps.map(s => `<li>${s}</li>`).join('');
-  permSteps.hidden      = false;
-  retryBtn.hidden       = false;
-  errorMsg.hidden       = false;
-}
-
 function hideError() {
-  errorMsg.hidden     = true;
+  errorMsg.hidden       = true;
   errorText.textContent = '';
-  permSteps.hidden    = true;
-  permSteps.innerHTML = '';
-  retryBtn.hidden     = true;
+  retryBtn.hidden       = true;
 }
-
-function showPermBanner() { permBanner.hidden = false; }
-function hidePermBanner() { permBanner.hidden = true; }
