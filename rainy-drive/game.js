@@ -50,9 +50,9 @@ const pick  = arr         => arr[Math.floor(Math.random() * arr.length)];
 // VP_Y=0.30 → horizon higher up, more road visible (closer driver POV)
 // ROAD_HW=0.64 → wider perspective, more enveloping highway feel
 // ROAD_BOTTOM=0.84 → slightly larger dashboard, more cabin immersion
-const VP_Y        = 0.30;
+const VP_Y        = 0.25;
 const ROAD_BOTTOM = 0.84;
-const ROAD_HW     = 0.64;
+const ROAD_HW     = 0.68;
 
 const vpX  = () => canvas.width  / 2;
 const vpY  = () => canvas.height * VP_Y;
@@ -295,6 +295,20 @@ function initGame() {
     keys: {},
   };
 
+  // Clouds for daytime sky
+  g.clouds = Array.from({length: 7}, () => ({
+    x:     rand(0, 1.1),
+    y:     rand(0.12, 0.82),
+    w:     rand(0.18, 0.46),
+    h:     rand(0.08, 0.18),
+    speed: rand(0.008, 0.022),
+    alpha: rand(0.28, 0.52),
+    dark:  rand(0.55, 0.80),
+  }));
+  // Roadside trees
+  g.trees = [];
+  for (let i = 0; i < 18; i++) g.trees.push(makeTreeRow(i / 18));
+
   for (let i = 0; i < 640; i++) g.rainFar.push(newRainFar(true));
   for (let i = 0; i < 340; i++) g.rainMid.push(newRainMid(true));
   for (let i = 0; i < 150; i++) g.rainNear.push(newRainNear(true));
@@ -344,6 +358,22 @@ function newRainCurtain(init = false) {
     alpha: rand(0.07, 0.22),
   };
 }
+function makeTreeRow(z) {
+  return {
+    z,
+    xL:    -(0.72 + rand(0.10, 0.20)),
+    xR:     (0.72 + rand(0.10, 0.20)),
+    sizeK:  rand(0.10, 0.18),
+    type:   Math.random() < 0.55 ? 'pine' : 'round',
+  };
+}
+function updateTrees(dt) {
+  const spd = 0.52 * g.speed * g.throttle;
+  for (let i = 0; i < g.trees.length; i++) {
+    g.trees[i].z += spd * dt;
+    if (g.trees[i].z > 1.02) g.trees[i] = makeTreeRow(rand(0, 0.05));
+  }
+}
 function spawnCar() {
   const vtype = pickVehicleType();
   // 大卡車/遊覽車 不占最左側車道 (minLaneIdx=1 → 只能用 LANES[1], LANES[2])
@@ -392,6 +422,8 @@ function update(dt) {
   updateWipers(dt);
   updateLightning(dt);
   updateSplashes(dt);
+  updateTrees(dt);
+  for (const c of g.clouds) { c.x -= c.speed * dt; if (c.x + c.w < -0.1) c.x = 1.1; }
 }
 
 function updatePlayer(dt) {
@@ -560,28 +592,172 @@ function updateSplashes(dt) {
   }
 }
 
-// ─── Draw: Sky ───────────────────────────────────────────────────────────────
+// ─── Draw: Sky (daytime overcast) ────────────────────────────────────────────
 function drawSky() {
   const W = canvas.width, H = canvas.height, vy = vpY();
+  // Overcast daytime gradient: grey-blue top → pale horizon
   const sky = ctx.createLinearGradient(0, 0, 0, vy);
-  sky.addColorStop(0,    '#030710');
-  sky.addColorStop(0.55, '#09121e');
-  sky.addColorStop(1,    '#122030');
+  sky.addColorStop(0,    '#5a6a78');
+  sky.addColorStop(0.45, '#7a8e9c');
+  sky.addColorStop(0.85, '#a8bcc8');
+  sky.addColorStop(1,    '#c2d0d8');
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, vy + 2);
 
-  for (let i = 0; i < 5; i++) {
-    const my = vy * (0.15 + i * 0.18);
-    const mb = ctx.createLinearGradient(0, my-H*0.08, 0, my+H*0.08);
-    mb.addColorStop(0,   'rgba(14,30,48,0)');
-    mb.addColorStop(0.5, `rgba(20,44,66,${0.13 + i*0.04 + g.rainIntensity*0.05})`);
-    mb.addColorStop(1,   'rgba(14,30,48,0)');
-    ctx.fillStyle = mb; ctx.fillRect(0, my-H*0.08, W, H*0.16);
+  // Clouds
+  drawClouds(vy);
+
+  // Misty horizon glow (rain brightens the horizon)
+  const fog = ctx.createLinearGradient(0, vy - H*0.12, 0, vy + H*0.06);
+  fog.addColorStop(0,   'rgba(190,210,220,0)');
+  fog.addColorStop(0.5, `rgba(200,215,225,${0.30 + g.rainIntensity * 0.12})`);
+  fog.addColorStop(1,   'rgba(190,210,220,0)');
+  ctx.fillStyle = fog; ctx.fillRect(0, vy - H*0.12, W, H*0.18);
+}
+
+function drawClouds(vy) {
+  if (!g.clouds) return;
+  const W = canvas.width;
+  ctx.save();
+  for (const c of g.clouds) {
+    const cx = c.x * W;
+    const cy = c.y * vy;
+    const cw = c.w * W;
+    const ch = c.h * vy;
+    const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(cw, ch) * 0.55);
+    const dc = Math.round(c.dark * 255);
+    gr.addColorStop(0,   `rgba(${dc},${dc+6},${dc+12},${c.alpha})`);
+    gr.addColorStop(0.65,`rgba(${dc},${dc+6},${dc+12},${c.alpha * 0.7})`);
+    gr.addColorStop(1,   `rgba(${dc},${dc+6},${dc+12},0)`);
+    ctx.fillStyle = gr;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, cw * 0.5, ch * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Second lobe for fluffy look
+    ctx.beginPath();
+    ctx.ellipse(cx - cw*0.22, cy + ch*0.08, cw*0.35, ch*0.40, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + cw*0.20, cy + ch*0.12, cw*0.30, ch*0.38, 0, 0, Math.PI*2);
+    ctx.fill();
   }
-  const fog = ctx.createLinearGradient(0, vy-H*0.15, 0, vy+H*0.09);
-  fog.addColorStop(0,    'rgba(10,24,42,0)');
-  fog.addColorStop(0.55, `rgba(34,62,92,${0.58 + g.rainIntensity*0.22})`);
-  fog.addColorStop(1,    'rgba(10,24,42,0)');
-  ctx.fillStyle = fog; ctx.fillRect(0, vy-H*0.15, W, H*0.24);
+  ctx.restore();
+}
+
+// ─── Draw: Background (mountains + distant treeline) ─────────────────────────
+function drawBackground() {
+  const W = canvas.width, vy = vpY();
+  ctx.save();
+  // Far mountains (misty, very pale)
+  ctx.fillStyle = 'rgba(135,152,165,0.40)';
+  ctx.beginPath(); ctx.moveTo(0, vy);
+  const m1 = [[0,0],[0.06,-0.09],[0.13,-0.03],[0.21,-0.10],[0.29,-0.04],
+               [0.37,-0.11],[0.45,-0.02],[0.53,-0.09],[0.61,-0.04],
+               [0.69,-0.12],[0.77,-0.03],[0.85,-0.10],[0.93,-0.04],[1,-0.07],[1,0]];
+  for (const [px,py] of m1) ctx.lineTo(px*W, vy + py*vy);
+  ctx.closePath(); ctx.fill();
+  // Nearer hills (slightly darker)
+  ctx.fillStyle = 'rgba(95,118,105,0.50)';
+  ctx.beginPath(); ctx.moveTo(0, vy);
+  const m2 = [[0,0],[0.04,-0.06],[0.10,-0.02],[0.18,-0.07],[0.26,-0.03],
+               [0.34,-0.06],[0.42,-0.01],[0.50,-0.05],[0.58,-0.02],
+               [0.66,-0.07],[0.74,-0.02],[0.82,-0.06],[0.90,-0.02],[1,-0.05],[1,0]];
+  for (const [px,py] of m2) ctx.lineTo(px*W, vy + py*vy);
+  ctx.closePath(); ctx.fill();
+  // Distant treeline silhouette
+  ctx.fillStyle = 'rgba(45,72,48,0.68)';
+  ctx.beginPath(); ctx.moveTo(0, vy + 2);
+  for (let x = 0; x <= W; x += Math.max(3, W * 0.008)) {
+    const h = Math.sin(x*0.006)*0.022 + Math.sin(x*0.019)*0.014 + Math.sin(x*0.041)*0.008;
+    ctx.lineTo(x, vy - h * vy + 2);
+  }
+  ctx.lineTo(W, vy + 2); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+// ─── Draw: Roadside (grass + shoulder + guardrails) ──────────────────────────
+function drawRoadside() {
+  const W = canvas.width, vx = vpX(), vy = vpY(), by = botY();
+  const rw = W * ROAD_HW, pOff = g.playerX;
+  ctx.save();
+  // Wet grass — left triangle outside road
+  const gL = ctx.createLinearGradient(0, vy, 0, by);
+  gL.addColorStop(0, 'rgba(62,92,55,0.90)');
+  gL.addColorStop(1, 'rgba(50,80,45,0.95)');
+  ctx.fillStyle = gL;
+  ctx.beginPath();
+  ctx.moveTo(vx, vy); ctx.lineTo(vx - rw, by); ctx.lineTo(0, by); ctx.lineTo(0, vy);
+  ctx.closePath(); ctx.fill();
+  // Wet grass — right
+  ctx.fillStyle = gL;
+  ctx.beginPath();
+  ctx.moveTo(vx, vy); ctx.lineTo(vx + rw, by); ctx.lineTo(W, by); ctx.lineTo(W, vy);
+  ctx.closePath(); ctx.fill();
+  // Guardrail beam (perspective) — left side
+  ctx.strokeStyle = 'rgba(168,175,182,0.62)';
+  ctx.lineWidth = Math.max(1.5, W * 0.004);
+  ctx.beginPath();
+  ctx.moveTo(projX(-0.74 - pOff, 0.04), projY(0.04));
+  ctx.lineTo(projX(-0.74 - pOff, 0.92), projY(0.92));
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(projX(+0.74 - pOff, 0.04), projY(0.04));
+  ctx.lineTo(projX(+0.74 - pOff, 0.92), projY(0.92));
+  ctx.stroke();
+  // Guardrail posts at intervals
+  for (let i = 1; i <= 10; i++) {
+    const z = i / 10;
+    const posY = projY(z);
+    const ph = Math.max(1.5, z * 9);
+    const lx = projX(-0.74 - pOff, z);
+    const rx = projX(+0.74 - pOff, z);
+    ctx.fillStyle = `rgba(155,162,170,${0.35 + z * 0.45})`;
+    ctx.fillRect(lx - z*2.5, posY - ph, z*5, ph);
+    ctx.fillRect(rx - z*2.5, posY - ph, z*5, ph);
+  }
+  ctx.restore();
+}
+
+// ─── Draw: Roadside trees ─────────────────────────────────────────────────────
+function drawTree(x, y, sz, type) {
+  if (sz < 2) return;
+  if (type === 'pine') {
+    // Two tiers of triangular foliage
+    ctx.fillStyle = 'rgba(28,62,32,0.92)';
+    ctx.beginPath();
+    ctx.moveTo(x, y - sz); ctx.lineTo(x - sz*0.44, y); ctx.lineTo(x + sz*0.44, y);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x, y - sz*0.70); ctx.lineTo(x - sz*0.56, y - sz*0.22); ctx.lineTo(x + sz*0.56, y - sz*0.22);
+    ctx.closePath(); ctx.fill();
+    // Trunk
+    ctx.fillStyle = 'rgba(55,38,22,0.82)';
+    ctx.fillRect(x - sz*0.055, y, sz*0.11, sz*0.22);
+  } else {
+    // Round deciduous
+    ctx.fillStyle = 'rgba(42,78,38,0.90)';
+    ctx.beginPath(); ctx.ellipse(x, y - sz*0.58, sz*0.44, sz*0.54, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(28,60,26,0.48)';
+    ctx.beginPath(); ctx.ellipse(x + sz*0.12, y - sz*0.52, sz*0.32, sz*0.40, 0.4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(60,42,24,0.82)';
+    ctx.fillRect(x - sz*0.055, y - sz*0.08, sz*0.11, sz*0.28);
+  }
+}
+function drawRoadsideTrees() {
+  if (!g.trees) return;
+  const pOff = g.playerX;
+  const sorted = [...g.trees].sort((a,b) => a.z - b.z);
+  for (const t of sorted) {
+    if (t.z < 0.05 || t.z > 0.96) continue;
+    const ty = projY(t.z);
+    const sz = t.z * canvas.height * t.sizeK;
+    const fogA = Math.min(0.92, t.z * 1.3);
+    ctx.save(); ctx.globalAlpha = fogA;
+    const lx = projX(t.xL - pOff, t.z);
+    if (lx > -sz * 2 && lx < canvas.width + sz) drawTree(lx, ty, sz, t.type);
+    const rx = projX(t.xR - pOff, t.z);
+    if (rx > -sz && rx < canvas.width + sz * 2) drawTree(rx, ty, sz, t.type);
+    ctx.restore();
+  }
 }
 
 // ─── Draw: Road (all content shifted by -playerX for first-person perspective)
@@ -589,9 +765,9 @@ function drawRoad() {
   const W = canvas.width, vx = vpX(), vy = vpY(), by = botY(), rw = W * ROAD_HW;
   const pOff = g.playerX;  // FIX: offset everything by player position
 
-  // Road surface (shape fixed, content shifts)
+  // Road surface — daytime grey wet asphalt
   const road = ctx.createLinearGradient(vx, vy, vx, by);
-  road.addColorStop(0, '#151515'); road.addColorStop(1, '#252525');
+  road.addColorStop(0, '#484848'); road.addColorStop(1, '#565656');
   ctx.fillStyle = road;
   ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(vx+rw, by); ctx.lineTo(vx-rw, by); ctx.closePath(); ctx.fill();
 
@@ -599,9 +775,9 @@ function drawRoad() {
   drawPuddles(pOff);
 
   const sheen = ctx.createLinearGradient(vx, vy, vx, by);
-  sheen.addColorStop(0,    'rgba(55,105,180,0)');
-  sheen.addColorStop(0.65, `rgba(55,105,180,${0.09 + g.rainIntensity*0.06})`);
-  sheen.addColorStop(1,    `rgba(88,148,215,${0.20 + g.rainIntensity*0.10})`);
+  sheen.addColorStop(0,    'rgba(140,170,195,0)');
+  sheen.addColorStop(0.65, `rgba(140,170,195,${0.10 + g.rainIntensity*0.07})`);
+  sheen.addColorStop(1,    `rgba(160,195,220,${0.25 + g.rainIntensity*0.12})`);
   ctx.fillStyle = sheen;
   ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(vx+rw, by); ctx.lineTo(vx-rw, by); ctx.closePath(); ctx.fill();
 
@@ -716,7 +892,6 @@ function drawCarSpray(c) {
 }
 
 // ─── Per-type car draw helpers ────────────────────────────────────────────────
-// Shared: draw brand label on rear of vehicle
 function drawBrandLabel(cx, cy, w, h, brand, yFrac) {
   if (w < 18) return;
   ctx.save();
@@ -731,182 +906,268 @@ function drawBrandLabel(cx, cy, w, h, brand, yFrac) {
   ctx.restore();
 }
 
+// Sedan — 3-box silhouette (trunk + cabin + roof) viewed from rear
 function drawSedan(cx, cy, w, h, color, z, brand) {
-  // ── Trunk (lower ~35%) ─────────────────────────────────────────────────────
+  const rw = w / 2;
+  const roofW = rw * 0.68;
+  // Lower body (bumper to beltline)
   ctx.fillStyle = color;
-  ctx.fillRect(cx-w/2, cy-h, w, h);
-  // Slightly darker roof panel (upper 32%)
-  ctx.fillStyle = 'rgba(0,0,0,0.14)';
-  ctx.fillRect(cx-w*0.36, cy-h, w*0.72, h*0.32);
-  // Rear window (dark glass)
-  ctx.fillStyle = 'rgba(0,0,0,0.30)';
-  ctx.fillRect(cx-w*0.30, cy-h*0.98, w*0.60, h*0.22);
-  ctx.fillStyle = 'rgba(100,165,225,0.40)';
-  ctx.fillRect(cx-w*0.26, cy-h*0.95, w*0.52, h*0.15);
-  // Trunk panel divider line
+  ctx.beginPath();
+  ctx.moveTo(cx - rw,        cy);
+  ctx.lineTo(cx + rw,        cy);
+  ctx.lineTo(cx + rw * 0.94, cy - h * 0.46);
+  ctx.lineTo(cx - rw * 0.94, cy - h * 0.46);
+  ctx.closePath(); ctx.fill();
+  // Cabin (beltline to roof) — narrower trapezoid
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx - rw * 0.94, cy - h * 0.46);
+  ctx.lineTo(cx + rw * 0.94, cy - h * 0.46);
+  ctx.lineTo(cx + roofW,     cy - h * 0.98);
+  ctx.lineTo(cx - roofW,     cy - h * 0.98);
+  ctx.closePath(); ctx.fill();
+  // Rear window (trapezoid glass)
+  ctx.fillStyle = 'rgba(110,150,200,0.52)';
+  ctx.beginPath();
+  ctx.moveTo(cx - rw * 0.74, cy - h * 0.50);
+  ctx.lineTo(cx + rw * 0.74, cy - h * 0.50);
+  ctx.lineTo(cx + roofW * 0.86, cy - h * 0.94);
+  ctx.lineTo(cx - roofW * 0.86, cy - h * 0.94);
+  ctx.closePath(); ctx.fill();
+  // Window reflection
+  ctx.fillStyle = 'rgba(200,230,255,0.20)';
+  ctx.beginPath();
+  ctx.moveTo(cx - rw * 0.70, cy - h * 0.52);
+  ctx.lineTo(cx - rw * 0.18, cy - h * 0.52);
+  ctx.lineTo(cx - roofW * 0.30, cy - h * 0.92);
+  ctx.lineTo(cx - roofW * 0.78, cy - h * 0.92);
+  ctx.closePath(); ctx.fill();
+  // Trunk seam
   ctx.strokeStyle = 'rgba(0,0,0,0.22)';
   ctx.lineWidth = Math.max(0.5, z * 1.2);
-  ctx.beginPath(); ctx.moveTo(cx-w*0.50, cy-h*0.38); ctx.lineTo(cx+w*0.50, cy-h*0.38); ctx.stroke();
-  // Taillights
+  ctx.beginPath(); ctx.moveTo(cx - rw*0.92, cy - h*0.38); ctx.lineTo(cx + rw*0.92, cy - h*0.38); ctx.stroke();
+  // Taillights (L + R blocks)
   ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 14*z*(1+g.rainIntensity*0.4);
   ctx.fillStyle = '#ff2200';
-  ctx.fillRect(cx-w*0.50, cy-h*0.22, w*0.16, h*0.10);
-  ctx.fillRect(cx+w*0.34, cy-h*0.22, w*0.16, h*0.10);
-  // Center brake line
-  ctx.fillStyle = 'rgba(255,50,0,0.55)';
-  ctx.fillRect(cx-w*0.15, cy-h*0.20, w*0.30, h*0.04);
+  ctx.fillRect(cx - rw,        cy - h*0.26, rw*0.26, h*0.14);
+  ctx.fillRect(cx + rw*0.74,   cy - h*0.26, rw*0.26, h*0.14);
+  ctx.fillStyle = 'rgba(255,60,0,0.50)';
+  ctx.fillRect(cx - rw*0.74,   cy - h*0.24, rw*1.48, h*0.04);
   ctx.shadowBlur = 0;
-  // Chrome bumper strip
-  ctx.fillStyle = 'rgba(200,200,200,0.32)';
-  ctx.fillRect(cx-w*0.46, cy-h*0.04, w*0.92, h*0.03);
-  // Roof shine
+  // License plate
+  ctx.fillStyle = 'rgba(230,230,230,0.65)';
+  ctx.fillRect(cx - rw*0.22, cy - h*0.10, rw*0.44, h*0.08);
+  // Chrome bumper
+  ctx.fillStyle = 'rgba(185,185,185,0.28)';
+  ctx.fillRect(cx - rw*0.92, cy - h*0.04, rw*1.84, h*0.03);
+  // Body shine
   const shine = ctx.createLinearGradient(cx, cy-h, cx, cy-h*0.58);
-  shine.addColorStop(0, 'rgba(255,255,255,0.22)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = shine; ctx.fillRect(cx-w/2, cy-h, w, h*0.44);
-  drawBrandLabel(cx, cy, w, h, brand, 0.56);
+  shine.addColorStop(0, 'rgba(255,255,255,0.20)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shine; ctx.fillRect(cx-roofW, cy-h, roofW*2, h*0.52);
+  drawBrandLabel(cx, cy, w, h, brand, 0.57);
 }
 
+// Sports car — very wide, very low, wedge profile
 function drawSportsCar(cx, cy, w, h, color, z, brand) {
-  // Main body (very low, wide)
+  const rw = w / 2;
+  const roofW = rw * 0.55; // very narrow roof
+  // Lower body (flat and wide)
   ctx.fillStyle = color;
-  ctx.fillRect(cx-w/2, cy-h, w, h);
-  // Tiny rear windshield slot
-  ctx.fillStyle = 'rgba(0,0,0,0.42)';
-  ctx.fillRect(cx-w*0.42, cy-h, w*0.84, h*0.26);
-  ctx.fillStyle = 'rgba(100,185,255,0.50)';
-  ctx.fillRect(cx-w*0.34, cy-h*0.97, w*0.68, h*0.14);
+  ctx.beginPath();
+  ctx.moveTo(cx - rw,        cy);
+  ctx.lineTo(cx + rw,        cy);
+  ctx.lineTo(cx + rw * 0.96, cy - h * 0.40);
+  ctx.lineTo(cx - rw * 0.96, cy - h * 0.40);
+  ctx.closePath(); ctx.fill();
+  // Cabin (very small and sloped)
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx - rw * 0.96, cy - h * 0.40);
+  ctx.lineTo(cx + rw * 0.96, cy - h * 0.40);
+  ctx.lineTo(cx + roofW,     cy - h * 0.98);
+  ctx.lineTo(cx - roofW,     cy - h * 0.98);
+  ctx.closePath(); ctx.fill();
   // Ducktail spoiler
-  ctx.fillStyle = 'rgba(0,0,0,0.50)';
-  ctx.fillRect(cx-w*0.48, cy-h*1.00, w*0.96, h*0.06);
-  // Wide LED-style taillight strip
+  ctx.fillStyle = 'rgba(18,18,18,0.72)';
+  ctx.beginPath();
+  ctx.moveTo(cx - rw*0.78, cy - h*0.96);
+  ctx.lineTo(cx + rw*0.78, cy - h*0.96);
+  ctx.lineTo(cx + rw*0.66, cy - h*1.05);
+  ctx.lineTo(cx - rw*0.66, cy - h*1.05);
+  ctx.closePath(); ctx.fill();
+  // Rear window (tiny, steeply raked)
+  ctx.fillStyle = 'rgba(110,150,200,0.58)';
+  ctx.beginPath();
+  ctx.moveTo(cx - rw*0.66, cy - h*0.44);
+  ctx.lineTo(cx + rw*0.66, cy - h*0.44);
+  ctx.lineTo(cx + roofW*0.80, cy - h*0.94);
+  ctx.lineTo(cx - roofW*0.80, cy - h*0.94);
+  ctx.closePath(); ctx.fill();
+  // Wide LED taillight strip
   ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 18*z*(1+g.rainIntensity*0.4);
   ctx.fillStyle = '#ff2200';
-  ctx.fillRect(cx-w*0.50, cy-h*0.18, w*0.24, h*0.08);
-  ctx.fillRect(cx+w*0.26, cy-h*0.18, w*0.24, h*0.08);
-  // LED connector strip
-  ctx.fillStyle = 'rgba(255,40,0,0.70)';
-  ctx.fillRect(cx-w*0.26, cy-h*0.17, w*0.52, h*0.04);
+  ctx.fillRect(cx - rw,        cy - h*0.20, rw*0.28, h*0.10);
+  ctx.fillRect(cx + rw*0.72,   cy - h*0.20, rw*0.28, h*0.10);
+  ctx.fillStyle = 'rgba(255,40,0,0.68)';
+  ctx.fillRect(cx - rw*0.72,   cy - h*0.18, rw*1.44, h*0.04);
   ctx.shadowBlur = 0;
-  // Diffuser (black bottom panel)
-  ctx.fillStyle = 'rgba(10,10,10,0.70)';
-  ctx.fillRect(cx-w*0.48, cy-h*0.11, w*0.96, h*0.11);
+  // Diffuser panel
+  ctx.fillStyle = 'rgba(14,14,14,0.78)';
+  ctx.fillRect(cx - rw*0.90,   cy - h*0.13, rw*1.80, h*0.13);
   // Exhaust pipes
-  ctx.fillStyle = '#888';
-  ctx.beginPath(); ctx.ellipse(cx-w*0.22, cy-h*0.05, w*0.04, h*0.03, 0, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(cx+w*0.22, cy-h*0.05, w*0.04, h*0.03, 0, 0, Math.PI*2); ctx.fill();
-  const shine = ctx.createLinearGradient(cx, cy-h, cx, cy-h*0.62);
-  shine.addColorStop(0, 'rgba(255,255,255,0.32)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = shine; ctx.fillRect(cx-w/2, cy-h, w, h*0.38);
-  drawBrandLabel(cx, cy, w, h, brand, 0.46);
+  ctx.fillStyle = 'rgba(90,90,90,0.80)';
+  ctx.beginPath(); ctx.ellipse(cx - rw*0.24, cy - h*0.055, rw*0.07, h*0.045, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + rw*0.24, cy - h*0.055, rw*0.07, h*0.045, 0, 0, Math.PI*2); ctx.fill();
+  const shine = ctx.createLinearGradient(cx, cy-h, cx, cy-h*0.60);
+  shine.addColorStop(0, 'rgba(255,255,255,0.30)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shine; ctx.fillRect(cx-roofW, cy-h, roofW*2, h*0.48);
+  drawBrandLabel(cx, cy, w, h, brand, 0.48);
 }
 
+// Van — tall boxy cargo van with cab + cargo distinction
 function drawVan(cx, cy, w, h, color, z, brand) {
-  // Cargo body (upper ~58%) – plain box
+  const rw = w / 2;
+  // Full body (nearly rectangular with slight top taper)
   ctx.fillStyle = color;
-  ctx.fillRect(cx-w*0.46, cy-h, w*0.92, h*0.58);
-  // Cargo rear door seam (center vertical)
-  ctx.strokeStyle = 'rgba(0,0,0,0.30)';
-  ctx.lineWidth = Math.max(0.5, z * 1.2);
-  ctx.beginPath(); ctx.moveTo(cx, cy-h); ctx.lineTo(cx, cy-h*0.42); ctx.stroke();
-  // Cargo door handle
-  ctx.strokeStyle = 'rgba(180,180,180,0.50)';
-  ctx.lineWidth = Math.max(0.5, z * 1.5);
-  ctx.beginPath(); ctx.moveTo(cx-w*0.08, cy-h*0.55); ctx.lineTo(cx+w*0.08, cy-h*0.55); ctx.stroke();
-  // Cab body (lower ~42%)
-  ctx.fillStyle = color;
-  ctx.fillRect(cx-w/2, cy-h*0.44, w, h*0.44);
-  // Cab window
+  ctx.beginPath();
+  ctx.moveTo(cx - rw,        cy);
+  ctx.lineTo(cx + rw,        cy);
+  ctx.lineTo(cx + rw * 0.97, cy - h);
+  ctx.lineTo(cx - rw * 0.97, cy - h);
+  ctx.closePath(); ctx.fill();
+  // Cab windows (lower 40%)
   ctx.fillStyle = 'rgba(0,0,0,0.30)';
-  ctx.fillRect(cx-w*0.38, cy-h*0.43, w*0.76, h*0.24);
-  ctx.fillStyle = 'rgba(100,165,225,0.42)';
-  ctx.fillRect(cx-w*0.30, cy-h*0.41, w*0.60, h*0.17);
-  // Divider bar between cab and cargo
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.fillRect(cx-w/2, cy-h*0.45, w, h*0.04);
+  ctx.fillRect(cx - rw*0.86, cy - h*0.44, rw*1.72, h*0.24);
+  ctx.fillStyle = 'rgba(110,155,210,0.42)';
+  ctx.fillRect(cx - rw*0.78, cy - h*0.42, rw*1.56, h*0.17);
+  // Cargo door divider (between cab and cargo)
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.fillRect(cx - rw, cy - h*0.48, rw*2, h*0.04);
+  // Cargo door seams
+  ctx.strokeStyle = 'rgba(0,0,0,0.24)';
+  ctx.lineWidth = Math.max(0.6, z*1.4);
+  ctx.beginPath(); ctx.moveTo(cx, cy-h*0.96); ctx.lineTo(cx, cy-h*0.52); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - rw*0.52, cy-h*0.74); ctx.lineTo(cx - rw*0.08, cy-h*0.74); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx + rw*0.08, cy-h*0.74); ctx.lineTo(cx + rw*0.52, cy-h*0.74); ctx.stroke();
   // Taillights
   ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 11*z*(1+g.rainIntensity*0.4);
   ctx.fillStyle = '#ff2200';
-  ctx.fillRect(cx-w*0.50, cy-h*0.14, w*0.15, h*0.10);
-  ctx.fillRect(cx+w*0.35, cy-h*0.14, w*0.15, h*0.10);
+  ctx.fillRect(cx - rw,       cy - h*0.18, rw*0.22, h*0.12);
+  ctx.fillRect(cx + rw*0.78,  cy - h*0.18, rw*0.22, h*0.12);
   ctx.shadowBlur = 0;
+  // Bumper
+  ctx.fillStyle = 'rgba(55,55,55,0.58)';
+  ctx.fillRect(cx - rw*0.94, cy - h*0.07, rw*1.88, h*0.07);
   const shine = ctx.createLinearGradient(cx, cy-h, cx, cy-h*0.56);
-  shine.addColorStop(0, 'rgba(255,255,255,0.17)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = shine; ctx.fillRect(cx-w/2, cy-h, w, h*0.44);
-  drawBrandLabel(cx, cy, w, h, brand, 0.76);
+  shine.addColorStop(0, 'rgba(255,255,255,0.16)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shine; ctx.fillRect(cx-rw, cy-h, rw*2, h*0.44);
+  drawBrandLabel(cx, cy, w, h, brand, 0.75);
 }
 
+// Big truck — cab-over with tall separate trailer
 function drawBigTruck(cx, cy, w, h, color, z, brand) {
-  // ── Trailer (far / upper 65%) ─────────────────────────────────────────────
-  ctx.fillStyle = '#6b7880';
-  ctx.fillRect(cx-w*0.46, cy-h, w*0.92, h*0.65);
+  const rw = w / 2;
+  const trailerTop = cy - h;
+  const cabH = h * 0.38;
+  const trailerH = h * 0.64;
+  // ── Trailer ──────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#667078';
+  ctx.beginPath();
+  ctx.moveTo(cx - rw*0.46, trailerTop);
+  ctx.lineTo(cx + rw*0.46, trailerTop);
+  ctx.lineTo(cx + rw*0.48, trailerTop + trailerH);
+  ctx.lineTo(cx - rw*0.48, trailerTop + trailerH);
+  ctx.closePath(); ctx.fill();
   // Trailer door seams
-  ctx.strokeStyle = 'rgba(30,30,30,0.60)';
-  ctx.lineWidth = Math.max(0.6, z * 1.8);
-  ctx.beginPath(); ctx.moveTo(cx, cy-h); ctx.lineTo(cx, cy-h*0.35); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(cx-w*0.44, cy-h*0.50); ctx.lineTo(cx+w*0.44, cy-h*0.50); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(cx-w*0.44, cy-h*0.76); ctx.lineTo(cx+w*0.44, cy-h*0.76); ctx.stroke();
-  // Trailer reflector strips (orange/white)
-  ctx.fillStyle = 'rgba(255,165,0,0.60)';
-  ctx.fillRect(cx-w*0.44, cy-h*0.685, w*0.92, h*0.014);
-  ctx.fillRect(cx-w*0.44, cy-h*0.825, w*0.92, h*0.014);
-  // Brand text on trailer door
-  drawBrandLabel(cx, cy, w, h, brand, 0.82);
-  // ── Cab (near / lower 36%) ────────────────────────────────────────────────
+  ctx.strokeStyle = 'rgba(35,35,35,0.62)';
+  ctx.lineWidth = Math.max(0.8, z*2.2);
+  ctx.beginPath(); ctx.moveTo(cx, trailerTop); ctx.lineTo(cx, trailerTop + trailerH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-rw*0.45, trailerTop + trailerH*0.36); ctx.lineTo(cx+rw*0.45, trailerTop + trailerH*0.36); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-rw*0.45, trailerTop + trailerH*0.70); ctx.lineTo(cx+rw*0.45, trailerTop + trailerH*0.70); ctx.stroke();
+  // Reflector strips
+  ctx.fillStyle = 'rgba(255,165,0,0.72)';
+  ctx.fillRect(cx-rw*0.44, trailerTop + trailerH*0.24, rw*0.88, h*0.017);
+  ctx.fillRect(cx-rw*0.44, trailerTop + trailerH*0.58, rw*0.88, h*0.017);
+  ctx.fillStyle = 'rgba(255,255,255,0.50)';
+  ctx.fillRect(cx-rw*0.44, trailerTop + trailerH*0.258, rw*0.88, h*0.010);
+  drawBrandLabel(cx, cy, w, h, brand, 0.80);
+  // ── Cab ──────────────────────────────────────────────────────────────────
   ctx.fillStyle = color;
-  ctx.fillRect(cx-w/2, cy-h*0.37, w, h*0.37);
-  // Cab top air deflector
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.fillRect(cx-w*0.42, cy-h*0.37, w*0.84, h*0.06);
+  ctx.beginPath();
+  ctx.moveTo(cx - rw,      cy);
+  ctx.lineTo(cx + rw,      cy);
+  ctx.lineTo(cx + rw*0.94, cy - cabH);
+  ctx.lineTo(cx - rw*0.94, cy - cabH);
+  ctx.closePath(); ctx.fill();
+  // Air deflector
+  ctx.fillStyle = 'rgba(0,0,0,0.36)';
+  ctx.fillRect(cx - rw*0.44, cy - cabH - h*0.04, rw*0.88, h*0.06);
   // Cab windshield
   ctx.fillStyle = 'rgba(0,0,0,0.30)';
-  ctx.fillRect(cx-w*0.32, cy-h*0.33, w*0.64, h*0.18);
-  ctx.fillStyle = 'rgba(100,165,225,0.40)';
-  ctx.fillRect(cx-w*0.25, cy-h*0.31, w*0.50, h*0.13);
+  ctx.fillRect(cx - rw*0.72, cy - cabH, rw*1.44, cabH*0.52);
+  ctx.fillStyle = 'rgba(110,155,210,0.38)';
+  ctx.fillRect(cx - rw*0.62, cy - cabH + cabH*0.04, rw*1.24, cabH*0.38);
   // Big taillights
-  ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 20*z*(1+g.rainIntensity*0.4);
+  ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 22*z*(1+g.rainIntensity*0.4);
   ctx.fillStyle = '#ff2200';
-  ctx.fillRect(cx-w*0.50, cy-h*0.15, w*0.18, h*0.12);
-  ctx.fillRect(cx+w*0.32, cy-h*0.15, w*0.18, h*0.12);
+  ctx.fillRect(cx - rw,       cy - h*0.17, rw*0.22, h*0.14);
+  ctx.fillRect(cx + rw*0.78,  cy - h*0.17, rw*0.22, h*0.14);
   ctx.shadowBlur = 0;
   // Mudflaps
-  ctx.fillStyle = 'rgba(20,20,20,0.65)';
-  ctx.fillRect(cx-w*0.50, cy-h*0.08, w*0.18, h*0.08);
-  ctx.fillRect(cx+w*0.32, cy-h*0.08, w*0.18, h*0.08);
+  ctx.fillStyle = 'rgba(22,22,22,0.72)';
+  ctx.fillRect(cx - rw,       cy - h*0.09, rw*0.22, h*0.09);
+  ctx.fillRect(cx + rw*0.78,  cy - h*0.09, rw*0.22, h*0.09);
+  // Chrome bumper
+  ctx.fillStyle = 'rgba(175,178,182,0.42)';
+  ctx.fillRect(cx - rw*0.90, cy - h*0.04, rw*1.80, h*0.03);
 }
 
+// Tour bus — very tall with two rows of windows
 function drawBus(cx, cy, w, h, color, z, brand) {
-  // Main body
+  const rw = w / 2;
+  // Main body (tall, slight taper at top)
   ctx.fillStyle = color;
-  ctx.fillRect(cx-w/2, cy-h, w, h);
-  // Roof radius hint (slightly darker top strip)
-  ctx.fillStyle = 'rgba(0,0,0,0.14)';
-  ctx.fillRect(cx-w/2, cy-h, w, h*0.06);
-  // Two rows of windows
-  const winW = w * 0.13, winH = h * 0.14;
+  ctx.beginPath();
+  ctx.moveTo(cx - rw,        cy);
+  ctx.lineTo(cx + rw,        cy);
+  ctx.lineTo(cx + rw * 0.96, cy - h);
+  ctx.lineTo(cx - rw * 0.96, cy - h);
+  ctx.closePath(); ctx.fill();
+  // Roof cap (slightly darker)
+  ctx.fillStyle = 'rgba(0,0,0,0.13)';
+  ctx.fillRect(cx - rw*0.96, cy - h, rw*1.92, h*0.07);
+  // Two rows of windows (5 per row)
   for (let row = 0; row < 2; row++) {
-    const winTop = cy - h * (0.94 - row * 0.20);
+    const winW = w * 0.11, winH = h * 0.14;
+    const winY = cy - h * (0.88 - row * 0.19);
     for (let i = 0; i < 5; i++) {
-      const wx = cx - w*0.44 + i * (w*0.88/4) - winW/2;
-      ctx.fillStyle = 'rgba(0,0,0,0.38)';   ctx.fillRect(wx,   winTop,   winW,   winH);
-      ctx.fillStyle = 'rgba(100,165,225,0.35)'; ctx.fillRect(wx+1, winTop+1, winW-2, winH-2);
+      const wx = cx - rw*0.84 + i*(rw*1.68/4) - winW/2;
+      ctx.fillStyle = 'rgba(0,0,0,0.40)';      ctx.fillRect(wx, winY, winW, winH);
+      ctx.fillStyle = 'rgba(110,155,210,0.38)'; ctx.fillRect(wx+1, winY+1, winW-2, winH-2);
+      // Curtain hint
+      if (Math.random() < 0.3) {
+        ctx.fillStyle = 'rgba(220,200,180,0.20)'; ctx.fillRect(wx+1, winY+1, winW*0.4, winH-2);
+      }
     }
   }
-  // Horizontal brand stripe
-  ctx.fillStyle = 'rgba(255,255,255,0.20)';
-  ctx.fillRect(cx-w*0.48, cy-h*0.52, w*0.96, h*0.06);
-  // Brand
-  drawBrandLabel(cx, cy, w, h, brand, 0.66);
-  // Taillights (wide, bus-style)
-  ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 15*z*(1+g.rainIntensity*0.4);
+  // Decorative stripe
+  ctx.fillStyle = 'rgba(0,0,0,0.16)';
+  ctx.fillRect(cx - rw, cy - h*0.52, rw*2, h*0.05);
+  drawBrandLabel(cx, cy, w, h, brand, 0.64);
+  // Rear panel
+  ctx.fillStyle = 'rgba(0,0,0,0.10)';
+  ctx.fillRect(cx - rw, cy - h*0.47, rw*2, h*0.20);
+  // Wide taillights
+  ctx.shadowColor = '#ff1100'; ctx.shadowBlur = 16*z*(1+g.rainIntensity*0.4);
   ctx.fillStyle = '#ff2200';
-  ctx.fillRect(cx-w*0.50, cy-h*0.18, w*0.22, h*0.10);
-  ctx.fillRect(cx+w*0.28, cy-h*0.18, w*0.22, h*0.10);
-  ctx.fillStyle = 'rgba(255,80,0,0.55)';
-  ctx.fillRect(cx-w*0.28, cy-h*0.17, w*0.56, h*0.04);
+  ctx.fillRect(cx - rw,        cy - h*0.24, rw*0.26, h*0.14);
+  ctx.fillRect(cx + rw*0.74,   cy - h*0.24, rw*0.26, h*0.14);
+  ctx.fillStyle = 'rgba(255,60,0,0.55)';
+  ctx.fillRect(cx - rw*0.74,   cy - h*0.22, rw*1.48, h*0.04);
   ctx.shadowBlur = 0;
-  const shine = ctx.createLinearGradient(cx, cy-h, cx, cy-h*0.66);
-  shine.addColorStop(0, 'rgba(255,255,255,0.18)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = shine; ctx.fillRect(cx-w/2, cy-h, w, h*0.35);
+  const shine = ctx.createLinearGradient(cx, cy-h, cx, cy-h*0.68);
+  shine.addColorStop(0, 'rgba(255,255,255,0.17)'); shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shine; ctx.fillRect(cx-rw, cy-h, rw*2, h*0.34);
 }
 
 // ─── Draw: Cars (offset by playerX for correct first-person perspective) ──────
@@ -1017,35 +1278,35 @@ function drawWindshieldFrame() {
   const W = canvas.width, H = canvas.height, by = botY();
   // Top header bar (ceiling)
   ctx.fillStyle = '#0a0a0a';
-  ctx.fillRect(0, 0, W, H * 0.065);
-  // Left A-pillar (wider at top → feels like you're sitting inside)
+  ctx.fillRect(0, 0, W, H * 0.070);
+  // Left A-pillar — extra wide at top for very close driver POV
   ctx.fillStyle = '#0b0b0b';
   ctx.beginPath();
   ctx.moveTo(0, 0);
-  ctx.lineTo(W*0.17, H*0.065);
-  ctx.lineTo(W*0.068, by);
+  ctx.lineTo(W*0.20, H*0.070);
+  ctx.lineTo(W*0.072, by);
   ctx.lineTo(0, by);
   ctx.closePath(); ctx.fill();
   // Right A-pillar
   ctx.beginPath();
   ctx.moveTo(W, 0);
-  ctx.lineTo(W*0.83, H*0.065);
-  ctx.lineTo(W*0.932, by);
+  ctx.lineTo(W*0.80, H*0.070);
+  ctx.lineTo(W*0.928, by);
   ctx.lineTo(W, by);
   ctx.closePath(); ctx.fill();
-  // Subtle A-pillar sheen (painted metal highlight)
-  ctx.fillStyle = 'rgba(60,60,60,0.28)';
+  // A-pillar interior edge sheen (warm grey — daytime ambient)
+  ctx.fillStyle = 'rgba(70,65,60,0.30)';
   ctx.beginPath();
-  ctx.moveTo(W*0.14, H*0.065);
-  ctx.lineTo(W*0.17, H*0.065);
-  ctx.lineTo(W*0.068, by);
-  ctx.lineTo(W*0.058, by);
+  ctx.moveTo(W*0.165, H*0.070);
+  ctx.lineTo(W*0.20, H*0.070);
+  ctx.lineTo(W*0.072, by);
+  ctx.lineTo(W*0.060, by);
   ctx.closePath(); ctx.fill();
   ctx.beginPath();
-  ctx.moveTo(W*0.86, H*0.065);
-  ctx.lineTo(W*0.83, H*0.065);
-  ctx.lineTo(W*0.932, by);
-  ctx.lineTo(W*0.942, by);
+  ctx.moveTo(W*0.835, H*0.070);
+  ctx.lineTo(W*0.80, H*0.070);
+  ctx.lineTo(W*0.928, by);
+  ctx.lineTo(W*0.940, by);
   ctx.closePath(); ctx.fill();
   // ── Rearview mirror (center top) ──────────────────────────────────────────
   const mirW = W * 0.082, mirH = H * 0.028;
@@ -1106,9 +1367,9 @@ function drawDashboard() {
 }
 
 function drawRainHaze() {
-  const a = Math.min(0.30, (g.rainIntensity-1.0)*0.10);
+  const a = Math.min(0.22, (g.rainIntensity - 1.0) * 0.08);
   if (a <= 0) return;
-  ctx.fillStyle = `rgba(8,18,32,${a})`;
+  ctx.fillStyle = `rgba(145,158,168,${a})`;  // grey haze for daytime
   ctx.fillRect(0, 0, canvas.width, canvas.height * ROAD_BOTTOM);
 }
 
@@ -1198,13 +1459,16 @@ function drawHUD() {
 // ─── Render ───────────────────────────────────────────────────────────────────
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawSky();
-  drawRainLayer(g.rainFar,  '#6a9cba', 0.5, 2.2);
+  drawSky();                                           // daytime overcast sky + clouds
+  drawBackground();                                    // mountains + treeline
+  drawRainLayer(g.rainFar,  '#9dc5d5', 0.5, 2.2);    // lighter rain for daytime
   drawRainCurtains();
+  drawRoadside();                                      // grass + guardrails outside road
+  drawRoadsideTrees();                                 // trees alongside road
   drawRoad();
-  drawRainLayer(g.rainMid,  '#9cc8e2', 1.0, 2.2);
+  drawRainLayer(g.rainMid,  '#b5d5e5', 1.0, 2.2);
   drawCars();
-  drawRainLayer(g.rainNear, '#c4def0', 1.6, 2.2);
+  drawRainLayer(g.rainNear, '#cce5f2', 1.6, 2.2);
   drawRainHaze();
   drawLightning();
   drawWindshieldDrops();
