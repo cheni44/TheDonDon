@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<properties>
+
+  <!-- Activity type: 0 = Running, 1 = Swimming -->
+  <property id="ActivityType" type="number">0</property>
+
+  <!-- Sensor sample rate: 25, 50, or 100 (Hz) -->
+  <property id="SampleRate" type="number">25</property>
+
+  <!-- Pool length (Swimming only): 25 or 50 (metres) -->
+  <property id="PoolLength" type="number">25</property>
+
+  <!-- User profile -->
+  <property id="Height" type="number">0</property>
+  <property id="Weight" type="number">0</property>
+  <property id="BirthYear" type="number">0</property>
+  <property id="BirthMonth" type="number">0</property>
+  <property id="BirthDay" type="number">0</property>
+  <property id="ArmSpan" type="number">0</property>
+
+</properties>

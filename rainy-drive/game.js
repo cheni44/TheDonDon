@@ -106,6 +106,50 @@ function pickVehicleType() {
   return VEHICLE_TYPES[0];
 }
 
+// ─── Scene configs for 國道一號 segments ─────────────────────────────────────
+function seededRand(seed) {
+  const s = Math.sin(seed * 9301 + 49297) * 233280;
+  return s - Math.floor(s);
+}
+const SCENE_CONFIGS = {
+  urban_north: {
+    label: '北部都市段',
+    skyColors: ['#485060','#637580','#8ea0ac','#aabbc5'],
+    grassRGB: [45, 68, 40], treePineFrac: 0.28, hasBuildings: true,
+    buildingRGBA: 'rgba(62,72,82,0.52)',
+    mountainRGBA: 'rgba(98,110,120,0.40)', hillRGBA: 'rgba(70,88,80,0.50)',
+  },
+  suburban: {
+    label: '桃竹苗段',
+    skyColors: ['#505e6c','#70848e','#9eaeb8','#bbc8ce'],
+    grassRGB: [52, 78, 44], treePineFrac: 0.55, hasBuildings: false,
+    buildingRGBA: null,
+    mountainRGBA: 'rgba(110,126,136,0.42)', hillRGBA: 'rgba(78,100,88,0.50)',
+  },
+  plains: {
+    label: '中部平原段',
+    skyColors: ['#4e5e78','#6e88a2','#94b2c6','#b4cad8'],
+    grassRGB: [60, 90, 50], treePineFrac: 0.44, hasBuildings: false,
+    buildingRGBA: null,
+    mountainRGBA: 'rgba(108,126,142,0.36)', hillRGBA: 'rgba(84,106,94,0.48)',
+  },
+  flatlands: {
+    label: '雲嘉平原段',
+    skyColors: ['#576678','#768696','#a0b0ba','#bccad0'],
+    grassRGB: [66, 94, 54], treePineFrac: 0.28, hasBuildings: false,
+    buildingRGBA: null,
+    mountainRGBA: 'rgba(115,130,138,0.26)', hillRGBA: 'rgba(88,108,98,0.36)',
+  },
+  tropical: {
+    label: '南部都市段',
+    skyColors: ['#486070','#6888a0','#96b2c0','#b8d0d8'],
+    grassRGB: [50, 100, 44], treePineFrac: 0.12, hasBuildings: true,
+    buildingRGBA: 'rgba(60,70,78,0.48)',
+    mountainRGBA: 'rgba(100,118,128,0.32)', hillRGBA: 'rgba(74,98,84,0.50)',
+  },
+};
+let currentSceneKey = 'plains';
+
 // ─── Web Audio rain & thunder ────────────────────────────────────────────────
 let audioCtx = null, rainGainNode = null, masterGainNode = null, noiseBuf = null;
 
@@ -228,30 +272,8 @@ function playBlinkerTick(highTone) {
   } catch(_) {}
 }
 
-// ─── Tilt control ─────────────────────────────────────────────────────────────
-let tiltX = 0, tiltEnabled = false;
-function handleTilt(e) {
-  if (!g?.alive) { tiltX = 0; return; }
-  const gamma = e.gamma ?? 0;
-  const DEAD = 4, MAX = 28;
-  tiltX = Math.abs(gamma) < DEAD
-    ? 0
-    : clamp((Math.abs(gamma) - DEAD) / (MAX - DEAD), 0, 1) * Math.sign(gamma);
-}
-async function requestTiltPermission() {
-  if (typeof DeviceOrientationEvent === 'undefined') return;
-  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try {
-      if (await DeviceOrientationEvent.requestPermission() === 'granted') {
-        window.addEventListener('deviceorientation', handleTilt);
-        tiltEnabled = true;
-      }
-    } catch(_) {}
-  } else {
-    window.addEventListener('deviceorientation', handleTilt);
-    tiltEnabled = true;
-  }
-}
+// ─── Tilt control (disabled — use buttons only) ───────────────────────────────
+const tiltX = 0; // kept as constant for legacy references
 
 // ─── Wind system ─────────────────────────────────────────────────────────────
 const wind = { vx: -12, nextGust: rand(2, 5), gustTimer: 0, gustStrength: 0 };
@@ -273,7 +295,15 @@ let g = {}, running = false, lastTime = 0, bestScore = 0;
 function initGame() {
   resetWind();
   g = {
-    playerX: 0, playerVX: 0,
+    playerX: 0,
+    // ── 車道系統 ───────────────────────────────────────────────────────────────
+    laneIdx:       1,   // 0=左, 1=中, 2=右 (起始在中間)
+    targetLaneIdx: 1,
+    laneProgress:  0,
+    laneState:     'idle',  // 'idle' | 'changing' | 'canceling'
+    laneDir:       0,       // -1=左 | 0=無 | 1=右
+    prevLeft:      false,
+    prevRight:     false,
     cars: [],
     rainFar: [], rainMid: [], rainNear: [],
     wsDrop: [], wsSheets: [], rainCurtains: [],
@@ -291,7 +321,8 @@ function initGame() {
     wiperA: -0.45, wiperDir: 1,
     lightning: 0, lightningNext: rand(3, 8),
     blinkerDir: 0, blinkerFlash: 0, blinkerOn: false,
-    blinkerFlashCount: 0, blinkerAutoOff: 0,
+    blinkerFlashCount: 0,
+    sceneConfig: SCENE_CONFIGS[currentSceneKey] || SCENE_CONFIGS.plains,
     keys: {},
   };
 
@@ -399,7 +430,7 @@ function update(dt) {
   dt = Math.min(dt, 0.05);
   g.time  += dt;
   g.score  = Math.floor(g.time * 12 * Math.max(0.5, g.throttle));
-  g.speed  = 1 + g.time * 0.035;
+  g.speed  = 1 + g.time * 0.022;  // 較慢加速，初始 100 km/h
 
   if (g.keys.speedUp)   g.throttle       = Math.min(2.0, g.throttle       + dt * 0.7);
   if (g.keys.speedDown) g.throttle       = Math.max(0.4, g.throttle       - dt * 0.7);
@@ -427,42 +458,70 @@ function update(dt) {
 }
 
 function updatePlayer(dt) {
-  const ACCEL = 5.0, DECEL = 6;
-  let ax = 0;
-  const goLeft  = g.keys['ArrowLeft']  || g.keys['a'] || g.keys['A'] || g.keys.touchLeft;
-  const goRight = g.keys['ArrowRight'] || g.keys['d'] || g.keys['D'] || g.keys.touchRight;
-  if (goLeft)  ax -= ACCEL;
-  if (goRight) ax += ACCEL;
-  ax += tiltX * ACCEL * 1.1;
+  // ── 邊緣偵測：只偵測「按下」的那一幀，不偵測持續按住 ──────────────────────
+  const nowLeft  = g.keys['ArrowLeft']  || g.keys['a'] || g.keys['A'] || g.keys.touchLeft;
+  const nowRight = g.keys['ArrowRight'] || g.keys['d'] || g.keys['D'] || g.keys.touchRight;
+  const tapLeft  = nowLeft  && !g.prevLeft;
+  const tapRight = nowRight && !g.prevRight;
+  g.prevLeft  = nowLeft;
+  g.prevRight = nowRight;
 
-  // ── 方向燈邏輯 ──────────────────────────────────────────────────────────────
-  const wantLeft  = goLeft  || tiltX < -0.22;
-  const wantRight = goRight || tiltX >  0.22;
-  if (wantLeft && !wantRight) {
-    if (g.blinkerDir !== -1) { g.blinkerDir = -1; g.blinkerFlash = 0; g.blinkerFlashCount = 0; }
-    g.blinkerAutoOff = 1.5;
-  } else if (wantRight && !wantLeft) {
-    if (g.blinkerDir !== 1)  { g.blinkerDir =  1; g.blinkerFlash = 0; g.blinkerFlashCount = 0; }
-    g.blinkerAutoOff = 1.5;
-  } else {
-    if (g.blinkerAutoOff > 0) {
-      g.blinkerAutoOff = Math.max(0, g.blinkerAutoOff - dt);
-      if (g.blinkerAutoOff === 0) g.blinkerDir = 0;
+  const LANE_SPD = 2.2; // 換道速度 (fraction/秒 ≈ 0.45 秒完成)
+
+  // ── 車道狀態機 ──────────────────────────────────────────────────────────────
+  if (g.laneState === 'idle') {
+    if (tapLeft  && g.laneIdx > 0) {
+      g.targetLaneIdx = g.laneIdx - 1;
+      g.laneProgress  = 0;
+      g.laneState     = 'changing';
+      g.laneDir       = -1;
+    } else if (tapRight && g.laneIdx < LANES.length - 1) {
+      g.targetLaneIdx = g.laneIdx + 1;
+      g.laneProgress  = 0;
+      g.laneState     = 'changing';
+      g.laneDir       = 1;
+    }
+  } else if (g.laneState === 'changing') {
+    // 按反方向 → 取消，回到原本車道
+    if ((tapRight && g.laneDir === -1) || (tapLeft && g.laneDir === 1)) {
+      g.laneState = 'canceling';
+    } else {
+      g.laneProgress = Math.min(1, g.laneProgress + dt * LANE_SPD);
+      if (g.laneProgress >= 1) {
+        g.laneIdx      = g.targetLaneIdx;
+        g.laneProgress = 0;
+        g.laneState    = 'idle';
+      }
+    }
+  } else if (g.laneState === 'canceling') {
+    // 退回原始車道
+    g.laneProgress = Math.max(0, g.laneProgress - dt * LANE_SPD);
+    if (g.laneProgress <= 0) {
+      g.targetLaneIdx = g.laneIdx;
+      g.laneState     = 'idle';
+      g.laneDir       = 0;
     }
   }
-  if (g.blinkerDir !== 0) {
+
+  // playerX 由車道插值決定
+  g.playerX = lerp(LANES[g.laneIdx], LANES[g.targetLaneIdx], g.laneProgress);
+
+  // ── 方向燈：換道時亮，取消/完成時熄 ────────────────────────────────────────
+  if (g.laneState === 'changing') {
+    if (g.blinkerDir !== g.laneDir) {
+      g.blinkerDir        = g.laneDir;
+      g.blinkerFlash      = 0;
+      g.blinkerFlashCount = 0;
+    }
     const CYCLE = 0.72;
     g.blinkerFlash += dt;
     const wasOn = g.blinkerOn;
     g.blinkerOn = (g.blinkerFlash % CYCLE) < CYCLE * 0.5;
     if (g.blinkerOn && !wasOn) { g.blinkerFlashCount++; playBlinkerTick(g.blinkerFlashCount % 2 === 1); }
   } else {
-    g.blinkerOn = false;
+    g.blinkerDir = 0;
+    g.blinkerOn  = false;
   }
-
-  g.playerVX += ax * dt;
-  g.playerVX *= Math.exp(-DECEL * dt);
-  g.playerX   = clamp(g.playerX + g.playerVX * dt, -0.78, 0.78);
 }
 
 function updateCars(dt) {
@@ -471,8 +530,7 @@ function updateCars(dt) {
     spawnCar();
     g.spawnT = Math.max(0.4, rand(1.4, 2.4) / (g.speed * g.throttle));
   }
-  // 玩家目前車速 (km/h)，用於計算與其他車輛的相對速度
-  const playerKph = (80 + g.speed * 38) * g.throttle;
+  const playerKph = (62 + g.speed * 38) * g.throttle;  // 初始 100 km/h
   for (let i = g.cars.length - 1; i >= 0; i--) {
     const c = g.cars[i];
     // 速差越大 → 相對接近越快；跑車接近較慢，貨車/慢車接近較快
@@ -592,24 +650,21 @@ function updateSplashes(dt) {
   }
 }
 
-// ─── Draw: Sky (daytime overcast) ────────────────────────────────────────────
+// ─── Draw: Sky (daytime overcast, scene-aware) ───────────────────────────────
 function drawSky() {
   const W = canvas.width, H = canvas.height, vy = vpY();
-  // Overcast daytime gradient: grey-blue top → pale horizon
+  const sc = g.sceneConfig || SCENE_CONFIGS.plains;
+  const [c0, c1, c2, c3] = sc.skyColors;
   const sky = ctx.createLinearGradient(0, 0, 0, vy);
-  sky.addColorStop(0,    '#5a6a78');
-  sky.addColorStop(0.45, '#7a8e9c');
-  sky.addColorStop(0.85, '#a8bcc8');
-  sky.addColorStop(1,    '#c2d0d8');
+  sky.addColorStop(0,    c0);
+  sky.addColorStop(0.40, c1);
+  sky.addColorStop(0.80, c2);
+  sky.addColorStop(1,    c3);
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, vy + 2);
-
-  // Clouds
   drawClouds(vy);
-
-  // Misty horizon glow (rain brightens the horizon)
   const fog = ctx.createLinearGradient(0, vy - H*0.12, 0, vy + H*0.06);
   fog.addColorStop(0,   'rgba(190,210,220,0)');
-  fog.addColorStop(0.5, `rgba(200,215,225,${0.30 + g.rainIntensity * 0.12})`);
+  fog.addColorStop(0.5, `rgba(200,215,225,${0.28 + g.rainIntensity * 0.10})`);
   fog.addColorStop(1,   'rgba(190,210,220,0)');
   ctx.fillStyle = fog; ctx.fillRect(0, vy - H*0.12, W, H*0.18);
 }
@@ -643,28 +698,48 @@ function drawClouds(vy) {
   ctx.restore();
 }
 
-// ─── Draw: Background (mountains + distant treeline) ─────────────────────────
+// ─── Draw: Background (mountains + distant treeline + city buildings) ─────────
 function drawBackground() {
   const W = canvas.width, vy = vpY();
+  const sc = g.sceneConfig || SCENE_CONFIGS.plains;
   ctx.save();
-  // Far mountains (misty, very pale)
-  ctx.fillStyle = 'rgba(135,152,165,0.40)';
+  // Far mountains
+  ctx.fillStyle = sc.mountainRGBA;
   ctx.beginPath(); ctx.moveTo(0, vy);
   const m1 = [[0,0],[0.06,-0.09],[0.13,-0.03],[0.21,-0.10],[0.29,-0.04],
                [0.37,-0.11],[0.45,-0.02],[0.53,-0.09],[0.61,-0.04],
                [0.69,-0.12],[0.77,-0.03],[0.85,-0.10],[0.93,-0.04],[1,-0.07],[1,0]];
   for (const [px,py] of m1) ctx.lineTo(px*W, vy + py*vy);
   ctx.closePath(); ctx.fill();
-  // Nearer hills (slightly darker)
-  ctx.fillStyle = 'rgba(95,118,105,0.50)';
+  // Nearer hills
+  ctx.fillStyle = sc.hillRGBA;
   ctx.beginPath(); ctx.moveTo(0, vy);
   const m2 = [[0,0],[0.04,-0.06],[0.10,-0.02],[0.18,-0.07],[0.26,-0.03],
                [0.34,-0.06],[0.42,-0.01],[0.50,-0.05],[0.58,-0.02],
                [0.66,-0.07],[0.74,-0.02],[0.82,-0.06],[0.90,-0.02],[1,-0.05],[1,0]];
   for (const [px,py] of m2) ctx.lineTo(px*W, vy + py*vy);
   ctx.closePath(); ctx.fill();
+  // City buildings (urban_north / tropical)
+  if (sc.hasBuildings && sc.buildingRGBA) {
+    ctx.fillStyle = sc.buildingRGBA;
+    let x = 0;
+    while (x < W * 0.36) {
+      const bw = Math.max(5, W * (0.030 + seededRand(x * 0.01) * 0.036));
+      const bh = vy * (0.18 + seededRand(x * 0.01 + 3) * 0.58);
+      ctx.fillRect(x, vy - bh, bw - 1, bh);
+      x += bw + seededRand(x * 0.01 + 7) * W * 0.006 + 1;
+    }
+    x = W * 0.64;
+    while (x < W) {
+      const bw = Math.max(5, W * (0.030 + seededRand(x * 0.01 + 100) * 0.036));
+      const bh = vy * (0.18 + seededRand(x * 0.01 + 103) * 0.58);
+      ctx.fillRect(x, vy - bh, Math.min(bw - 1, W - x), bh);
+      x += bw + seededRand(x * 0.01 + 107) * W * 0.006 + 1;
+    }
+  }
   // Distant treeline silhouette
-  ctx.fillStyle = 'rgba(45,72,48,0.68)';
+  const [gr, gg, gb] = sc.grassRGB;
+  ctx.fillStyle = `rgba(${gr-20},${gg-22},${gb-18},0.72)`;
   ctx.beginPath(); ctx.moveTo(0, vy + 2);
   for (let x = 0; x <= W; x += Math.max(3, W * 0.008)) {
     const h = Math.sin(x*0.006)*0.022 + Math.sin(x*0.019)*0.014 + Math.sin(x*0.041)*0.008;
@@ -674,42 +749,31 @@ function drawBackground() {
   ctx.restore();
 }
 
-// ─── Draw: Roadside (grass + shoulder + guardrails) ──────────────────────────
+// ─── Draw: Roadside (grass + shoulder + guardrails, scene-aware) ─────────────
 function drawRoadside() {
   const W = canvas.width, vx = vpX(), vy = vpY(), by = botY();
   const rw = W * ROAD_HW, pOff = g.playerX;
+  const sc = g.sceneConfig || SCENE_CONFIGS.plains;
+  const [gr, gg, gb] = sc.grassRGB;
   ctx.save();
-  // Wet grass — left triangle outside road
   const gL = ctx.createLinearGradient(0, vy, 0, by);
-  gL.addColorStop(0, 'rgba(62,92,55,0.90)');
-  gL.addColorStop(1, 'rgba(50,80,45,0.95)');
+  gL.addColorStop(0, `rgba(${gr},${gg},${gb},0.88)`);
+  gL.addColorStop(1, `rgba(${gr-8},${gg-10},${gb-6},0.95)`);
   ctx.fillStyle = gL;
   ctx.beginPath();
   ctx.moveTo(vx, vy); ctx.lineTo(vx - rw, by); ctx.lineTo(0, by); ctx.lineTo(0, vy);
   ctx.closePath(); ctx.fill();
-  // Wet grass — right
-  ctx.fillStyle = gL;
   ctx.beginPath();
   ctx.moveTo(vx, vy); ctx.lineTo(vx + rw, by); ctx.lineTo(W, by); ctx.lineTo(W, vy);
   ctx.closePath(); ctx.fill();
-  // Guardrail beam (perspective) — left side
+  // Guardrail beam
   ctx.strokeStyle = 'rgba(168,175,182,0.62)';
   ctx.lineWidth = Math.max(1.5, W * 0.004);
-  ctx.beginPath();
-  ctx.moveTo(projX(-0.74 - pOff, 0.04), projY(0.04));
-  ctx.lineTo(projX(-0.74 - pOff, 0.92), projY(0.92));
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(projX(+0.74 - pOff, 0.04), projY(0.04));
-  ctx.lineTo(projX(+0.74 - pOff, 0.92), projY(0.92));
-  ctx.stroke();
-  // Guardrail posts at intervals
+  ctx.beginPath(); ctx.moveTo(projX(-0.74-pOff,0.04),projY(0.04)); ctx.lineTo(projX(-0.74-pOff,0.92),projY(0.92)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(projX(+0.74-pOff,0.04),projY(0.04)); ctx.lineTo(projX(+0.74-pOff,0.92),projY(0.92)); ctx.stroke();
   for (let i = 1; i <= 10; i++) {
-    const z = i / 10;
-    const posY = projY(z);
-    const ph = Math.max(1.5, z * 9);
-    const lx = projX(-0.74 - pOff, z);
-    const rx = projX(+0.74 - pOff, z);
+    const z = i / 10, posY = projY(z), ph = Math.max(1.5, z * 9);
+    const lx = projX(-0.74 - pOff, z), rx = projX(+0.74 - pOff, z);
     ctx.fillStyle = `rgba(155,162,170,${0.35 + z * 0.45})`;
     ctx.fillRect(lx - z*2.5, posY - ph, z*5, ph);
     ctx.fillRect(rx - z*2.5, posY - ph, z*5, ph);
@@ -745,9 +809,12 @@ function drawTree(x, y, sz, type) {
 function drawRoadsideTrees() {
   if (!g.trees) return;
   const pOff = g.playerX;
+  const sc   = g.sceneConfig || SCENE_CONFIGS.plains;
   const sorted = [...g.trees].sort((a,b) => a.z - b.z);
   for (const t of sorted) {
     if (t.z < 0.05 || t.z > 0.96) continue;
+    // Re-evaluate tree type based on scene (use stored type but bias toward scene)
+    const effectiveType = (Math.random() < sc.treePineFrac) ? 'pine' : 'round';
     const ty = projY(t.z);
     const sz = t.z * canvas.height * t.sizeK;
     const fogA = Math.min(0.92, t.z * 1.3);
@@ -1350,7 +1417,7 @@ function drawDashboard() {
     ctx.stroke();
   }
   // Speedometer cluster (left of steering wheel)
-  const kmph = Math.round((80 + g.speed*38) * g.throttle);
+  const kmph = Math.round((62 + g.speed*38) * g.throttle);
   const spX = W*0.28, spY = sy - sr*0.2, spR = W*0.042;
   ctx.strokeStyle = '#252525'; ctx.lineWidth = W*0.010;
   ctx.beginPath(); ctx.arc(spX, spY, spR, 0, Math.PI*2); ctx.stroke();
@@ -1442,15 +1509,10 @@ function drawHUD() {
   ctx.font = `bold ${Math.round(W*0.028)}px 'Courier New',monospace`;
   ctx.fillStyle = 'rgba(152,208,255,0.88)'; ctx.textAlign = 'left';
   ctx.fillText(`▶ ${g.score} m`, W*0.085, H*0.105);
-  const kph = Math.round((80 + g.speed*38) * g.throttle);
+  const kph = Math.round((62 + g.speed*38) * g.throttle);
   ctx.font = `bold ${Math.round(W*0.036)}px 'Courier New',monospace`;
   ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.textAlign = 'right';
   ctx.fillText(`${kph} km/h`, W*0.915, H*0.105);
-  if (tiltEnabled && Math.abs(tiltX) > 0.06) {
-    ctx.font = `${Math.round(W*0.020)}px 'Courier New',monospace`;
-    ctx.fillStyle = 'rgba(175,220,255,0.55)'; ctx.textAlign = 'center';
-    ctx.fillText(tiltX > 0 ? '→ 傾斜' : '傾斜 ←', W*0.5, H*0.105);
-  }
   const tv = document.getElementById('throttleVal');
   if (tv) tv.textContent = g.throttle.toFixed(1) + '×';
   ctx.restore();
@@ -1543,10 +1605,11 @@ bindSideBtn('btnAccel',     'speedUp');
 bindSideBtn('btnRight',     'touchRight');
 bindSideBtn('btnWiperFast', 'wiperUp');
 
-document.getElementById('startBtn').addEventListener('click', async () => {
+document.getElementById('startBtn').addEventListener('click', () => {
+  const sel = document.getElementById('sceneSelect');
+  if (sel) currentSceneKey = sel.value || 'plains';
   document.getElementById('startScreen').classList.add('hidden');
   initAudio();
-  await requestTiltPermission();
   startGame();
 });
 document.getElementById('restartBtn').addEventListener('click', () => {

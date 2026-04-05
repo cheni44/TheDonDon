@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<strings>
+  <string id="AppName">SpatioInsight</string>
+
+  <!-- Display mode labels -->
+  <string id="ModeRaw">RAW</string>
+  <string id="ModeMetrics">METRICS</string>
+
+  <!-- Sensor field labels -->
+  <string id="LabelAccel">ACCEL</string>
+  <string id="LabelGyro">GYRO</string>
+  <string id="LabelHR">HR</string>
+  <string id="FitAccelX">Accel X</string>
+  <string id="FitAccelY">Accel Y</string>
+  <string id="FitAccelZ">Accel Z</string>
+  <string id="FitGyroX">Gyro X</string>
+  <string id="FitGyroY">Gyro Y</string>
+  <string id="FitGyroZ">Gyro Z</string>
+
+  <!-- Running metrics labels -->
+  <string id="LabelCadence">CADENCE</string>
+  <string id="LabelStride">STRIDE</string>
+  <string id="LabelVertOsc">VERT OSC</string>
+  <string id="LabelLatOsc">LAT OSC</string>
+
+  <!-- Swimming metrics labels -->
+  <string id="LabelStrokeRate">STR RATE</string>
+  <string id="LabelStrokeDist">STR DIST</string>
+  <string id="LabelStrokeEff">STR EFF</string>
+  <string id="LabelHrZone">HR ZONE</string>
+
+  <!-- Settings labels -->
+  <string id="SettingActivityTypeTitle">Activity Type</string>
+  <string id="SettingAccelRateTitle">Accel Sample Rate</string>
+  <string id="SettingGyroRateTitle">Gyro Sample Rate</string>
+  <string id="SettingPoolLengthTitle">Pool Length</string>
+  <string id="ActivityRunning">Running</string>
+  <string id="ActivitySwimming">Swimming</string>
+  <string id="SampleRate25">25 Hz</string>
+  <string id="SampleRate50">50 Hz</string>
+  <string id="SampleRate100">100 Hz</string>
+  <string id="PoolLength25">25 m</string>
+  <string id="PoolLength50">50 m</string>
+
+  <!-- Units -->
+  <string id="UnitSpm">spm</string>
+  <string id="UnitMetres">m</string>
+  <string id="UnitMm">mm</string>
+  <string id="UnitBpm">bpm</string>
+  <string id="UnitMg">mg</string>
+  <string id="UnitDps">°/s</string>
+  <string id="UnitPercent">%</string>
+
+  <!-- Placeholder -->
+  <string id="NoData">---</string>
+  <string id="NotAvailable">N/A</string>
+</strings>

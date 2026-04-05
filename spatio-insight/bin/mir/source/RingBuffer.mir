@@ -1,0 +1,251 @@
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 1; @symbol_importdef<0> = [Toybox,1,7,13]; @symbol_importdef<1> = [Lang,1,14,18]; ]
+import Toybox.Lang;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 5; @symbol_classdef = [RingBuffer,5,6,16]; ]
+class RingBuffer {
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 5; ]
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 5; ]
+    static
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 7; @position = 16; @symbol_vardef = [_buffer,7,16,23]; @symbol_type<0> = [Array,7,27,32]; ]
+    private
+    var _buffer as Array;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 8; @position = 16; @symbol_vardef = [_capacity,8,16,25]; @symbol_type<0> = [Number,8,29,35]; ]
+    private
+    var _capacity as Number;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 9; @position = 16; @symbol_vardef = [_head,9,16,21]; @symbol_type<0> = [Number,9,25,31]; ]
+    private
+    var _head as Number;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 10; @position = 16; @symbol_vardef = [_size,10,16,21]; @symbol_type<0> = [Number,10,25,31]; ]
+    private
+    var _size as Number;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 12; @symbol_functiondef = [initialize,12,13,23]; @symbol_param<0> = [capacity,12,24,32]; @symbol_param<0>_type<0> = [Number,12,36,42]; ]
+    function initialize(capacity as Number) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_12_44_17_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 13 8 ]
+        %tmp.1 = lgetv %capacity;
+        symbol [ capacity %tmp.1 13 20 28 ];
+        symbol [ _capacity ? 13 8 17 ];
+        putv self :_capacity %tmp.1;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 14 8 ]
+        %tmp.3 = lgetv %capacity;
+        symbol [ capacity %tmp.3 14 28 36 ];
+        %tmp.2 = newa Array %tmp.3;
+        symbol [ Array %tmp.2 14 22 27 ];
+        symbol [ _buffer ? 14 8 15 ];
+        putv self :_buffer %tmp.2;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 15 8 ]
+        %tmp.4 = 0;
+        symbol [ _head ? 15 8 13 ];
+        putv self :_head %tmp.4;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 16 8 ]
+        %tmp.5 = 0;
+        symbol [ _size ? 16 8 13 ];
+        putv self :_size %tmp.5;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_12_44_17_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 20; @symbol_functiondef = [push,20,13,17]; @symbol_param<0> = [entry,20,18,23]; @symbol_param<0>_type<0> = [Object,20,27,33]; ]
+    function push(entry as Object) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_20_43_29_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 21 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_20_43_29_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_20_43_29_4_stop" ]
+        %tail.1 = local;
+        symbol [ tail %tail.1 21 12 16 ];
+        symbol [ _head %tmp.2 21 20 25 ];
+        %tmp.2 = getv ? :_head;
+        symbol [ _size %tmp.4 21 28 33 ];
+        %tmp.4 = getv ? :_size;
+        %tmp.5 = add %tmp.2 %tmp.4;
+        symbol [ _capacity %tmp.7 21 37 46 ];
+        %tmp.7 = getv ? :_capacity;
+        %tmp.8 = mod %tmp.5 %tmp.7;
+        lputv %tail.1 %tmp.8;
+        symbol [ tail %tail.1 21 12 16 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 22 8 ]
+        symbol [ _buffer %tmp.9 22 8 15 ];
+        %tmp.9 = getv self :_buffer;
+        %tmp.10 = lgetv %entry;
+        symbol [ entry %tmp.10 22 24 29 ];
+        %tmp.11 = lgetv %tail.1;
+        symbol [ tail %tmp.11 22 16 20 ];
+        aputv %tmp.9 %tmp.11 %tmp.10;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 23 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_23_8_28_8_if_stmt:
+        symbol [ _size %tmp.13 23 12 17 ];
+        %tmp.13 = getv ? :_size;
+        symbol [ _capacity %tmp.15 23 20 29 ];
+        %tmp.15 = getv ? :_capacity;
+        %tmp.16 = lt %tmp.13 %tmp.15;
+        bf %tmp.16 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_23_8_28_8_if_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_23_8_28_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_23_31_25_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 24 12 ]
+        symbol [ _size %tmp.19 24 12 17 ];
+        %tmp.19 = getv ? :_size;
+        %tmp.20 = add %tmp.19 1;
+        symbol [ _size ? 24 12 17 ];
+        putv self :_size dup %tmp.20;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_23_31_25_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_23_8_28_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_23_8_28_8_if_else_false:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_25_15_28_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 27 12 ]
+        symbol [ _head %tmp.22 27 21 26 ];
+        %tmp.22 = getv ? :_head;
+        %tmp.23 = 1;
+        %tmp.24 = add %tmp.22 %tmp.23;
+        symbol [ _capacity %tmp.26 27 34 43 ];
+        %tmp.26 = getv ? :_capacity;
+        %tmp.27 = mod %tmp.24 %tmp.26;
+        symbol [ _head ? 27 12 17 ];
+        putv self :_head %tmp.27;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_25_15_28_8_stop:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_23_8_28_8_if_end:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_20_43_29_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 32; @symbol_functiondef = [getLast,32,13,20]; @symbol_return<0> = [Object,32,26,32]; ]
+    function getLast() as Object or Null {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_32_41_36_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 33 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_33_8_33_39_if_stmt:
+        symbol [ _size %tmp.2 33 12 17 ];
+        %tmp.2 = getv ? :_size;
+        %tmp.3 = 0;
+        %tmp.4 = eq %tmp.2 %tmp.3;
+        bf %tmp.4 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_33_8_33_39_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_33_8_33_39_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_33_24_33_39_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 33 26 ]
+        %tmp.5 = null;
+        ret %tmp.5;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_33_24_33_39_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_33_8_33_39_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_33_8_33_39_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 34 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_32_41_36_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_32_41_36_4_stop" ]
+        %tail.1 = local;
+        symbol [ tail %tail.1 34 12 16 ];
+        symbol [ _head %tmp.7 34 20 25 ];
+        %tmp.7 = getv ? :_head;
+        symbol [ _size %tmp.9 34 28 33 ];
+        %tmp.9 = getv ? :_size;
+        %tmp.10 = add %tmp.7 %tmp.9;
+        %tmp.11 = 1;
+        %tmp.12 = sub %tmp.10 %tmp.11;
+        symbol [ _capacity %tmp.14 34 41 50 ];
+        %tmp.14 = getv ? :_capacity;
+        %tmp.15 = mod %tmp.12 %tmp.14;
+        lputv %tail.1 %tmp.15;
+        symbol [ tail %tail.1 34 12 16 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 35 8 ]
+        symbol [ _buffer %tmp.17 35 15 22 ];
+        %tmp.17 = getv ? :_buffer;
+        %tmp.18 = lgetv %tail.1;
+        symbol [ tail %tmp.18 35 23 27 ];
+        %tmp.19 = agetv %tmp.17 %tmp.18;
+        ret %tmp.19;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_32_41_36_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 39; @symbol_functiondef = [getAll,39,13,19]; @symbol_return<0> = [Array,39,25,30]; ]
+    function getAll() as Array {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_39_31_45_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 40 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_39_31_45_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_39_31_45_4_stop" ]
+        %result.1 = local;
+        symbol [ result %result.1 40 12 18 ];
+        symbol [ _size %tmp.3 40 31 36 ];
+        %tmp.3 = getv ? :_size;
+        %tmp.1 = newa Array %tmp.3;
+        symbol [ Array %tmp.1 40 25 30 ];
+        lputv %result.1 %tmp.1;
+        symbol [ result %result.1 40 12 18 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 41 8 ]
+        for @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_test @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_incr @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_init:
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_begin" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_end" ]
+        %i.2 = local;
+        symbol [ i %i.2 41 17 18 ];
+        %tmp.4 = 0;
+        lputv %i.2 %tmp.4;
+        symbol [ i %i.2 41 17 18 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_test:
+        %tmp.5 = lgetv %i.2;
+        symbol [ i %tmp.5 41 24 25 ];
+        symbol [ _size %tmp.7 41 28 33 ];
+        %tmp.7 = getv ? :_size;
+        %tmp.8 = lt %tmp.5 %tmp.7;
+        bf %tmp.8 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_begin:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_40_43_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 42 12 ]
+        %tmp.9 = lgetv %result.1;
+        symbol [ result %tmp.9 42 12 18 ];
+        symbol [ _buffer %tmp.11 42 24 31 ];
+        %tmp.11 = getv ? :_buffer;
+        symbol [ _head %tmp.13 42 33 38 ];
+        %tmp.13 = getv ? :_head;
+        %tmp.14 = lgetv %i.2;
+        symbol [ i %tmp.14 42 41 42 ];
+        %tmp.15 = add %tmp.13 %tmp.14;
+        symbol [ _capacity %tmp.17 42 46 55 ];
+        %tmp.17 = getv ? :_capacity;
+        %tmp.18 = mod %tmp.15 %tmp.17;
+        %tmp.19 = agetv %tmp.11 %tmp.18;
+        %tmp.20 = lgetv %i.2;
+        symbol [ i %tmp.20 42 19 20 ];
+        aputv %tmp.9 %tmp.20 %tmp.19;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_40_43_8_stop:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_incr:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 41 ]
+        %tmp.23 = lgetv %i.2;
+        symbol [ i %tmp.23 41 35 36 ];
+        %tmp.24 = add %tmp.23 1;
+        lputv %i.2 %tmp.24;
+        symbol [ i %i.2 41 35 36 ];
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_test;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_41_8_43_8_for_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 44 8 ]
+        %tmp.25 = lgetv %result.1;
+        symbol [ result %tmp.25 44 15 21 ];
+        ret %tmp.25;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_39_31_45_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 48; @symbol_functiondef = [size,48,13,17]; @symbol_return<0> = [Number,48,23,29]; ]
+    function size() as Number {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_48_30_50_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 49 8 ]
+        symbol [ _size %tmp.2 49 15 20 ];
+        %tmp.2 = getv ? :_size;
+        ret %tmp.2;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_48_30_50_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 53; @symbol_functiondef = [isEmpty,53,13,20]; @symbol_return<0> = [Boolean,53,26,33]; ]
+    function isEmpty() as Boolean {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_53_34_55_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 54 8 ]
+        symbol [ _size %tmp.2 54 15 20 ];
+        %tmp.2 = getv ? :_size;
+        %tmp.3 = 0;
+        %tmp.4 = eq %tmp.2 %tmp.3;
+        ret %tmp.4;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_53_34_55_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 58; @symbol_functiondef = [clear,58,13,18]; ]
+    function clear() as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_58_29_61_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 59 8 ]
+        %tmp.1 = 0;
+        symbol [ _head ? 59 8 13 ];
+        putv self :_head %tmp.1;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc" 60 8 ]
+        %tmp.2 = 0;
+        symbol [ _size ? 60 8 13 ];
+        putv self :_size %tmp.2;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RingBuffer_mc_58_29_61_4_stop:
+    }
+}
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RingBuffer.mc"; @line = 1; ]
+<init> {
+}

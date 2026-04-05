@@ -1,0 +1,1628 @@
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 1; @symbol_importdef<0> = [Toybox,1,7,13]; @symbol_importdef<1> = [Lang,1,14,18]; ]
+import Toybox.Lang;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 2; @symbol_importdef<0> = [Toybox,2,7,13]; @symbol_importdef<1> = [WatchUi,2,14,21]; ]
+import Toybox.WatchUi;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 3; @symbol_importdef<0> = [Toybox,3,7,13]; @symbol_importdef<1> = [Graphics,3,14,22]; ]
+import Toybox.Graphics;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 4; @symbol_importdef<0> = [Toybox,4,7,13]; @symbol_importdef<1> = [Activity,4,14,22]; ]
+import Toybox.Activity;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 5; @symbol_importdef<0> = [Toybox,5,7,13]; @symbol_importdef<1> = [System,5,14,20]; ]
+import Toybox.System;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 8; @symbol_enumdef = [DisplayMode,8,5,16]; ]
+enum DisplayMode {
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 9; @position = 4; @symbol_enumdec = [MODE_RAW,9,4,12]; ]
+    MODE_RAW = 0,
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 10; @position = 4; @symbol_enumdec = [MODE_METRICS,10,4,16]; ]
+    MODE_METRICS = 1
+}
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 16; @symbol_classdef = [AppView,16,6,13]; @symbol_extends<0> = [WatchUi,16,22,29]; @symbol_extends<1> = [View,16,30,34]; ]
+class AppView extends WatchUi.View {
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 16; ]
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 16; ]
+    static
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 18; @position = 16; @symbol_vardef = [_sensorManager,18,16,30]; @symbol_type<0> = [SensorManager,18,35,48]; ]
+    private
+    var _sensorManager as SensorManager;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 19; @position = 16; @symbol_vardef = [_userProfile,19,16,28]; @symbol_type<0> = [UserProfile,19,35,46]; ]
+    private
+    var _userProfile as UserProfile;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 20; @position = 16; @symbol_vardef = [_activityType,20,16,29]; @symbol_type<0> = [Number,20,35,41]; ]
+    private
+    var _activityType as Number;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 21; @position = 16; @symbol_vardef = [_poolLength,21,16,27]; @symbol_type<0> = [Number,21,35,41]; ]
+    private
+    var _poolLength as Number;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 22; @position = 16; @symbol_vardef = [_displayMode,22,16,28]; @symbol_type<0> = [Number,22,35,41]; ]
+    private
+    var _displayMode as Number;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 25; @position = 16; @symbol_vardef = [_strokeCount,25,16,28]; @symbol_type<0> = [Number,25,32,38]; ]
+    private
+    var _strokeCount as Number;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 26; @position = 16; @symbol_vardef = [_lapCount,26,16,25]; @symbol_type<0> = [Number,26,32,38]; ]
+    private
+    var _lapCount as Number;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 28; @symbol_functiondef = [initialize,28,13,23]; @symbol_param<0> = [sensorManager,29,8,21]; @symbol_param<0>_type<0> = [SensorManager,29,25,38]; @symbol_param<1> = [userProfile,30,8,19]; @symbol_param<1>_type<0> = [UserProfile,30,25,36]; @symbol_param<2> = [activityType,31,8,20]; @symbol_param<2>_type<0> = [Number,31,25,31]; @symbol_param<3> = [poolLength,32,8,18]; @symbol_param<3>_type<0> = [Number,32,25,31]; ]
+    function initialize(sensorManager as SensorManager, userProfile as UserProfile, activityType as Number, poolLength as Number) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_33_6_42_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 34 8 ]
+        symbol [ View %tmp.2 34 8 12 ];
+        %tmp.2 = getv ? :View;
+        symbol [ initialize %tmp.3 34 13 23 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 35 8 ]
+        %tmp.4 = lgetv %sensorManager;
+        symbol [ sensorManager %tmp.4 35 25 38 ];
+        symbol [ _sensorManager ? 35 8 22 ];
+        putv self :_sensorManager %tmp.4;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 36 8 ]
+        %tmp.5 = lgetv %userProfile;
+        symbol [ userProfile %tmp.5 36 25 36 ];
+        symbol [ _userProfile ? 36 8 20 ];
+        putv self :_userProfile %tmp.5;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 37 8 ]
+        %tmp.6 = lgetv %activityType;
+        symbol [ activityType %tmp.6 37 25 37 ];
+        symbol [ _activityType ? 37 8 21 ];
+        putv self :_activityType %tmp.6;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 38 8 ]
+        %tmp.7 = lgetv %poolLength;
+        symbol [ poolLength %tmp.7 38 25 35 ];
+        symbol [ _poolLength ? 38 8 19 ];
+        putv self :_poolLength %tmp.7;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 39 8 ]
+        symbol [ MODE_RAW %tmp.9 39 25 33 ];
+        %tmp.9 = getv ? :MODE_RAW;
+        symbol [ _displayMode ? 39 8 20 ];
+        putv self :_displayMode %tmp.9;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 40 8 ]
+        %tmp.10 = 0;
+        symbol [ _strokeCount ? 40 8 20 ];
+        putv self :_strokeCount %tmp.10;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 41 8 ]
+        %tmp.11 = 0;
+        symbol [ _lapCount ? 41 8 17 ];
+        putv self :_lapCount %tmp.11;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_33_6_42_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 45; @symbol_functiondef = [toggleMode,45,13,23]; ]
+    function toggleMode() as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_45_34_52_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 46 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_46_8_50_8_if_stmt:
+        symbol [ _displayMode %tmp.2 46 12 24 ];
+        %tmp.2 = getv ? :_displayMode;
+        symbol [ MODE_RAW %tmp.4 46 28 36 ];
+        %tmp.4 = getv ? :MODE_RAW;
+        %tmp.5 = eq %tmp.2 %tmp.4;
+        bf %tmp.5 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_46_8_50_8_if_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_46_8_50_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_46_38_48_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 47 12 ]
+        symbol [ MODE_METRICS %tmp.7 47 27 39 ];
+        %tmp.7 = getv ? :MODE_METRICS;
+        symbol [ _displayMode ? 47 12 24 ];
+        putv self :_displayMode %tmp.7;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_46_38_48_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_46_8_50_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_46_8_50_8_if_else_false:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_48_15_50_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 49 12 ]
+        symbol [ MODE_RAW %tmp.9 49 27 35 ];
+        %tmp.9 = getv ? :MODE_RAW;
+        symbol [ _displayMode ? 49 12 24 ];
+        putv self :_displayMode %tmp.9;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_48_15_50_8_stop:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_46_8_50_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 51 8 ]
+        symbol [ WatchUi %tmp.10 51 8 15 ];
+        %tmp.10 = getm $.Toybox.WatchUi;
+        symbol [ requestUpdate %tmp.11 51 16 29 ];
+        %tmp.11 = getv function %tmp.10 :requestUpdate;
+        invoke %tmp.10 %tmp.11();
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_45_34_52_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 54; @symbol_functiondef = [getDisplayMode,54,13,27]; @symbol_return<0> = [Number,54,33,39]; ]
+    function getDisplayMode() as Number {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_54_40_56_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 55 8 ]
+        symbol [ _displayMode %tmp.2 55 15 27 ];
+        %tmp.2 = getv ? :_displayMode;
+        ret %tmp.2;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_54_40_56_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 59; @symbol_functiondef = [onUpdate,59,13,21]; @symbol_param<0> = [dc,59,22,24]; @symbol_param<0>_type<0> = [Graphics,59,28,36]; @symbol_param<0>_type<1> = [Dc,59,37,39]; ]
+    function onUpdate(dc as Graphics.Dc) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_59_49_69_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 60 8 ]
+        %tmp.1 = lgetv %dc;
+        symbol [ dc %tmp.1 60 8 10 ];
+        symbol [ setColor %tmp.2 60 11 19 ];
+        %tmp.2 = getv function %tmp.1 :setColor;
+        symbol [ Graphics %tmp.3 60 20 28 ];
+        %tmp.3 = getm $.Toybox.Graphics;
+        symbol [ COLOR_BLACK %tmp.4 60 29 40 ];
+        %tmp.4 = getv %tmp.3 :COLOR_BLACK;
+        symbol [ Graphics %tmp.5 60 42 50 ];
+        %tmp.5 = getm $.Toybox.Graphics;
+        symbol [ COLOR_BLACK %tmp.6 60 51 62 ];
+        %tmp.6 = getv %tmp.5 :COLOR_BLACK;
+        invoke %tmp.1 %tmp.2(%tmp.4, %tmp.6);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 61 8 ]
+        %tmp.7 = lgetv %dc;
+        symbol [ dc %tmp.7 61 8 10 ];
+        symbol [ clear %tmp.8 61 11 16 ];
+        %tmp.8 = getv function %tmp.7 :clear;
+        invoke %tmp.7 %tmp.8();
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 62 8 ]
+        %tmp.9 = lgetv %dc;
+        symbol [ dc %tmp.9 62 8 10 ];
+        symbol [ setColor %tmp.10 62 11 19 ];
+        %tmp.10 = getv function %tmp.9 :setColor;
+        symbol [ Graphics %tmp.11 62 20 28 ];
+        %tmp.11 = getm $.Toybox.Graphics;
+        symbol [ COLOR_WHITE %tmp.12 62 29 40 ];
+        %tmp.12 = getv %tmp.11 :COLOR_WHITE;
+        symbol [ Graphics %tmp.13 62 42 50 ];
+        %tmp.13 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.14 62 51 68 ];
+        %tmp.14 = getv %tmp.13 :COLOR_TRANSPARENT;
+        invoke %tmp.9 %tmp.10(%tmp.12, %tmp.14);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 64 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_64_8_68_8_if_stmt:
+        symbol [ _displayMode %tmp.16 64 12 24 ];
+        %tmp.16 = getv ? :_displayMode;
+        symbol [ MODE_RAW %tmp.18 64 28 36 ];
+        %tmp.18 = getv ? :MODE_RAW;
+        %tmp.19 = eq %tmp.16 %tmp.18;
+        bf %tmp.19 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_64_8_68_8_if_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_64_8_68_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_64_38_66_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 65 12 ]
+        %tmp.20 = self;
+        symbol [ _drawRaw %tmp.21 65 12 20 ];
+        %tmp.21 = getv function %tmp.20 :_drawRaw;
+        %tmp.22 = lgetv %dc;
+        symbol [ dc %tmp.22 65 21 23 ];
+        invoke %tmp.20 %tmp.21(%tmp.22);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_64_38_66_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_64_8_68_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_64_8_68_8_if_else_false:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_66_15_68_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 67 12 ]
+        %tmp.23 = self;
+        symbol [ _drawMetrics %tmp.24 67 12 24 ];
+        %tmp.24 = getv function %tmp.23 :_drawMetrics;
+        %tmp.25 = lgetv %dc;
+        symbol [ dc %tmp.25 67 25 27 ];
+        invoke %tmp.23 %tmp.24(%tmp.25);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_66_15_68_8_stop:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_64_8_68_8_if_end:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_59_49_69_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 74; @symbol_functiondef = [_drawRaw,74,21,29]; @symbol_param<0> = [dc,74,30,32]; @symbol_param<0>_type<0> = [Graphics,74,36,44]; @symbol_param<0>_type<1> = [Dc,74,45,47]; ]
+    private
+    function _drawRaw(dc as Graphics.Dc) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 75 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_stop" ]
+        %w.1 = local;
+        symbol [ w %w.1 75 12 13 ];
+        %tmp.1 = lgetv %dc;
+        symbol [ dc %tmp.1 75 17 19 ];
+        symbol [ getWidth %tmp.2 75 20 28 ];
+        %tmp.2 = getv function %tmp.1 :getWidth;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %w.1 %tmp.3;
+        symbol [ w %w.1 75 12 13 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 76 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_stop" ]
+        %h.2 = local;
+        symbol [ h %h.2 76 12 13 ];
+        %tmp.4 = lgetv %dc;
+        symbol [ dc %tmp.4 76 17 19 ];
+        symbol [ getHeight %tmp.5 76 20 29 ];
+        %tmp.5 = getv function %tmp.4 :getHeight;
+        %tmp.6 = invoke %tmp.4 %tmp.5();
+        lputv %h.2 %tmp.6;
+        symbol [ h %h.2 76 12 13 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 77 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_stop" ]
+        %cx.3 = local;
+        symbol [ cx %cx.3 77 12 14 ];
+        %tmp.7 = lgetv %w.1;
+        symbol [ w %tmp.7 77 17 18 ];
+        %tmp.8 = 2;
+        %tmp.9 = div %tmp.7 %tmp.8;
+        lputv %cx.3 %tmp.9;
+        symbol [ cx %cx.3 77 12 14 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 80 8 ]
+        %tmp.10 = lgetv %dc;
+        symbol [ dc %tmp.10 80 8 10 ];
+        symbol [ setColor %tmp.11 80 11 19 ];
+        %tmp.11 = getv function %tmp.10 :setColor;
+        symbol [ Graphics %tmp.12 80 20 28 ];
+        %tmp.12 = getm $.Toybox.Graphics;
+        symbol [ COLOR_YELLOW %tmp.13 80 29 41 ];
+        %tmp.13 = getv %tmp.12 :COLOR_YELLOW;
+        symbol [ Graphics %tmp.14 80 43 51 ];
+        %tmp.14 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.15 80 52 69 ];
+        %tmp.15 = getv %tmp.14 :COLOR_TRANSPARENT;
+        invoke %tmp.10 %tmp.11(%tmp.13, %tmp.15);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 81 8 ]
+        %tmp.16 = lgetv %dc;
+        symbol [ dc %tmp.16 81 8 10 ];
+        symbol [ drawText %tmp.17 81 11 19 ];
+        %tmp.17 = getv function %tmp.16 :drawText;
+        %tmp.18 = lgetv %cx.3;
+        symbol [ cx %tmp.18 81 20 22 ];
+        %tmp.19 = 10;
+        symbol [ Graphics %tmp.20 81 28 36 ];
+        %tmp.20 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.21 81 37 46 ];
+        %tmp.21 = getv %tmp.20 :FONT_TINY;
+        %tmp.22 = "RAW";
+        symbol [ Graphics %tmp.23 81 55 63 ];
+        %tmp.23 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.24 81 64 83 ];
+        %tmp.24 = getv %tmp.23 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.16 %tmp.17(%tmp.18, %tmp.19, %tmp.21, %tmp.22, %tmp.24);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 82 8 ]
+        %tmp.25 = lgetv %dc;
+        symbol [ dc %tmp.25 82 8 10 ];
+        symbol [ setColor %tmp.26 82 11 19 ];
+        %tmp.26 = getv function %tmp.25 :setColor;
+        symbol [ Graphics %tmp.27 82 20 28 ];
+        %tmp.27 = getm $.Toybox.Graphics;
+        symbol [ COLOR_WHITE %tmp.28 82 29 40 ];
+        %tmp.28 = getv %tmp.27 :COLOR_WHITE;
+        symbol [ Graphics %tmp.29 82 42 50 ];
+        %tmp.29 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.30 82 51 68 ];
+        %tmp.30 = getv %tmp.29 :COLOR_TRANSPARENT;
+        invoke %tmp.25 %tmp.26(%tmp.28, %tmp.30);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 85 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_stop" ]
+        %accelLast.4 = local;
+        symbol [ accelLast %accelLast.4 85 12 21 ];
+        symbol [ _sensorManager %tmp.32 85 24 38 ];
+        %tmp.32 = getv ? :_sensorManager;
+        symbol [ accelBuffer %tmp.33 85 39 50 ];
+        %tmp.33 = getv %tmp.32 :accelBuffer;
+        symbol [ getLast %tmp.34 85 51 58 ];
+        %tmp.34 = getv function %tmp.33 :getLast;
+        %tmp.35 = invoke %tmp.33 %tmp.34();
+        %tmp.36 = as %tmp.35 SensorEntry or Null;
+        symbol [ SensorEntry %tmp.36 85 64 75 ];
+        lputv %accelLast.4 %tmp.36;
+        symbol [ accelLast %accelLast.4 85 12 21 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 86 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_stop" ]
+        %ax.5 = local;
+        symbol [ ax %ax.5 86 12 14 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_86_17_86_70_begin:
+        %tmp.37 = lgetv %accelLast.4;
+        symbol [ accelLast %tmp.37 86 17 26 ];
+        %tmp.38 = null;
+        %tmp.39 = ne %tmp.37 %tmp.38;
+        bf %tmp.39 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_86_17_86_70_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_86_17_86_70_true:
+        %tmp.40 = lgetv %accelLast.4;
+        symbol [ accelLast %tmp.40 86 37 46 ];
+        %tmp.41 = as %tmp.40 { (!Null) };
+        symbol [ values %tmp.42 86 47 53 ];
+        %tmp.42 = getv %tmp.41 :values;
+        %tmp.43 = 0;
+        %tmp.44 = agetv %tmp.42 %tmp.43;
+        symbol [ toString %tmp.45 86 57 65 ];
+        %tmp.45 = getv function %tmp.44 :toString;
+        %tmp.46 = invoke %tmp.44 %tmp.45();
+        push %tmp.46;
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_86_17_86_70_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_86_17_86_70_else_false:
+        %tmp.47 = "---";
+        push %tmp.47;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_86_17_86_70_end:
+        %tmp.48 = phi [%tmp.39 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_86_17_86_70_begin] [%tmp.46 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_86_17_86_70_true] [%tmp.47 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_86_17_86_70_else_false] [%tmp.48 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_86_17_86_70_end];
+        lputv %ax.5 %tmp.48;
+        symbol [ ax %ax.5 86 12 14 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 87 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_stop" ]
+        %ay.6 = local;
+        symbol [ ay %ay.6 87 12 14 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_87_17_87_70_begin:
+        %tmp.49 = lgetv %accelLast.4;
+        symbol [ accelLast %tmp.49 87 17 26 ];
+        %tmp.50 = null;
+        %tmp.51 = ne %tmp.49 %tmp.50;
+        bf %tmp.51 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_87_17_87_70_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_87_17_87_70_true:
+        %tmp.52 = lgetv %accelLast.4;
+        symbol [ accelLast %tmp.52 87 37 46 ];
+        %tmp.53 = as %tmp.52 { (!Null) };
+        symbol [ values %tmp.54 87 47 53 ];
+        %tmp.54 = getv %tmp.53 :values;
+        %tmp.55 = 1;
+        %tmp.56 = agetv %tmp.54 %tmp.55;
+        symbol [ toString %tmp.57 87 57 65 ];
+        %tmp.57 = getv function %tmp.56 :toString;
+        %tmp.58 = invoke %tmp.56 %tmp.57();
+        push %tmp.58;
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_87_17_87_70_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_87_17_87_70_else_false:
+        %tmp.59 = "---";
+        push %tmp.59;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_87_17_87_70_end:
+        %tmp.60 = phi [%tmp.51 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_87_17_87_70_begin] [%tmp.58 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_87_17_87_70_true] [%tmp.59 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_87_17_87_70_else_false] [%tmp.60 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_87_17_87_70_end];
+        lputv %ay.6 %tmp.60;
+        symbol [ ay %ay.6 87 12 14 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 88 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_stop" ]
+        %az.7 = local;
+        symbol [ az %az.7 88 12 14 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_88_17_88_70_begin:
+        %tmp.61 = lgetv %accelLast.4;
+        symbol [ accelLast %tmp.61 88 17 26 ];
+        %tmp.62 = null;
+        %tmp.63 = ne %tmp.61 %tmp.62;
+        bf %tmp.63 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_88_17_88_70_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_88_17_88_70_true:
+        %tmp.64 = lgetv %accelLast.4;
+        symbol [ accelLast %tmp.64 88 37 46 ];
+        %tmp.65 = as %tmp.64 { (!Null) };
+        symbol [ values %tmp.66 88 47 53 ];
+        %tmp.66 = getv %tmp.65 :values;
+        %tmp.67 = 2;
+        %tmp.68 = agetv %tmp.66 %tmp.67;
+        symbol [ toString %tmp.69 88 57 65 ];
+        %tmp.69 = getv function %tmp.68 :toString;
+        %tmp.70 = invoke %tmp.68 %tmp.69();
+        push %tmp.70;
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_88_17_88_70_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_88_17_88_70_else_false:
+        %tmp.71 = "---";
+        push %tmp.71;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_88_17_88_70_end:
+        %tmp.72 = phi [%tmp.63 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_88_17_88_70_begin] [%tmp.70 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_88_17_88_70_true] [%tmp.71 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_88_17_88_70_else_false] [%tmp.72 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_88_17_88_70_end];
+        lputv %az.7 %tmp.72;
+        symbol [ az %az.7 88 12 14 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 90 8 ]
+        %tmp.73 = lgetv %dc;
+        symbol [ dc %tmp.73 90 8 10 ];
+        symbol [ drawText %tmp.74 90 11 19 ];
+        %tmp.74 = getv function %tmp.73 :drawText;
+        %tmp.75 = lgetv %cx.3;
+        symbol [ cx %tmp.75 90 20 22 ];
+        %tmp.76 = 35;
+        symbol [ Graphics %tmp.77 90 28 36 ];
+        %tmp.77 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.78 90 37 46 ];
+        %tmp.78 = getv %tmp.77 :FONT_TINY;
+        %tmp.79 = "ACCEL (mg)";
+        symbol [ Graphics %tmp.80 90 62 70 ];
+        %tmp.80 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.81 90 71 90 ];
+        %tmp.81 = getv %tmp.80 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.73 %tmp.74(%tmp.75, %tmp.76, %tmp.78, %tmp.79, %tmp.81);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 91 8 ]
+        %tmp.82 = lgetv %dc;
+        symbol [ dc %tmp.82 91 8 10 ];
+        symbol [ drawText %tmp.83 91 11 19 ];
+        %tmp.83 = getv function %tmp.82 :drawText;
+        %tmp.84 = lgetv %cx.3;
+        symbol [ cx %tmp.84 91 20 22 ];
+        %tmp.85 = 52;
+        symbol [ Graphics %tmp.86 91 28 36 ];
+        %tmp.86 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.87 91 37 46 ];
+        %tmp.87 = getv %tmp.86 :FONT_TINY;
+        %tmp.88 = "X:";
+        %tmp.89 = lgetv %ax.5;
+        symbol [ ax %tmp.89 91 55 57 ];
+        %tmp.90 = add %tmp.88 %tmp.89;
+        %tmp.91 = " Y:";
+        %tmp.92 = add %tmp.90 %tmp.91;
+        %tmp.93 = lgetv %ay.6;
+        symbol [ ay %tmp.93 91 68 70 ];
+        %tmp.94 = add %tmp.92 %tmp.93;
+        %tmp.95 = " Z:";
+        %tmp.96 = add %tmp.94 %tmp.95;
+        %tmp.97 = lgetv %az.7;
+        symbol [ az %tmp.97 91 81 83 ];
+        %tmp.98 = add %tmp.96 %tmp.97;
+        symbol [ Graphics %tmp.99 91 85 93 ];
+        %tmp.99 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.100 91 94 113 ];
+        %tmp.100 = getv %tmp.99 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.82 %tmp.83(%tmp.84, %tmp.85, %tmp.87, %tmp.98, %tmp.100);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 94 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_stop" ]
+        %gyroLabel.8 = local;
+        symbol [ gyroLabel %gyroLabel.8 94 12 21 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_94_24_94_70_begin:
+        symbol [ _sensorManager %tmp.102 94 24 38 ];
+        %tmp.102 = getv ? :_sensorManager;
+        symbol [ gyroAvailable %tmp.103 94 39 52 ];
+        %tmp.103 = getv %tmp.102 :gyroAvailable;
+        bf %tmp.103 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_94_24_94_70_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_94_24_94_70_true:
+        %tmp.104 = "GYRO (°/s)";
+        push %tmp.104;
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_94_24_94_70_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_94_24_94_70_else_false:
+        %tmp.105 = "GYRO N/A";
+        push %tmp.105;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_94_24_94_70_end:
+        %tmp.106 = phi [%tmp.103 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_94_24_94_70_begin] [%tmp.104 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_94_24_94_70_true] [%tmp.105 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_94_24_94_70_else_false] [%tmp.106 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_94_24_94_70_end];
+        lputv %gyroLabel.8 %tmp.106;
+        symbol [ gyroLabel %gyroLabel.8 94 12 21 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 95 8 ]
+        %tmp.107 = lgetv %dc;
+        symbol [ dc %tmp.107 95 8 10 ];
+        symbol [ drawText %tmp.108 95 11 19 ];
+        %tmp.108 = getv function %tmp.107 :drawText;
+        %tmp.109 = lgetv %cx.3;
+        symbol [ cx %tmp.109 95 20 22 ];
+        %tmp.110 = 75;
+        symbol [ Graphics %tmp.111 95 28 36 ];
+        %tmp.111 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.112 95 37 46 ];
+        %tmp.112 = getv %tmp.111 :FONT_TINY;
+        %tmp.113 = lgetv %gyroLabel.8;
+        symbol [ gyroLabel %tmp.113 95 48 57 ];
+        symbol [ Graphics %tmp.114 95 59 67 ];
+        %tmp.114 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.115 95 68 87 ];
+        %tmp.115 = getv %tmp.114 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.107 %tmp.108(%tmp.109, %tmp.110, %tmp.112, %tmp.113, %tmp.115);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 97 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_8_107_8_if_stmt:
+        symbol [ _sensorManager %tmp.117 97 12 26 ];
+        %tmp.117 = getv ? :_sensorManager;
+        symbol [ gyroAvailable %tmp.118 97 27 40 ];
+        %tmp.118 = getv %tmp.117 :gyroAvailable;
+        bf %tmp.118 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_8_107_8_if_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_8_107_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_42_103_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 98 12 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_42_103_8_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_42_103_8_stop" ]
+        %gyroLast.9 = local;
+        symbol [ gyroLast %gyroLast.9 98 16 24 ];
+        symbol [ _sensorManager %tmp.120 98 27 41 ];
+        %tmp.120 = getv ? :_sensorManager;
+        symbol [ gyroBuffer %tmp.121 98 42 52 ];
+        %tmp.121 = getv %tmp.120 :gyroBuffer;
+        symbol [ getLast %tmp.122 98 53 60 ];
+        %tmp.122 = getv function %tmp.121 :getLast;
+        %tmp.123 = invoke %tmp.121 %tmp.122();
+        %tmp.124 = as %tmp.123 SensorEntry or Null;
+        symbol [ SensorEntry %tmp.124 98 66 77 ];
+        lputv %gyroLast.9 %tmp.124;
+        symbol [ gyroLast %gyroLast.9 98 16 24 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 99 12 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_42_103_8_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_42_103_8_stop" ]
+        %gx.10 = local;
+        symbol [ gx %gx.10 99 16 18 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_99_21_99_72_begin:
+        %tmp.125 = lgetv %gyroLast.9;
+        symbol [ gyroLast %tmp.125 99 21 29 ];
+        %tmp.126 = null;
+        %tmp.127 = ne %tmp.125 %tmp.126;
+        bf %tmp.127 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_99_21_99_72_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_99_21_99_72_true:
+        %tmp.128 = lgetv %gyroLast.9;
+        symbol [ gyroLast %tmp.128 99 40 48 ];
+        %tmp.129 = as %tmp.128 { (!Null) };
+        symbol [ values %tmp.130 99 49 55 ];
+        %tmp.130 = getv %tmp.129 :values;
+        %tmp.131 = 0;
+        %tmp.132 = agetv %tmp.130 %tmp.131;
+        symbol [ toString %tmp.133 99 59 67 ];
+        %tmp.133 = getv function %tmp.132 :toString;
+        %tmp.134 = invoke %tmp.132 %tmp.133();
+        push %tmp.134;
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_99_21_99_72_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_99_21_99_72_else_false:
+        %tmp.135 = "---";
+        push %tmp.135;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_99_21_99_72_end:
+        %tmp.136 = phi [%tmp.127 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_99_21_99_72_begin] [%tmp.134 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_99_21_99_72_true] [%tmp.135 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_99_21_99_72_else_false] [%tmp.136 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_99_21_99_72_end];
+        lputv %gx.10 %tmp.136;
+        symbol [ gx %gx.10 99 16 18 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 100 12 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_42_103_8_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_42_103_8_stop" ]
+        %gy.11 = local;
+        symbol [ gy %gy.11 100 16 18 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_100_21_100_72_begin:
+        %tmp.137 = lgetv %gyroLast.9;
+        symbol [ gyroLast %tmp.137 100 21 29 ];
+        %tmp.138 = null;
+        %tmp.139 = ne %tmp.137 %tmp.138;
+        bf %tmp.139 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_100_21_100_72_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_100_21_100_72_true:
+        %tmp.140 = lgetv %gyroLast.9;
+        symbol [ gyroLast %tmp.140 100 40 48 ];
+        %tmp.141 = as %tmp.140 { (!Null) };
+        symbol [ values %tmp.142 100 49 55 ];
+        %tmp.142 = getv %tmp.141 :values;
+        %tmp.143 = 1;
+        %tmp.144 = agetv %tmp.142 %tmp.143;
+        symbol [ toString %tmp.145 100 59 67 ];
+        %tmp.145 = getv function %tmp.144 :toString;
+        %tmp.146 = invoke %tmp.144 %tmp.145();
+        push %tmp.146;
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_100_21_100_72_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_100_21_100_72_else_false:
+        %tmp.147 = "---";
+        push %tmp.147;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_100_21_100_72_end:
+        %tmp.148 = phi [%tmp.139 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_100_21_100_72_begin] [%tmp.146 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_100_21_100_72_true] [%tmp.147 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_100_21_100_72_else_false] [%tmp.148 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_100_21_100_72_end];
+        lputv %gy.11 %tmp.148;
+        symbol [ gy %gy.11 100 16 18 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 101 12 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_42_103_8_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_42_103_8_stop" ]
+        %gz.12 = local;
+        symbol [ gz %gz.12 101 16 18 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_101_21_101_72_begin:
+        %tmp.149 = lgetv %gyroLast.9;
+        symbol [ gyroLast %tmp.149 101 21 29 ];
+        %tmp.150 = null;
+        %tmp.151 = ne %tmp.149 %tmp.150;
+        bf %tmp.151 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_101_21_101_72_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_101_21_101_72_true:
+        %tmp.152 = lgetv %gyroLast.9;
+        symbol [ gyroLast %tmp.152 101 40 48 ];
+        %tmp.153 = as %tmp.152 { (!Null) };
+        symbol [ values %tmp.154 101 49 55 ];
+        %tmp.154 = getv %tmp.153 :values;
+        %tmp.155 = 2;
+        %tmp.156 = agetv %tmp.154 %tmp.155;
+        symbol [ toString %tmp.157 101 59 67 ];
+        %tmp.157 = getv function %tmp.156 :toString;
+        %tmp.158 = invoke %tmp.156 %tmp.157();
+        push %tmp.158;
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_101_21_101_72_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_101_21_101_72_else_false:
+        %tmp.159 = "---";
+        push %tmp.159;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_101_21_101_72_end:
+        %tmp.160 = phi [%tmp.151 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_101_21_101_72_begin] [%tmp.158 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_101_21_101_72_true] [%tmp.159 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_101_21_101_72_else_false] [%tmp.160 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_101_21_101_72_end];
+        lputv %gz.12 %tmp.160;
+        symbol [ gz %gz.12 101 16 18 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 102 12 ]
+        %tmp.161 = lgetv %dc;
+        symbol [ dc %tmp.161 102 12 14 ];
+        symbol [ drawText %tmp.162 102 15 23 ];
+        %tmp.162 = getv function %tmp.161 :drawText;
+        %tmp.163 = lgetv %cx.3;
+        symbol [ cx %tmp.163 102 24 26 ];
+        %tmp.164 = 90;
+        symbol [ Graphics %tmp.165 102 32 40 ];
+        %tmp.165 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.166 102 41 50 ];
+        %tmp.166 = getv %tmp.165 :FONT_TINY;
+        %tmp.167 = "X:";
+        %tmp.168 = lgetv %gx.10;
+        symbol [ gx %tmp.168 102 59 61 ];
+        %tmp.169 = add %tmp.167 %tmp.168;
+        %tmp.170 = " Y:";
+        %tmp.171 = add %tmp.169 %tmp.170;
+        %tmp.172 = lgetv %gy.11;
+        symbol [ gy %tmp.172 102 72 74 ];
+        %tmp.173 = add %tmp.171 %tmp.172;
+        %tmp.174 = " Z:";
+        %tmp.175 = add %tmp.173 %tmp.174;
+        %tmp.176 = lgetv %gz.12;
+        symbol [ gz %tmp.176 102 85 87 ];
+        %tmp.177 = add %tmp.175 %tmp.176;
+        symbol [ Graphics %tmp.178 102 89 97 ];
+        %tmp.178 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.179 102 98 117 ];
+        %tmp.179 = getv %tmp.178 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.161 %tmp.162(%tmp.163, %tmp.164, %tmp.166, %tmp.177, %tmp.179);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_42_103_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_8_107_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_8_107_8_if_else_false:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_103_15_107_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 104 12 ]
+        %tmp.180 = lgetv %dc;
+        symbol [ dc %tmp.180 104 12 14 ];
+        symbol [ setColor %tmp.181 104 15 23 ];
+        %tmp.181 = getv function %tmp.180 :setColor;
+        symbol [ Graphics %tmp.182 104 24 32 ];
+        %tmp.182 = getm $.Toybox.Graphics;
+        symbol [ COLOR_LT_GRAY %tmp.183 104 33 46 ];
+        %tmp.183 = getv %tmp.182 :COLOR_LT_GRAY;
+        symbol [ Graphics %tmp.184 104 48 56 ];
+        %tmp.184 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.185 104 57 74 ];
+        %tmp.185 = getv %tmp.184 :COLOR_TRANSPARENT;
+        invoke %tmp.180 %tmp.181(%tmp.183, %tmp.185);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 105 12 ]
+        %tmp.186 = lgetv %dc;
+        symbol [ dc %tmp.186 105 12 14 ];
+        symbol [ drawText %tmp.187 105 15 23 ];
+        %tmp.187 = getv function %tmp.186 :drawText;
+        %tmp.188 = lgetv %cx.3;
+        symbol [ cx %tmp.188 105 24 26 ];
+        %tmp.189 = 90;
+        symbol [ Graphics %tmp.190 105 32 40 ];
+        %tmp.190 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.191 105 41 50 ];
+        %tmp.191 = getv %tmp.190 :FONT_TINY;
+        %tmp.192 = "N/A";
+        symbol [ Graphics %tmp.193 105 59 67 ];
+        %tmp.193 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.194 105 68 87 ];
+        %tmp.194 = getv %tmp.193 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.186 %tmp.187(%tmp.188, %tmp.189, %tmp.191, %tmp.192, %tmp.194);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 106 12 ]
+        %tmp.195 = lgetv %dc;
+        symbol [ dc %tmp.195 106 12 14 ];
+        symbol [ setColor %tmp.196 106 15 23 ];
+        %tmp.196 = getv function %tmp.195 :setColor;
+        symbol [ Graphics %tmp.197 106 24 32 ];
+        %tmp.197 = getm $.Toybox.Graphics;
+        symbol [ COLOR_WHITE %tmp.198 106 33 44 ];
+        %tmp.198 = getv %tmp.197 :COLOR_WHITE;
+        symbol [ Graphics %tmp.199 106 46 54 ];
+        %tmp.199 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.200 106 55 72 ];
+        %tmp.200 = getv %tmp.199 :COLOR_TRANSPARENT;
+        invoke %tmp.195 %tmp.196(%tmp.198, %tmp.200);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_103_15_107_8_stop:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_97_8_107_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 110 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_stop" ]
+        %hrLast.13 = local;
+        symbol [ hrLast %hrLast.13 110 12 18 ];
+        symbol [ _sensorManager %tmp.202 110 21 35 ];
+        %tmp.202 = getv ? :_sensorManager;
+        symbol [ hrBuffer %tmp.203 110 36 44 ];
+        %tmp.203 = getv %tmp.202 :hrBuffer;
+        symbol [ getLast %tmp.204 110 45 52 ];
+        %tmp.204 = getv function %tmp.203 :getLast;
+        %tmp.205 = invoke %tmp.203 %tmp.204();
+        %tmp.206 = as %tmp.205 SensorEntry or Null;
+        symbol [ SensorEntry %tmp.206 110 58 69 ];
+        lputv %hrLast.13 %tmp.206;
+        symbol [ hrLast %hrLast.13 110 12 18 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 111 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_stop" ]
+        %hr.14 = local;
+        symbol [ hr %hr.14 111 12 14 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_111_17_111_73_begin:
+        %tmp.207 = lgetv %hrLast.13;
+        symbol [ hrLast %tmp.207 111 17 23 ];
+        %tmp.208 = null;
+        %tmp.209 = ne %tmp.207 %tmp.208;
+        bf %tmp.209 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_111_17_111_73_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_111_17_111_73_true:
+        %tmp.210 = lgetv %hrLast.13;
+        symbol [ hrLast %tmp.210 111 34 40 ];
+        %tmp.211 = as %tmp.210 { (!Null) };
+        symbol [ values %tmp.212 111 41 47 ];
+        %tmp.212 = getv %tmp.211 :values;
+        %tmp.213 = 0;
+        %tmp.214 = agetv %tmp.212 %tmp.213;
+        symbol [ toString %tmp.215 111 51 59 ];
+        %tmp.215 = getv function %tmp.214 :toString;
+        %tmp.216 = invoke %tmp.214 %tmp.215();
+        %tmp.217 = " bpm";
+        %tmp.218 = add %tmp.216 %tmp.217;
+        push %tmp.218;
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_111_17_111_73_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_111_17_111_73_else_false:
+        %tmp.219 = "--- bpm";
+        push %tmp.219;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_111_17_111_73_end:
+        %tmp.220 = phi [%tmp.209 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_111_17_111_73_begin] [%tmp.218 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_111_17_111_73_true] [%tmp.219 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_111_17_111_73_else_false] [%tmp.220 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_111_17_111_73_end];
+        lputv %hr.14 %tmp.220;
+        symbol [ hr %hr.14 111 12 14 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 112 8 ]
+        %tmp.221 = lgetv %dc;
+        symbol [ dc %tmp.221 112 8 10 ];
+        symbol [ drawText %tmp.222 112 11 19 ];
+        %tmp.222 = getv function %tmp.221 :drawText;
+        %tmp.223 = lgetv %cx.3;
+        symbol [ cx %tmp.223 112 20 22 ];
+        %tmp.224 = 115;
+        symbol [ Graphics %tmp.225 112 29 37 ];
+        %tmp.225 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.226 112 38 47 ];
+        %tmp.226 = getv %tmp.225 :FONT_TINY;
+        %tmp.227 = "HR";
+        symbol [ Graphics %tmp.228 112 55 63 ];
+        %tmp.228 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.229 112 64 83 ];
+        %tmp.229 = getv %tmp.228 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.221 %tmp.222(%tmp.223, %tmp.224, %tmp.226, %tmp.227, %tmp.229);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 113 8 ]
+        %tmp.230 = lgetv %dc;
+        symbol [ dc %tmp.230 113 8 10 ];
+        symbol [ drawText %tmp.231 113 11 19 ];
+        %tmp.231 = getv function %tmp.230 :drawText;
+        %tmp.232 = lgetv %cx.3;
+        symbol [ cx %tmp.232 113 20 22 ];
+        %tmp.233 = 130;
+        symbol [ Graphics %tmp.234 113 29 37 ];
+        %tmp.234 = getm $.Toybox.Graphics;
+        symbol [ FONT_SMALL %tmp.235 113 38 48 ];
+        %tmp.235 = getv %tmp.234 :FONT_SMALL;
+        %tmp.236 = lgetv %hr.14;
+        symbol [ hr %tmp.236 113 50 52 ];
+        symbol [ Graphics %tmp.237 113 54 62 ];
+        %tmp.237 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.238 113 63 82 ];
+        %tmp.238 = getv %tmp.237 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.230 %tmp.231(%tmp.232, %tmp.233, %tmp.235, %tmp.236, %tmp.238);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_74_57_114_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 119; @symbol_functiondef = [_drawMetrics,119,21,33]; @symbol_param<0> = [dc,119,34,36]; @symbol_param<0>_type<0> = [Graphics,119,40,48]; @symbol_param<0>_type<1> = [Dc,119,49,51]; ]
+    private
+    function _drawMetrics(dc as Graphics.Dc) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_119_61_134_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 120 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_119_61_134_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_119_61_134_4_stop" ]
+        %w.1 = local;
+        symbol [ w %w.1 120 12 13 ];
+        %tmp.1 = lgetv %dc;
+        symbol [ dc %tmp.1 120 17 19 ];
+        symbol [ getWidth %tmp.2 120 20 28 ];
+        %tmp.2 = getv function %tmp.1 :getWidth;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %w.1 %tmp.3;
+        symbol [ w %w.1 120 12 13 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 121 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_119_61_134_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_119_61_134_4_stop" ]
+        %h.2 = local;
+        symbol [ h %h.2 121 12 13 ];
+        %tmp.4 = lgetv %dc;
+        symbol [ dc %tmp.4 121 17 19 ];
+        symbol [ getHeight %tmp.5 121 20 29 ];
+        %tmp.5 = getv function %tmp.4 :getHeight;
+        %tmp.6 = invoke %tmp.4 %tmp.5();
+        lputv %h.2 %tmp.6;
+        symbol [ h %h.2 121 12 13 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 122 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_119_61_134_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_119_61_134_4_stop" ]
+        %cx.3 = local;
+        symbol [ cx %cx.3 122 12 14 ];
+        %tmp.7 = lgetv %w.1;
+        symbol [ w %tmp.7 122 17 18 ];
+        %tmp.8 = 2;
+        %tmp.9 = div %tmp.7 %tmp.8;
+        lputv %cx.3 %tmp.9;
+        symbol [ cx %cx.3 122 12 14 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 125 8 ]
+        %tmp.10 = lgetv %dc;
+        symbol [ dc %tmp.10 125 8 10 ];
+        symbol [ setColor %tmp.11 125 11 19 ];
+        %tmp.11 = getv function %tmp.10 :setColor;
+        symbol [ Graphics %tmp.12 125 20 28 ];
+        %tmp.12 = getm $.Toybox.Graphics;
+        symbol [ COLOR_GREEN %tmp.13 125 29 40 ];
+        %tmp.13 = getv %tmp.12 :COLOR_GREEN;
+        symbol [ Graphics %tmp.14 125 42 50 ];
+        %tmp.14 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.15 125 51 68 ];
+        %tmp.15 = getv %tmp.14 :COLOR_TRANSPARENT;
+        invoke %tmp.10 %tmp.11(%tmp.13, %tmp.15);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 126 8 ]
+        %tmp.16 = lgetv %dc;
+        symbol [ dc %tmp.16 126 8 10 ];
+        symbol [ drawText %tmp.17 126 11 19 ];
+        %tmp.17 = getv function %tmp.16 :drawText;
+        %tmp.18 = lgetv %cx.3;
+        symbol [ cx %tmp.18 126 20 22 ];
+        %tmp.19 = 10;
+        symbol [ Graphics %tmp.20 126 28 36 ];
+        %tmp.20 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.21 126 37 46 ];
+        %tmp.21 = getv %tmp.20 :FONT_TINY;
+        %tmp.22 = "METRICS";
+        symbol [ Graphics %tmp.23 126 59 67 ];
+        %tmp.23 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.24 126 68 87 ];
+        %tmp.24 = getv %tmp.23 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.16 %tmp.17(%tmp.18, %tmp.19, %tmp.21, %tmp.22, %tmp.24);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 127 8 ]
+        %tmp.25 = lgetv %dc;
+        symbol [ dc %tmp.25 127 8 10 ];
+        symbol [ setColor %tmp.26 127 11 19 ];
+        %tmp.26 = getv function %tmp.25 :setColor;
+        symbol [ Graphics %tmp.27 127 20 28 ];
+        %tmp.27 = getm $.Toybox.Graphics;
+        symbol [ COLOR_WHITE %tmp.28 127 29 40 ];
+        %tmp.28 = getv %tmp.27 :COLOR_WHITE;
+        symbol [ Graphics %tmp.29 127 42 50 ];
+        %tmp.29 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.30 127 51 68 ];
+        %tmp.30 = getv %tmp.29 :COLOR_TRANSPARENT;
+        invoke %tmp.25 %tmp.26(%tmp.28, %tmp.30);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 129 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_129_8_133_8_if_stmt:
+        symbol [ _activityType %tmp.32 129 12 25 ];
+        %tmp.32 = getv ? :_activityType;
+        symbol [ SensorManager %tmp.34 129 29 42 ];
+        %tmp.34 = getv ? :SensorManager;
+        symbol [ ACTIVITY_RUNNING %tmp.35 129 43 59 ];
+        %tmp.35 = getv %tmp.34 :ACTIVITY_RUNNING;
+        %tmp.36 = eq %tmp.32 %tmp.35;
+        bf %tmp.36 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_129_8_133_8_if_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_129_8_133_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_129_61_131_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 130 12 ]
+        %tmp.37 = self;
+        symbol [ _drawRunningMetrics %tmp.38 130 12 31 ];
+        %tmp.38 = getv function %tmp.37 :_drawRunningMetrics;
+        %tmp.39 = lgetv %dc;
+        symbol [ dc %tmp.39 130 32 34 ];
+        %tmp.40 = lgetv %cx.3;
+        symbol [ cx %tmp.40 130 36 38 ];
+        invoke %tmp.37 %tmp.38(%tmp.39, %tmp.40);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_129_61_131_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_129_8_133_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_129_8_133_8_if_else_false:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_131_15_133_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 132 12 ]
+        %tmp.41 = self;
+        symbol [ _drawSwimmingMetrics %tmp.42 132 12 32 ];
+        %tmp.42 = getv function %tmp.41 :_drawSwimmingMetrics;
+        %tmp.43 = lgetv %dc;
+        symbol [ dc %tmp.43 132 33 35 ];
+        %tmp.44 = lgetv %cx.3;
+        symbol [ cx %tmp.44 132 37 39 ];
+        invoke %tmp.41 %tmp.42(%tmp.43, %tmp.44);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_131_15_133_8_stop:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_129_8_133_8_if_end:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_119_61_134_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 136; @symbol_functiondef = [_drawRunningMetrics,136,21,40]; @symbol_param<0> = [dc,136,41,43]; @symbol_param<0>_type<0> = [Graphics,136,47,55]; @symbol_param<0>_type<1> = [Dc,136,56,58]; @symbol_param<1> = [cx,136,60,62]; @symbol_param<1>_type<0> = [Number,136,66,72]; ]
+    private
+    function _drawRunningMetrics(dc as Graphics.Dc, cx as Number) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_136_82_151_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 137 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_136_82_151_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_136_82_151_4_stop" ]
+        %actInfo.1 = local;
+        symbol [ actInfo %actInfo.1 137 12 19 ];
+        symbol [ Activity %tmp.1 137 23 31 ];
+        %tmp.1 = getm $.Toybox.Activity;
+        symbol [ getActivityInfo %tmp.2 137 32 47 ];
+        %tmp.2 = getv function %tmp.1 :getActivityInfo;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %actInfo.1 %tmp.3;
+        symbol [ actInfo %actInfo.1 137 12 19 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 138 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_136_82_151_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_136_82_151_4_stop" ]
+        %gpsSpeed.2 = local;
+        symbol [ gpsSpeed %gpsSpeed.2 138 12 20 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_23_140_25_begin:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_24_138_67_begin:
+        %tmp.4 = lgetv %actInfo.1;
+        symbol [ actInfo %tmp.4 138 24 31 ];
+        %tmp.5 = null;
+        %tmp.6 = ne %tmp.4 %tmp.5;
+        bf %tmp.6 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_23_140_25_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_43_138_67_true:
+        %tmp.7 = lgetv %actInfo.1;
+        symbol [ actInfo %tmp.7 138 43 50 ];
+        %tmp.8 = as %tmp.7 { (!Null) };
+        symbol [ currentSpeed %tmp.9 138 51 63 ];
+        %tmp.9 = getv %tmp.8 :currentSpeed;
+        %tmp.10 = null;
+        %tmp.11 = ne %tmp.9 %tmp.10;
+        push %tmp.11;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_43_138_67_end:
+        %tmp.12 = phi [%tmp.6 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_24_138_67_begin] [%tmp.11 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_43_138_67_true] [%tmp.12 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_43_138_67_end];
+        bf %tmp.12 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_23_140_25_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_23_140_25_true:
+        %tmp.13 = lgetv %actInfo.1;
+        symbol [ actInfo %tmp.13 139 25 32 ];
+        %tmp.14 = as %tmp.13 { (!Null) };
+        symbol [ currentSpeed %tmp.15 139 33 45 ];
+        %tmp.15 = getv %tmp.14 :currentSpeed;
+        symbol [ toFloat %tmp.16 139 46 53 ];
+        %tmp.16 = getv function %tmp.15 :toFloat;
+        %tmp.17 = invoke %tmp.15 %tmp.16();
+        push %tmp.17;
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_23_140_25_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_23_140_25_else_false:
+        %tmp.18 = null;
+        push %tmp.18;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_23_140_25_end:
+        %tmp.19 = phi [%tmp.12 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_23_140_25_begin] [%tmp.17 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_23_140_25_true] [%tmp.18 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_23_140_25_else_false] [%tmp.19 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_138_23_140_25_end];
+        lputv %gpsSpeed.2 %tmp.19;
+        symbol [ gpsSpeed %gpsSpeed.2 138 12 20 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 141 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_136_82_151_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_136_82_151_4_stop" ]
+        %heightCm.3 = local;
+        symbol [ heightCm %heightCm.3 141 12 20 ];
+        symbol [ _userProfile %tmp.21 141 23 35 ];
+        %tmp.21 = getv ? :_userProfile;
+        symbol [ getHeight %tmp.22 141 36 45 ];
+        %tmp.22 = getv function %tmp.21 :getHeight;
+        %tmp.23 = invoke %tmp.21 %tmp.22();
+        lputv %heightCm.3 %tmp.23;
+        symbol [ heightCm %heightCm.3 141 12 20 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 143 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_136_82_151_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_136_82_151_4_stop" ]
+        %r.4 = local;
+        symbol [ r %r.4 143 12 13 ];
+        symbol [ RunningMetrics %tmp.25 143 16 30 ];
+        %tmp.25 = getv ? :RunningMetrics;
+        symbol [ calculate %tmp.26 143 31 40 ];
+        %tmp.26 = getv function %tmp.25 :calculate;
+        symbol [ _sensorManager %tmp.28 143 41 55 ];
+        %tmp.28 = getv ? :_sensorManager;
+        symbol [ accelBuffer %tmp.29 143 56 67 ];
+        %tmp.29 = getv %tmp.28 :accelBuffer;
+        %tmp.30 = lgetv %gpsSpeed.2;
+        symbol [ gpsSpeed %tmp.30 143 69 77 ];
+        %tmp.31 = lgetv %heightCm.3;
+        symbol [ heightCm %tmp.31 143 79 87 ];
+        %tmp.32 = invoke %tmp.25 %tmp.26(%tmp.29, %tmp.30, %tmp.31);
+        lputv %r.4 %tmp.32;
+        symbol [ r %r.4 143 12 13 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 145 8 ]
+        %tmp.33 = self;
+        symbol [ _drawMetricRow %tmp.34 145 8 22 ];
+        %tmp.34 = getv function %tmp.33 :_drawMetricRow;
+        %tmp.35 = lgetv %dc;
+        symbol [ dc %tmp.35 145 23 25 ];
+        %tmp.36 = lgetv %cx;
+        symbol [ cx %tmp.36 145 27 29 ];
+        %tmp.37 = 40;
+        %tmp.38 = "CADENCE";
+        %tmp.39 = lgetv %r.4;
+        symbol [ r %tmp.39 145 48 49 ];
+        symbol [ cadence %tmp.40 145 50 57 ];
+        %tmp.40 = getv %tmp.39 :cadence;
+        %tmp.41 = "spm";
+        %tmp.42 = 1;
+        invoke %tmp.33 %tmp.34(%tmp.35, %tmp.36, %tmp.37, %tmp.38, %tmp.40, %tmp.41, %tmp.42);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 146 8 ]
+        %tmp.43 = self;
+        symbol [ _drawMetricRow %tmp.44 146 8 22 ];
+        %tmp.44 = getv function %tmp.43 :_drawMetricRow;
+        %tmp.45 = lgetv %dc;
+        symbol [ dc %tmp.45 146 23 25 ];
+        %tmp.46 = lgetv %cx;
+        symbol [ cx %tmp.46 146 27 29 ];
+        %tmp.47 = 75;
+        %tmp.48 = "STRIDE";
+        %tmp.49 = lgetv %r.4;
+        symbol [ r %tmp.49 146 48 49 ];
+        symbol [ strideLength %tmp.50 146 50 62 ];
+        %tmp.50 = getv %tmp.49 :strideLength;
+        %tmp.51 = "m";
+        %tmp.52 = 2;
+        invoke %tmp.43 %tmp.44(%tmp.45, %tmp.46, %tmp.47, %tmp.48, %tmp.50, %tmp.51, %tmp.52);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 147 8 ]
+        %tmp.53 = self;
+        symbol [ _drawMetricRow %tmp.54 147 8 22 ];
+        %tmp.54 = getv function %tmp.53 :_drawMetricRow;
+        %tmp.55 = lgetv %dc;
+        symbol [ dc %tmp.55 147 23 25 ];
+        %tmp.56 = lgetv %cx;
+        symbol [ cx %tmp.56 147 27 29 ];
+        %tmp.57 = 110;
+        %tmp.58 = "VERT OSC";
+        %tmp.59 = lgetv %r.4;
+        symbol [ r %tmp.59 147 48 49 ];
+        symbol [ verticalOscillation %tmp.60 147 50 69 ];
+        %tmp.60 = getv %tmp.59 :verticalOscillation;
+        %tmp.61 = "mm";
+        %tmp.62 = 0;
+        invoke %tmp.53 %tmp.54(%tmp.55, %tmp.56, %tmp.57, %tmp.58, %tmp.60, %tmp.61, %tmp.62);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 148 8 ]
+        %tmp.63 = self;
+        symbol [ _drawMetricRow %tmp.64 148 8 22 ];
+        %tmp.64 = getv function %tmp.63 :_drawMetricRow;
+        %tmp.65 = lgetv %dc;
+        symbol [ dc %tmp.65 148 23 25 ];
+        %tmp.66 = lgetv %cx;
+        symbol [ cx %tmp.66 148 27 29 ];
+        %tmp.67 = 145;
+        %tmp.68 = "LAT OSC";
+        %tmp.69 = lgetv %r.4;
+        symbol [ r %tmp.69 148 48 49 ];
+        symbol [ lateralOscillation %tmp.70 148 50 68 ];
+        %tmp.70 = getv %tmp.69 :lateralOscillation;
+        %tmp.71 = "mm";
+        %tmp.72 = 0;
+        invoke %tmp.63 %tmp.64(%tmp.65, %tmp.66, %tmp.67, %tmp.68, %tmp.70, %tmp.71, %tmp.72);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 150 8 ]
+        %tmp.73 = self;
+        symbol [ _drawHrZone %tmp.74 150 8 19 ];
+        %tmp.74 = getv function %tmp.73 :_drawHrZone;
+        %tmp.75 = lgetv %dc;
+        symbol [ dc %tmp.75 150 20 22 ];
+        %tmp.76 = lgetv %cx;
+        symbol [ cx %tmp.76 150 24 26 ];
+        %tmp.77 = 180;
+        invoke %tmp.73 %tmp.74(%tmp.75, %tmp.76, %tmp.77);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_136_82_151_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 153; @symbol_functiondef = [_drawSwimmingMetrics,153,21,41]; @symbol_param<0> = [dc,153,42,44]; @symbol_param<0>_type<0> = [Graphics,153,48,56]; @symbol_param<0>_type<1> = [Dc,153,57,59]; @symbol_param<1> = [cx,153,61,63]; @symbol_param<1>_type<0> = [Number,153,67,73]; ]
+    private
+    function _drawSwimmingMetrics(dc as Graphics.Dc, cx as Number) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 154 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_stop" ]
+        %actInfo.1 = local;
+        symbol [ actInfo %actInfo.1 154 12 19 ];
+        symbol [ Activity %tmp.1 154 22 30 ];
+        %tmp.1 = getm $.Toybox.Activity;
+        symbol [ getActivityInfo %tmp.2 154 31 46 ];
+        %tmp.2 = getv function %tmp.1 :getActivityInfo;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %actInfo.1 %tmp.3;
+        symbol [ actInfo %actInfo.1 154 12 19 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 155 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_stop" ]
+        %totalDist.2 = local;
+        symbol [ totalDist %totalDist.2 155 12 21 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_24_157_26_begin:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_25_155_71_begin:
+        %tmp.4 = lgetv %actInfo.1;
+        symbol [ actInfo %tmp.4 155 25 32 ];
+        %tmp.5 = null;
+        %tmp.6 = ne %tmp.4 %tmp.5;
+        bf %tmp.6 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_24_157_26_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_44_155_71_true:
+        %tmp.7 = lgetv %actInfo.1;
+        symbol [ actInfo %tmp.7 155 44 51 ];
+        %tmp.8 = as %tmp.7 { (!Null) };
+        symbol [ elapsedDistance %tmp.9 155 52 67 ];
+        %tmp.9 = getv %tmp.8 :elapsedDistance;
+        %tmp.10 = null;
+        %tmp.11 = ne %tmp.9 %tmp.10;
+        push %tmp.11;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_44_155_71_end:
+        %tmp.12 = phi [%tmp.6 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_25_155_71_begin] [%tmp.11 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_44_155_71_true] [%tmp.12 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_44_155_71_end];
+        bf %tmp.12 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_24_157_26_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_24_157_26_true:
+        %tmp.13 = lgetv %actInfo.1;
+        symbol [ actInfo %tmp.13 156 26 33 ];
+        %tmp.14 = as %tmp.13 { (!Null) };
+        symbol [ elapsedDistance %tmp.15 156 34 49 ];
+        %tmp.15 = getv %tmp.14 :elapsedDistance;
+        symbol [ toFloat %tmp.16 156 50 57 ];
+        %tmp.16 = getv function %tmp.15 :toFloat;
+        %tmp.17 = invoke %tmp.15 %tmp.16();
+        push %tmp.17;
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_24_157_26_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_24_157_26_else_false:
+        %tmp.18 = null;
+        push %tmp.18;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_24_157_26_end:
+        %tmp.19 = phi [%tmp.12 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_24_157_26_begin] [%tmp.17 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_24_157_26_true] [%tmp.18 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_24_157_26_else_false] [%tmp.19 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_155_24_157_26_end];
+        lputv %totalDist.2 %tmp.19;
+        symbol [ totalDist %totalDist.2 155 12 21 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 158 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_stop" ]
+        %gpsAvail.3 = local;
+        symbol [ gpsAvail %gpsAvail.3 158 12 20 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_158_25_158_68_begin:
+        %tmp.20 = lgetv %actInfo.1;
+        symbol [ actInfo %tmp.20 158 25 32 ];
+        %tmp.21 = null;
+        %tmp.22 = ne %tmp.20 %tmp.21;
+        %tmp.23 = dup %tmp.22;
+        bf %tmp.23 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_158_44_158_68_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_158_44_158_68_true:
+        %tmp.24 = lgetv %actInfo.1;
+        symbol [ actInfo %tmp.24 158 44 51 ];
+        %tmp.25 = as %tmp.24 { (!Null) };
+        symbol [ currentSpeed %tmp.26 158 52 64 ];
+        %tmp.26 = getv %tmp.25 :currentSpeed;
+        %tmp.27 = null;
+        %tmp.28 = ne %tmp.26 %tmp.27;
+        %tmp.29 = and %tmp.22 %tmp.28;
+        push %tmp.29;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_158_44_158_68_end:
+        %tmp.30 = phi [%tmp.23 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_158_25_158_68_begin] [%tmp.29 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_158_44_158_68_true] [%tmp.30 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_158_44_158_68_end];
+        lputv %gpsAvail.3 %tmp.30;
+        symbol [ gpsAvail %gpsAvail.3 158 12 20 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 161 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_stop" ]
+        %swimResult.4 = local;
+        symbol [ swimResult %swimResult.4 161 12 22 ];
+        symbol [ SwimmingMetrics %tmp.32 161 25 40 ];
+        %tmp.32 = getv ? :SwimmingMetrics;
+        symbol [ calculate %tmp.33 161 41 50 ];
+        %tmp.33 = getv function %tmp.32 :calculate;
+        symbol [ _sensorManager %tmp.35 162 12 26 ];
+        %tmp.35 = getv ? :_sensorManager;
+        symbol [ accelBuffer %tmp.36 162 27 38 ];
+        %tmp.36 = getv %tmp.35 :accelBuffer;
+        %tmp.37 = lgetv %totalDist.2;
+        symbol [ totalDist %tmp.37 163 12 21 ];
+        symbol [ _strokeCount %tmp.39 164 12 24 ];
+        %tmp.39 = getv ? :_strokeCount;
+        symbol [ _poolLength %tmp.41 165 12 23 ];
+        %tmp.41 = getv ? :_poolLength;
+        symbol [ _lapCount %tmp.43 166 12 21 ];
+        %tmp.43 = getv ? :_lapCount;
+        %tmp.44 = lgetv %gpsAvail.3;
+        symbol [ gpsAvail %tmp.44 167 12 20 ];
+        %tmp.45 = invoke %tmp.32 %tmp.33(%tmp.36, %tmp.37, %tmp.39, %tmp.41, %tmp.43, %tmp.44);
+        lputv %swimResult.4 %tmp.45;
+        symbol [ swimResult %swimResult.4 161 12 22 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 170 8 ]
+        %tmp.46 = self;
+        symbol [ _drawMetricRow %tmp.47 170 8 22 ];
+        %tmp.47 = getv function %tmp.46 :_drawMetricRow;
+        %tmp.48 = lgetv %dc;
+        symbol [ dc %tmp.48 170 23 25 ];
+        %tmp.49 = lgetv %cx;
+        symbol [ cx %tmp.49 170 27 29 ];
+        %tmp.50 = 40;
+        %tmp.51 = "STR RATE";
+        %tmp.52 = lgetv %swimResult.4;
+        symbol [ swimResult %tmp.52 170 48 58 ];
+        symbol [ strokeRate %tmp.53 170 59 69 ];
+        %tmp.53 = getv %tmp.52 :strokeRate;
+        %tmp.54 = "spm";
+        %tmp.55 = 1;
+        invoke %tmp.46 %tmp.47(%tmp.48, %tmp.49, %tmp.50, %tmp.51, %tmp.53, %tmp.54, %tmp.55);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 171 8 ]
+        %tmp.56 = self;
+        symbol [ _drawMetricRow %tmp.57 171 8 22 ];
+        %tmp.57 = getv function %tmp.56 :_drawMetricRow;
+        %tmp.58 = lgetv %dc;
+        symbol [ dc %tmp.58 171 23 25 ];
+        %tmp.59 = lgetv %cx;
+        symbol [ cx %tmp.59 171 27 29 ];
+        %tmp.60 = 75;
+        %tmp.61 = "STR DIST";
+        %tmp.62 = lgetv %swimResult.4;
+        symbol [ swimResult %tmp.62 171 48 58 ];
+        symbol [ strokeDistance %tmp.63 171 59 73 ];
+        %tmp.63 = getv %tmp.62 :strokeDistance;
+        %tmp.64 = "m";
+        %tmp.65 = 2;
+        invoke %tmp.56 %tmp.57(%tmp.58, %tmp.59, %tmp.60, %tmp.61, %tmp.63, %tmp.64, %tmp.65);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 172 8 ]
+        %tmp.66 = self;
+        symbol [ _drawMetricRow %tmp.67 172 8 22 ];
+        %tmp.67 = getv function %tmp.66 :_drawMetricRow;
+        %tmp.68 = lgetv %dc;
+        symbol [ dc %tmp.68 172 23 25 ];
+        %tmp.69 = lgetv %cx;
+        symbol [ cx %tmp.69 172 27 29 ];
+        %tmp.70 = 110;
+        %tmp.71 = "VERT OSC";
+        %tmp.72 = lgetv %swimResult.4;
+        symbol [ swimResult %tmp.72 172 48 58 ];
+        symbol [ verticalOscillation %tmp.73 172 59 78 ];
+        %tmp.73 = getv %tmp.72 :verticalOscillation;
+        %tmp.74 = "mm";
+        %tmp.75 = 0;
+        invoke %tmp.66 %tmp.67(%tmp.68, %tmp.69, %tmp.70, %tmp.71, %tmp.73, %tmp.74, %tmp.75);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 173 8 ]
+        %tmp.76 = self;
+        symbol [ _drawMetricRow %tmp.77 173 8 22 ];
+        %tmp.77 = getv function %tmp.76 :_drawMetricRow;
+        %tmp.78 = lgetv %dc;
+        symbol [ dc %tmp.78 173 23 25 ];
+        %tmp.79 = lgetv %cx;
+        symbol [ cx %tmp.79 173 27 29 ];
+        %tmp.80 = 145;
+        %tmp.81 = "LAT OSC";
+        %tmp.82 = lgetv %swimResult.4;
+        symbol [ swimResult %tmp.82 173 48 58 ];
+        symbol [ lateralOscillation %tmp.83 173 59 77 ];
+        %tmp.83 = getv %tmp.82 :lateralOscillation;
+        %tmp.84 = "mm";
+        %tmp.85 = 0;
+        invoke %tmp.76 %tmp.77(%tmp.78, %tmp.79, %tmp.80, %tmp.81, %tmp.83, %tmp.84, %tmp.85);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 175 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_stop" ]
+        %armSpanCm.5 = local;
+        symbol [ armSpanCm %armSpanCm.5 175 12 21 ];
+        symbol [ _userProfile %tmp.87 175 24 36 ];
+        %tmp.87 = getv ? :_userProfile;
+        symbol [ getArmSpan %tmp.88 175 37 47 ];
+        %tmp.88 = getv function %tmp.87 :getArmSpan;
+        %tmp.89 = invoke %tmp.87 %tmp.88();
+        lputv %armSpanCm.5 %tmp.89;
+        symbol [ armSpanCm %armSpanCm.5 175 12 21 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 176 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_stop" ]
+        %strokeEff.6 = local;
+        symbol [ strokeEff %strokeEff.6 176 12 21 ];
+        symbol [ MetricsCalculator %tmp.91 176 24 41 ];
+        %tmp.91 = getv ? :MetricsCalculator;
+        symbol [ calculateStrokeEfficiency %tmp.92 176 42 67 ];
+        %tmp.92 = getv function %tmp.91 :calculateStrokeEfficiency;
+        %tmp.93 = lgetv %swimResult.4;
+        symbol [ swimResult %tmp.93 176 68 78 ];
+        symbol [ strokeDistance %tmp.94 176 79 93 ];
+        %tmp.94 = getv %tmp.93 :strokeDistance;
+        %tmp.95 = lgetv %armSpanCm.5;
+        symbol [ armSpanCm %tmp.95 176 95 104 ];
+        %tmp.96 = invoke %tmp.91 %tmp.92(%tmp.94, %tmp.95);
+        lputv %strokeEff.6 %tmp.96;
+        symbol [ strokeEff %strokeEff.6 176 12 21 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 177 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_177_8_179_8_if_stmt:
+        %tmp.97 = lgetv %strokeEff.6;
+        symbol [ strokeEff %tmp.97 177 12 21 ];
+        %tmp.98 = null;
+        %tmp.99 = ne %tmp.97 %tmp.98;
+        bf %tmp.99 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_177_8_179_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_177_8_179_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_177_31_179_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 178 12 ]
+        %tmp.100 = self;
+        symbol [ _drawMetricRow %tmp.101 178 12 26 ];
+        %tmp.101 = getv function %tmp.100 :_drawMetricRow;
+        %tmp.102 = lgetv %dc;
+        symbol [ dc %tmp.102 178 27 29 ];
+        %tmp.103 = lgetv %cx;
+        symbol [ cx %tmp.103 178 31 33 ];
+        %tmp.104 = 180;
+        %tmp.105 = "STR EFF";
+        %tmp.106 = lgetv %strokeEff.6;
+        symbol [ strokeEff %tmp.106 178 51 60 ];
+        %tmp.107 = as %tmp.106 { (!Null) };
+        %tmp.108 = "%";
+        %tmp.109 = 1;
+        invoke %tmp.100 %tmp.101(%tmp.102, %tmp.103, %tmp.104, %tmp.105, %tmp.107, %tmp.108, %tmp.109);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_177_31_179_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_177_8_179_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_177_8_179_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 181 8 ]
+        %tmp.110 = self;
+        symbol [ _drawHrZone %tmp.111 181 8 19 ];
+        %tmp.111 = getv function %tmp.110 :_drawHrZone;
+        %tmp.112 = lgetv %dc;
+        symbol [ dc %tmp.112 181 20 22 ];
+        %tmp.113 = lgetv %cx;
+        symbol [ cx %tmp.113 181 24 26 ];
+        %tmp.114 = 215;
+        invoke %tmp.110 %tmp.111(%tmp.112, %tmp.113, %tmp.114);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_153_83_182_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 184; @symbol_functiondef = [_drawHrZone,184,21,32]; @symbol_param<0> = [dc,184,33,35]; @symbol_param<0>_type<0> = [Graphics,184,39,47]; @symbol_param<0>_type<1> = [Dc,184,48,50]; @symbol_param<1> = [cx,184,52,54]; @symbol_param<1>_type<0> = [Number,184,58,64]; @symbol_param<2> = [y,184,66,67]; @symbol_param<2>_type<0> = [Number,184,71,77]; ]
+    private
+    function _drawHrZone(dc as Graphics.Dc, cx as Number, y as Number) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 185 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_stop" ]
+        %maxHr.1 = local;
+        symbol [ maxHr %maxHr.1 185 12 17 ];
+        symbol [ _userProfile %tmp.2 185 20 32 ];
+        %tmp.2 = getv ? :_userProfile;
+        symbol [ getMaxHr %tmp.3 185 33 41 ];
+        %tmp.3 = getv function %tmp.2 :getMaxHr;
+        %tmp.4 = invoke %tmp.2 %tmp.3();
+        lputv %maxHr.1 %tmp.4;
+        symbol [ maxHr %maxHr.1 185 12 17 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 186 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_186_8_188_8_if_stmt:
+        %tmp.5 = lgetv %maxHr.1;
+        symbol [ maxHr %tmp.5 186 12 17 ];
+        %tmp.6 = null;
+        %tmp.7 = eq %tmp.5 %tmp.6;
+        bf %tmp.7 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_186_8_188_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_186_8_188_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_186_27_188_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 187 12 ]
+        ret ?;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_186_27_188_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_186_8_188_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_186_8_188_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 190 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_stop" ]
+        %hrLast.2 = local;
+        symbol [ hrLast %hrLast.2 190 12 18 ];
+        symbol [ _sensorManager %tmp.9 190 21 35 ];
+        %tmp.9 = getv ? :_sensorManager;
+        symbol [ hrBuffer %tmp.10 190 36 44 ];
+        %tmp.10 = getv %tmp.9 :hrBuffer;
+        symbol [ getLast %tmp.11 190 45 52 ];
+        %tmp.11 = getv function %tmp.10 :getLast;
+        %tmp.12 = invoke %tmp.10 %tmp.11();
+        %tmp.13 = as %tmp.12 SensorEntry or Null;
+        symbol [ SensorEntry %tmp.13 190 58 69 ];
+        lputv %hrLast.2 %tmp.13;
+        symbol [ hrLast %hrLast.2 190 12 18 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 191 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_stop" ]
+        %currentHr.3 = local;
+        symbol [ currentHr %currentHr.3 191 12 21 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_191_24_191_70_begin:
+        %tmp.14 = lgetv %hrLast.2;
+        symbol [ hrLast %tmp.14 191 24 30 ];
+        %tmp.15 = null;
+        %tmp.16 = ne %tmp.14 %tmp.15;
+        bf %tmp.16 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_191_24_191_70_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_191_24_191_70_true:
+        %tmp.17 = lgetv %hrLast.2;
+        symbol [ hrLast %tmp.17 191 41 47 ];
+        %tmp.18 = as %tmp.17 { (!Null) };
+        symbol [ values %tmp.19 191 48 54 ];
+        %tmp.19 = getv %tmp.18 :values;
+        %tmp.20 = 0;
+        %tmp.21 = agetv %tmp.19 %tmp.20;
+        %tmp.22 = as %tmp.21 Number;
+        symbol [ Number %tmp.22 191 61 67 ];
+        push %tmp.22;
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_191_24_191_70_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_191_24_191_70_else_false:
+        %tmp.23 = null;
+        push %tmp.23;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_191_24_191_70_end:
+        %tmp.24 = phi [%tmp.16 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_191_24_191_70_begin] [%tmp.22 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_191_24_191_70_true] [%tmp.23 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_191_24_191_70_else_false] [%tmp.24 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_191_24_191_70_end];
+        lputv %currentHr.3 %tmp.24;
+        symbol [ currentHr %currentHr.3 191 12 21 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 192 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_stop" ]
+        %zone.4 = local;
+        symbol [ zone %zone.4 192 12 16 ];
+        symbol [ MetricsCalculator %tmp.26 192 19 36 ];
+        %tmp.26 = getv ? :MetricsCalculator;
+        symbol [ calculateHrZone %tmp.27 192 37 52 ];
+        %tmp.27 = getv function %tmp.26 :calculateHrZone;
+        %tmp.28 = lgetv %currentHr.3;
+        symbol [ currentHr %tmp.28 192 53 62 ];
+        %tmp.29 = lgetv %maxHr.1;
+        symbol [ maxHr %tmp.29 192 64 69 ];
+        %tmp.30 = invoke %tmp.26 %tmp.27(%tmp.28, %tmp.29);
+        lputv %zone.4 %tmp.30;
+        symbol [ zone %zone.4 192 12 16 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 193 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_8_195_8_if_stmt:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_12_193_41_begin:
+        %tmp.31 = lgetv %zone.4;
+        symbol [ zone %tmp.31 193 12 16 ];
+        %tmp.32 = null;
+        %tmp.33 = eq %tmp.31 %tmp.32;
+        bt %tmp.33 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_8_195_8_if_true;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_28_193_41_false:
+        %tmp.34 = lgetv %currentHr.3;
+        symbol [ currentHr %tmp.34 193 28 37 ];
+        %tmp.35 = null;
+        %tmp.36 = eq %tmp.34 %tmp.35;
+        push %tmp.36;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_28_193_41_end:
+        %tmp.37 = phi [%tmp.33 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_12_193_41_begin] [%tmp.36 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_28_193_41_false] [%tmp.37 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_28_193_41_end];
+        bf %tmp.37 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_8_195_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_8_195_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_47_195_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 194 12 ]
+        ret ?;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_47_195_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_8_195_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_193_8_195_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 197 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_stop" ]
+        %hrPercent.5 = local;
+        symbol [ hrPercent %hrPercent.5 197 12 21 ];
+        %tmp.38 = lgetv %currentHr.3;
+        symbol [ currentHr %tmp.38 197 26 35 ];
+        %tmp.39 = as %tmp.38 Number;
+        symbol [ Number %tmp.39 197 39 45 ];
+        symbol [ toFloat %tmp.40 197 47 54 ];
+        %tmp.40 = getv function %tmp.39 :toFloat;
+        %tmp.41 = invoke %tmp.39 %tmp.40();
+        %tmp.42 = lgetv %maxHr.1;
+        symbol [ maxHr %tmp.42 197 60 65 ];
+        %tmp.43 = as %tmp.42 Number;
+        symbol [ Number %tmp.43 197 69 75 ];
+        symbol [ toFloat %tmp.44 197 77 84 ];
+        %tmp.44 = getv function %tmp.43 :toFloat;
+        %tmp.45 = invoke %tmp.43 %tmp.44();
+        %tmp.46 = div %tmp.41 %tmp.45;
+        %tmp.47 = 100.0;
+        %tmp.48 = mul %tmp.46 %tmp.47;
+        lputv %hrPercent.5 %tmp.48;
+        symbol [ hrPercent %hrPercent.5 197 12 21 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 198 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_stop" ]
+        %text.6 = local;
+        symbol [ text %text.6 198 12 16 ];
+        %tmp.49 = "HR ZONE Z";
+        %tmp.50 = lgetv %zone.4;
+        symbol [ zone %tmp.50 198 33 37 ];
+        symbol [ toString %tmp.51 198 38 46 ];
+        %tmp.51 = getv function %tmp.50 :toString;
+        %tmp.52 = invoke %tmp.50 %tmp.51();
+        %tmp.53 = add %tmp.49 %tmp.52;
+        %tmp.54 = " (";
+        %tmp.55 = add %tmp.53 %tmp.54;
+        %tmp.56 = lgetv %hrPercent.5;
+        symbol [ hrPercent %tmp.56 198 58 67 ];
+        symbol [ format %tmp.57 198 68 74 ];
+        %tmp.57 = getv function %tmp.56 :format;
+        %tmp.58 = "%.0f";
+        %tmp.59 = invoke %tmp.56 %tmp.57(%tmp.58);
+        %tmp.60 = add %tmp.55 %tmp.59;
+        %tmp.61 = "%)";
+        %tmp.62 = add %tmp.60 %tmp.61;
+        lputv %text.6 %tmp.62;
+        symbol [ text %text.6 198 12 16 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 200 8 ]
+        %tmp.63 = lgetv %dc;
+        symbol [ dc %tmp.63 200 8 10 ];
+        symbol [ setColor %tmp.64 200 11 19 ];
+        %tmp.64 = getv function %tmp.63 :setColor;
+        symbol [ Graphics %tmp.65 200 20 28 ];
+        %tmp.65 = getm $.Toybox.Graphics;
+        symbol [ COLOR_LT_GRAY %tmp.66 200 29 42 ];
+        %tmp.66 = getv %tmp.65 :COLOR_LT_GRAY;
+        symbol [ Graphics %tmp.67 200 44 52 ];
+        %tmp.67 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.68 200 53 70 ];
+        %tmp.68 = getv %tmp.67 :COLOR_TRANSPARENT;
+        invoke %tmp.63 %tmp.64(%tmp.66, %tmp.68);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 201 8 ]
+        %tmp.69 = lgetv %dc;
+        symbol [ dc %tmp.69 201 8 10 ];
+        symbol [ drawText %tmp.70 201 11 19 ];
+        %tmp.70 = getv function %tmp.69 :drawText;
+        %tmp.71 = lgetv %cx;
+        symbol [ cx %tmp.71 201 20 22 ];
+        %tmp.72 = lgetv %y;
+        symbol [ y %tmp.72 201 24 25 ];
+        symbol [ Graphics %tmp.73 201 27 35 ];
+        %tmp.73 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.74 201 36 45 ];
+        %tmp.74 = getv %tmp.73 :FONT_TINY;
+        %tmp.75 = lgetv %text.6;
+        symbol [ text %tmp.75 201 47 51 ];
+        symbol [ Graphics %tmp.76 201 53 61 ];
+        %tmp.76 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.77 201 62 81 ];
+        %tmp.77 = getv %tmp.76 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.69 %tmp.70(%tmp.71, %tmp.72, %tmp.74, %tmp.75, %tmp.77);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 202 8 ]
+        %tmp.78 = lgetv %dc;
+        symbol [ dc %tmp.78 202 8 10 ];
+        symbol [ setColor %tmp.79 202 11 19 ];
+        %tmp.79 = getv function %tmp.78 :setColor;
+        symbol [ Graphics %tmp.80 202 20 28 ];
+        %tmp.80 = getm $.Toybox.Graphics;
+        symbol [ COLOR_WHITE %tmp.81 202 29 40 ];
+        %tmp.81 = getv %tmp.80 :COLOR_WHITE;
+        symbol [ Graphics %tmp.82 202 42 50 ];
+        %tmp.82 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.83 202 51 68 ];
+        %tmp.83 = getv %tmp.82 :COLOR_TRANSPARENT;
+        invoke %tmp.78 %tmp.79(%tmp.81, %tmp.83);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_184_87_203_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 206; @symbol_functiondef = [_drawMetricRow,206,21,35]; @symbol_param<0> = [dc,207,8,10]; @symbol_param<0>_type<0> = [Graphics,207,25,33]; @symbol_param<0>_type<1> = [Dc,207,34,36]; @symbol_param<1> = [cx,208,8,10]; @symbol_param<1>_type<0> = [Number,208,25,31]; @symbol_param<2> = [y,209,8,9]; @symbol_param<2>_type<0> = [Number,209,25,31]; @symbol_param<3> = [label,210,8,13]; @symbol_param<3>_type<0> = [String,210,25,31]; @symbol_param<4> = [value,211,8,13]; @symbol_param<4>_type<0> = [Float,211,25,30]; @symbol_param<5> = [unit,212,8,12]; @symbol_param<5>_type<0> = [String,212,25,31]; @symbol_param<6> = [decimalPlaces,213,8,21]; @symbol_param<6>_type<0> = [Number,213,25,31]; ]
+    private
+    function _drawMetricRow(dc as Graphics.Dc, cx as Number, y as Number, label as String, value as Float or Null, unit as String, decimalPlaces as Number) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_214_14_226_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 215 8 ]
+        %tmp.1 = lgetv %dc;
+        symbol [ dc %tmp.1 215 8 10 ];
+        symbol [ setColor %tmp.2 215 11 19 ];
+        %tmp.2 = getv function %tmp.1 :setColor;
+        symbol [ Graphics %tmp.3 215 20 28 ];
+        %tmp.3 = getm $.Toybox.Graphics;
+        symbol [ COLOR_LT_GRAY %tmp.4 215 29 42 ];
+        %tmp.4 = getv %tmp.3 :COLOR_LT_GRAY;
+        symbol [ Graphics %tmp.5 215 44 52 ];
+        %tmp.5 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.6 215 53 70 ];
+        %tmp.6 = getv %tmp.5 :COLOR_TRANSPARENT;
+        invoke %tmp.1 %tmp.2(%tmp.4, %tmp.6);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 216 8 ]
+        %tmp.7 = lgetv %dc;
+        symbol [ dc %tmp.7 216 8 10 ];
+        symbol [ drawText %tmp.8 216 11 19 ];
+        %tmp.8 = getv function %tmp.7 :drawText;
+        %tmp.9 = lgetv %cx;
+        symbol [ cx %tmp.9 216 20 22 ];
+        %tmp.10 = lgetv %y;
+        symbol [ y %tmp.10 216 24 25 ];
+        symbol [ Graphics %tmp.11 216 27 35 ];
+        %tmp.11 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.12 216 36 45 ];
+        %tmp.12 = getv %tmp.11 :FONT_TINY;
+        %tmp.13 = lgetv %label;
+        symbol [ label %tmp.13 216 47 52 ];
+        symbol [ Graphics %tmp.14 216 54 62 ];
+        %tmp.14 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.15 216 63 82 ];
+        %tmp.15 = getv %tmp.14 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.7 %tmp.8(%tmp.9, %tmp.10, %tmp.12, %tmp.13, %tmp.15);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 217 8 ]
+        %tmp.16 = lgetv %dc;
+        symbol [ dc %tmp.16 217 8 10 ];
+        symbol [ setColor %tmp.17 217 11 19 ];
+        %tmp.17 = getv function %tmp.16 :setColor;
+        symbol [ Graphics %tmp.18 217 20 28 ];
+        %tmp.18 = getm $.Toybox.Graphics;
+        symbol [ COLOR_WHITE %tmp.19 217 29 40 ];
+        %tmp.19 = getv %tmp.18 :COLOR_WHITE;
+        symbol [ Graphics %tmp.20 217 42 50 ];
+        %tmp.20 = getm $.Toybox.Graphics;
+        symbol [ COLOR_TRANSPARENT %tmp.21 217 51 68 ];
+        %tmp.21 = getv %tmp.20 :COLOR_TRANSPARENT;
+        invoke %tmp.16 %tmp.17(%tmp.19, %tmp.21);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 219 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_214_14_226_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_214_14_226_4_stop" ]
+        %display.1 = local;
+        symbol [ display %display.1 219 12 19 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 220 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_220_8_224_8_if_stmt:
+        %tmp.22 = lgetv %value;
+        symbol [ value %tmp.22 220 12 17 ];
+        %tmp.23 = null;
+        %tmp.24 = eq %tmp.22 %tmp.23;
+        bf %tmp.24 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_220_8_224_8_if_else_false;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_220_8_224_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_220_27_222_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 221 12 ]
+        %tmp.25 = "---";
+        lputv %display.1 %tmp.25;
+        symbol [ display %display.1 221 12 19 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_220_27_222_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_220_8_224_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_220_8_224_8_if_else_false:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_222_15_224_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 223 12 ]
+        %tmp.26 = lgetv %value;
+        symbol [ value %tmp.26 223 22 27 ];
+        %tmp.27 = as %tmp.26 { (!Null) };
+        symbol [ format %tmp.28 223 28 34 ];
+        %tmp.28 = getv function %tmp.27 :format;
+        %tmp.29 = "%.";
+        %tmp.30 = lgetv %decimalPlaces;
+        symbol [ decimalPlaces %tmp.30 223 42 55 ];
+        symbol [ toString %tmp.31 223 56 64 ];
+        %tmp.31 = getv function %tmp.30 :toString;
+        %tmp.32 = invoke %tmp.30 %tmp.31();
+        %tmp.33 = add %tmp.29 %tmp.32;
+        %tmp.34 = "f";
+        %tmp.35 = add %tmp.33 %tmp.34;
+        %tmp.36 = invoke %tmp.27 %tmp.28(%tmp.35);
+        %tmp.37 = " ";
+        %tmp.38 = add %tmp.36 %tmp.37;
+        %tmp.39 = lgetv %unit;
+        symbol [ unit %tmp.39 223 82 86 ];
+        %tmp.40 = add %tmp.38 %tmp.39;
+        lputv %display.1 %tmp.40;
+        symbol [ display %display.1 223 12 19 ];
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_222_15_224_8_stop:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_220_8_224_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc" 225 8 ]
+        %tmp.41 = lgetv %dc;
+        symbol [ dc %tmp.41 225 8 10 ];
+        symbol [ drawText %tmp.42 225 11 19 ];
+        %tmp.42 = getv function %tmp.41 :drawText;
+        %tmp.43 = lgetv %cx;
+        symbol [ cx %tmp.43 225 20 22 ];
+        %tmp.44 = lgetv %y;
+        symbol [ y %tmp.44 225 24 25 ];
+        %tmp.45 = 14;
+        %tmp.46 = add %tmp.44 %tmp.45;
+        symbol [ Graphics %tmp.47 225 32 40 ];
+        %tmp.47 = getm $.Toybox.Graphics;
+        symbol [ FONT_SMALL %tmp.48 225 41 51 ];
+        %tmp.48 = getv %tmp.47 :FONT_SMALL;
+        %tmp.49 = lgetv %display.1;
+        symbol [ display %tmp.49 225 53 60 ];
+        symbol [ Graphics %tmp.50 225 62 70 ];
+        %tmp.50 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.51 225 71 90 ];
+        %tmp.51 = getv %tmp.50 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.41 %tmp.42(%tmp.43, %tmp.46, %tmp.48, %tmp.49, %tmp.51);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_AppView_mc_214_14_226_4_stop:
+    }
+}
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/AppView.mc"; @line = 1; ]
+<init> {
+}

@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<drawables>
+  <!-- App launcher icon (placeholder — replace with actual PNG) -->
+  <bitmap id="AppIcon" filename="app_icon.png"/>
+</drawables>

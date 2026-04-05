@@ -66,6 +66,34 @@ body {
 }
 .hint strong { color: #88b8e0; }
 
+.scene-selector {
+  margin: 18px 0 4px;
+  text-align: left;
+}
+.scene-selector label {
+  display: block;
+  font-size: 0.82rem;
+  color: #7aa0c0;
+  margin-bottom: 7px;
+  letter-spacing: 0.03em;
+}
+.scene-selector select {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 0.95rem;
+  background: rgba(10,22,40,0.88);
+  color: #d0e8ff;
+  border: 1px solid rgba(80,150,220,0.30);
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236090c0' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.scene-selector select:focus { border-color: rgba(80,160,240,0.55); }
+
 .card button {
   margin-top: 28px;
   padding: 13px 38px;

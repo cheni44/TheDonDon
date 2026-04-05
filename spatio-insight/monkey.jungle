@@ -1,0 +1,7 @@
+project.manifest = garmin-app/manifest.xml
+
+base.sourcePath = garmin-app/source
+base.resourcePath = garmin-app/resources
+
+fr965.sourcePath = $(base.sourcePath)
+fr965.resourcePath = $(base.resourcePath)

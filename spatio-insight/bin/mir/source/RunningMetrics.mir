@@ -1,0 +1,139 @@
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 1; @symbol_importdef<0> = [Toybox,1,7,13]; @symbol_importdef<1> = [Lang,1,14,18]; ]
+import Toybox.Lang;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 4; @symbol_classdef = [RunningMetricsResult,4,6,26]; ]
+class RunningMetricsResult {
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 4; ]
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 4; ]
+    static
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 5; @position = 8; @symbol_vardef = [cadence,5,8,15]; @symbol_type<0> = [Float,5,30,35]; ]
+    var cadence as Float or Null;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 6; @position = 8; @symbol_vardef = [strideLength,6,8,20]; @symbol_type<0> = [Float,6,30,35]; ]
+    var strideLength as Float or Null;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 7; @position = 8; @symbol_vardef = [verticalOscillation,7,8,27]; @symbol_type<0> = [Float,7,31,36]; ]
+    var verticalOscillation as Float or Null;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 8; @position = 8; @symbol_vardef = [lateralOscillation,8,8,26]; @symbol_type<0> = [Float,8,31,36]; ]
+    var lateralOscillation as Float or Null;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 10; @symbol_functiondef = [initialize,10,13,23]; ]
+    function initialize() as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RunningMetrics_mc_10_26_15_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc" 11 8 ]
+        %tmp.1 = null;
+        symbol [ cadence ? 11 8 15 ];
+        putv self :cadence %tmp.1;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc" 12 8 ]
+        %tmp.2 = null;
+        symbol [ strideLength ? 12 8 20 ];
+        putv self :strideLength %tmp.2;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc" 13 8 ]
+        %tmp.3 = null;
+        symbol [ verticalOscillation ? 13 8 27 ];
+        putv self :verticalOscillation %tmp.3;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc" 14 8 ]
+        %tmp.4 = null;
+        symbol [ lateralOscillation ? 14 8 26 ];
+        putv self :lateralOscillation %tmp.4;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RunningMetrics_mc_10_26_15_4_stop:
+    }
+}
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 19; @symbol_classdef = [RunningMetrics,19,6,20]; ]
+class RunningMetrics {
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 19; ]
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 19; ]
+    static
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 22; @symbol_functiondef = [calculate,22,20,29]; @symbol_param<0> = [accelBuffer,23,8,19]; @symbol_param<0>_type<0> = [RingBuffer,23,23,33]; @symbol_param<1> = [gpsSpeed,24,8,16]; @symbol_param<1>_type<0> = [Float,24,23,28]; @symbol_param<2> = [heightCm,25,8,16]; @symbol_param<2>_type<0> = [Number,25,23,29]; @symbol_return<0> = [RunningMetricsResult,26,9,29]; ]
+    static
+    function calculate(accelBuffer as RingBuffer, gpsSpeed as Float or Null, heightCm as Number) as RunningMetricsResult {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RunningMetrics_mc_26_30_36_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc" 27 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RunningMetrics_mc_26_30_36_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RunningMetrics_mc_26_30_36_4_stop" ]
+        %result.1 = local;
+        symbol [ result %result.1 27 12 18 ];
+        symbol [ RunningMetricsResult %tmp.4 27 25 45 ];
+        %tmp.4 = getv ? :RunningMetricsResult;
+        %tmp.1 = newc %tmp.4 ();
+        lputv %result.1 %tmp.1;
+        symbol [ result %result.1 27 12 18 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc" 28 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RunningMetrics_mc_26_30_36_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RunningMetrics_mc_26_30_36_4_stop" ]
+        %buffer.2 = local;
+        symbol [ buffer %buffer.2 28 12 18 ];
+        %tmp.5 = lgetv %accelBuffer;
+        symbol [ accelBuffer %tmp.5 28 21 32 ];
+        symbol [ getAll %tmp.6 28 33 39 ];
+        %tmp.6 = getv function %tmp.5 :getAll;
+        %tmp.7 = invoke %tmp.5 %tmp.6();
+        lputv %buffer.2 %tmp.7;
+        symbol [ buffer %buffer.2 28 12 18 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc" 30 8 ]
+        %tmp.8 = lgetv %result.1;
+        symbol [ result %tmp.8 30 8 14 ];
+        symbol [ MetricsCalculator %tmp.10 30 37 54 ];
+        %tmp.10 = getv ? :MetricsCalculator;
+        symbol [ calculateCadence %tmp.11 30 55 71 ];
+        %tmp.11 = getv function %tmp.10 :calculateCadence;
+        %tmp.12 = lgetv %buffer.2;
+        symbol [ buffer %tmp.12 30 72 78 ];
+        %tmp.13 = 2;
+        %tmp.14 = invoke %tmp.10 %tmp.11(%tmp.12, %tmp.13);
+        symbol [ cadence ? 30 15 22 ];
+        putv %tmp.8 :cadence %tmp.14;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc" 31 8 ]
+        %tmp.15 = lgetv %result.1;
+        symbol [ result %tmp.15 31 8 14 ];
+        symbol [ MetricsCalculator %tmp.17 31 37 54 ];
+        %tmp.17 = getv ? :MetricsCalculator;
+        symbol [ calculateStrideLength %tmp.18 31 55 76 ];
+        %tmp.18 = getv function %tmp.17 :calculateStrideLength;
+        %tmp.19 = lgetv %gpsSpeed;
+        symbol [ gpsSpeed %tmp.19 31 77 85 ];
+        %tmp.20 = lgetv %result.1;
+        symbol [ result %tmp.20 31 87 93 ];
+        symbol [ cadence %tmp.21 31 94 101 ];
+        %tmp.21 = getv %tmp.20 :cadence;
+        %tmp.22 = lgetv %heightCm;
+        symbol [ heightCm %tmp.22 31 103 111 ];
+        %tmp.23 = invoke %tmp.17 %tmp.18(%tmp.19, %tmp.21, %tmp.22);
+        symbol [ strideLength ? 31 15 27 ];
+        putv %tmp.15 :strideLength %tmp.23;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc" 32 8 ]
+        %tmp.24 = lgetv %result.1;
+        symbol [ result %tmp.24 32 8 14 ];
+        symbol [ MetricsCalculator %tmp.26 32 37 54 ];
+        %tmp.26 = getv ? :MetricsCalculator;
+        symbol [ calculateVerticalOscillation %tmp.27 32 55 83 ];
+        %tmp.27 = getv function %tmp.26 :calculateVerticalOscillation;
+        %tmp.28 = lgetv %buffer.2;
+        symbol [ buffer %tmp.28 32 84 90 ];
+        %tmp.29 = invoke %tmp.26 %tmp.27(%tmp.28);
+        symbol [ verticalOscillation ? 32 15 34 ];
+        putv %tmp.24 :verticalOscillation %tmp.29;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc" 33 8 ]
+        %tmp.30 = lgetv %result.1;
+        symbol [ result %tmp.30 33 8 14 ];
+        symbol [ MetricsCalculator %tmp.32 33 37 54 ];
+        %tmp.32 = getv ? :MetricsCalculator;
+        symbol [ calculateLateralOscillation %tmp.33 33 55 82 ];
+        %tmp.33 = getv function %tmp.32 :calculateLateralOscillation;
+        %tmp.34 = lgetv %buffer.2;
+        symbol [ buffer %tmp.34 33 83 89 ];
+        %tmp.35 = invoke %tmp.32 %tmp.33(%tmp.34);
+        symbol [ lateralOscillation ? 33 15 33 ];
+        putv %tmp.30 :lateralOscillation %tmp.35;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc" 35 8 ]
+        %tmp.36 = lgetv %result.1;
+        symbol [ result %tmp.36 35 15 21 ];
+        ret %tmp.36;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_RunningMetrics_mc_26_30_36_4_stop:
+    }
+}
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/RunningMetrics.mc"; @line = 1; ]
+<init> {
+}

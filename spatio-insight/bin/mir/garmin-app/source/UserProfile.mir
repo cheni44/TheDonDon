@@ -1,0 +1,311 @@
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 1; @symbol_importdef<0> = [Toybox,1,7,13]; @symbol_importdef<1> = [Lang,1,14,18]; ]
+import Toybox.Lang;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 2; @symbol_importdef<0> = [Toybox,2,7,13]; @symbol_importdef<1> = [Application,2,14,25]; ]
+import Toybox.Application;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 5; @symbol_classdef = [UserProfile,5,6,17]; ]
+class UserProfile {
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 5; ]
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 5; ]
+    static
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 7; @position = 17; @symbol_constdef = [MIN_HEIGHT_CM,7,17,30]; ]
+    static
+    const MIN_HEIGHT_CM = 100;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 8; @position = 17; @symbol_constdef = [MAX_HEIGHT_CM,8,17,30]; ]
+    static
+    const MAX_HEIGHT_CM = 250;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 9; @position = 17; @symbol_constdef = [MIN_WEIGHT_KG,9,17,30]; ]
+    static
+    const MIN_WEIGHT_KG = 20;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 10; @position = 17; @symbol_constdef = [MAX_WEIGHT_KG,10,17,30]; ]
+    static
+    const MAX_WEIGHT_KG = 300;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 11; @position = 17; @symbol_constdef = [MIN_ARM_SPAN_CM,11,17,32]; ]
+    static
+    const MIN_ARM_SPAN_CM = 100;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 12; @position = 17; @symbol_constdef = [MAX_ARM_SPAN_CM,12,17,32]; ]
+    static
+    const MAX_ARM_SPAN_CM = 250;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 13; @position = 17; @symbol_constdef = [MIN_BIRTH_YEAR,13,17,31]; ]
+    static
+    const MIN_BIRTH_YEAR = 1900;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 14; @position = 17; @symbol_constdef = [MAX_BIRTH_YEAR,14,17,31]; ]
+    static
+    const MAX_BIRTH_YEAR = 2026;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 16; @symbol_functiondef = [initialize,16,13,23]; ]
+    function initialize() as Void {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 19; @symbol_functiondef = [getHeight,19,13,22]; @symbol_return<0> = [Number,19,28,34]; ]
+    function getHeight() as Number {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_19_35_21_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 20 8 ]
+        %tmp.1 = self;
+        symbol [ _readRangedNumber %tmp.2 20 15 32 ];
+        %tmp.2 = getv function %tmp.1 :_readRangedNumber;
+        %tmp.3 = "Height";
+        symbol [ MIN_HEIGHT_CM %tmp.5 20 43 56 ];
+        %tmp.5 = getv ? :MIN_HEIGHT_CM;
+        symbol [ MAX_HEIGHT_CM %tmp.7 20 58 71 ];
+        %tmp.7 = getv ? :MAX_HEIGHT_CM;
+        %tmp.8 = invoke %tmp.1 %tmp.2(%tmp.3, %tmp.5, %tmp.7);
+        ret %tmp.8;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_19_35_21_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 23; @symbol_functiondef = [getWeight,23,13,22]; @symbol_return<0> = [Number,23,28,34]; ]
+    function getWeight() as Number {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_23_35_25_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 24 8 ]
+        %tmp.1 = self;
+        symbol [ _readRangedNumber %tmp.2 24 15 32 ];
+        %tmp.2 = getv function %tmp.1 :_readRangedNumber;
+        %tmp.3 = "Weight";
+        symbol [ MIN_WEIGHT_KG %tmp.5 24 43 56 ];
+        %tmp.5 = getv ? :MIN_WEIGHT_KG;
+        symbol [ MAX_WEIGHT_KG %tmp.7 24 58 71 ];
+        %tmp.7 = getv ? :MAX_WEIGHT_KG;
+        %tmp.8 = invoke %tmp.1 %tmp.2(%tmp.3, %tmp.5, %tmp.7);
+        ret %tmp.8;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_23_35_25_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 27; @symbol_functiondef = [getBirthYear,27,13,25]; @symbol_return<0> = [Number,27,31,37]; ]
+    function getBirthYear() as Number {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_27_38_29_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 28 8 ]
+        %tmp.1 = self;
+        symbol [ _readRangedNumber %tmp.2 28 15 32 ];
+        %tmp.2 = getv function %tmp.1 :_readRangedNumber;
+        %tmp.3 = "BirthYear";
+        symbol [ MIN_BIRTH_YEAR %tmp.5 28 46 60 ];
+        %tmp.5 = getv ? :MIN_BIRTH_YEAR;
+        symbol [ MAX_BIRTH_YEAR %tmp.7 28 62 76 ];
+        %tmp.7 = getv ? :MAX_BIRTH_YEAR;
+        %tmp.8 = invoke %tmp.1 %tmp.2(%tmp.3, %tmp.5, %tmp.7);
+        ret %tmp.8;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_27_38_29_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 31; @symbol_functiondef = [getBirthMonth,31,13,26]; @symbol_return<0> = [Number,31,32,38]; ]
+    function getBirthMonth() as Number {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_31_39_33_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 32 8 ]
+        %tmp.1 = self;
+        symbol [ _readRangedNumber %tmp.2 32 15 32 ];
+        %tmp.2 = getv function %tmp.1 :_readRangedNumber;
+        %tmp.3 = "BirthMonth";
+        %tmp.4 = 1;
+        %tmp.5 = 12;
+        %tmp.6 = invoke %tmp.1 %tmp.2(%tmp.3, %tmp.4, %tmp.5);
+        ret %tmp.6;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_31_39_33_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 35; @symbol_functiondef = [getBirthDay,35,13,24]; @symbol_return<0> = [Number,35,30,36]; ]
+    function getBirthDay() as Number {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_35_37_37_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 36 8 ]
+        %tmp.1 = self;
+        symbol [ _readRangedNumber %tmp.2 36 15 32 ];
+        %tmp.2 = getv function %tmp.1 :_readRangedNumber;
+        %tmp.3 = "BirthDay";
+        %tmp.4 = 1;
+        %tmp.5 = 31;
+        %tmp.6 = invoke %tmp.1 %tmp.2(%tmp.3, %tmp.4, %tmp.5);
+        ret %tmp.6;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_35_37_37_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 39; @symbol_functiondef = [getArmSpan,39,13,23]; @symbol_return<0> = [Number,39,29,35]; ]
+    function getArmSpan() as Number {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_39_36_41_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 40 8 ]
+        %tmp.1 = self;
+        symbol [ _readRangedNumber %tmp.2 40 15 32 ];
+        %tmp.2 = getv function %tmp.1 :_readRangedNumber;
+        %tmp.3 = "ArmSpan";
+        symbol [ MIN_ARM_SPAN_CM %tmp.5 40 44 59 ];
+        %tmp.5 = getv ? :MIN_ARM_SPAN_CM;
+        symbol [ MAX_ARM_SPAN_CM %tmp.7 40 61 76 ];
+        %tmp.7 = getv ? :MAX_ARM_SPAN_CM;
+        %tmp.8 = invoke %tmp.1 %tmp.2(%tmp.3, %tmp.5, %tmp.7);
+        ret %tmp.8;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_39_36_41_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 43; @symbol_functiondef = [getAge,43,13,19]; @symbol_return<0> = [Number,43,25,31]; ]
+    function getAge() as Number or Null {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_43_40_55_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 44 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_43_40_55_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_43_40_55_4_stop" ]
+        %birthYear.1 = local;
+        symbol [ birthYear %birthYear.1 44 12 21 ];
+        %tmp.1 = self;
+        symbol [ getBirthYear %tmp.2 44 24 36 ];
+        %tmp.2 = getv function %tmp.1 :getBirthYear;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %birthYear.1 %tmp.3;
+        symbol [ birthYear %birthYear.1 44 12 21 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 45 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_45_8_47_8_if_stmt:
+        %tmp.4 = lgetv %birthYear.1;
+        symbol [ birthYear %tmp.4 45 12 21 ];
+        %tmp.5 = 0;
+        %tmp.6 = eq %tmp.4 %tmp.5;
+        bf %tmp.6 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_45_8_47_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_45_8_47_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_45_28_47_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 46 12 ]
+        %tmp.7 = null;
+        ret %tmp.7;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_45_28_47_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_45_8_47_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_45_8_47_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 49 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_43_40_55_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_43_40_55_4_stop" ]
+        %age.2 = local;
+        symbol [ age %age.2 49 12 15 ];
+        symbol [ MAX_BIRTH_YEAR %tmp.9 49 18 32 ];
+        %tmp.9 = getv ? :MAX_BIRTH_YEAR;
+        %tmp.10 = lgetv %birthYear.1;
+        symbol [ birthYear %tmp.10 49 35 44 ];
+        %tmp.11 = sub %tmp.9 %tmp.10;
+        lputv %age.2 %tmp.11;
+        symbol [ age %age.2 49 12 15 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 50 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_50_8_52_8_if_stmt:
+        %tmp.12 = lgetv %age.2;
+        symbol [ age %tmp.12 50 12 15 ];
+        %tmp.13 = 0;
+        %tmp.14 = lt %tmp.12 %tmp.13;
+        bf %tmp.14 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_50_8_52_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_50_8_52_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_50_21_52_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 51 12 ]
+        %tmp.15 = null;
+        ret %tmp.15;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_50_21_52_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_50_8_52_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_50_8_52_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 54 8 ]
+        %tmp.16 = lgetv %age.2;
+        symbol [ age %tmp.16 54 15 18 ];
+        ret %tmp.16;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_43_40_55_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 57; @symbol_functiondef = [getMaxHr,57,13,21]; @symbol_return<0> = [Number,57,27,33]; ]
+    function getMaxHr() as Number or Null {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_57_42_64_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 58 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_57_42_64_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_57_42_64_4_stop" ]
+        %age.1 = local;
+        symbol [ age %age.1 58 12 15 ];
+        %tmp.1 = self;
+        symbol [ getAge %tmp.2 58 18 24 ];
+        %tmp.2 = getv function %tmp.1 :getAge;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %age.1 %tmp.3;
+        symbol [ age %age.1 58 12 15 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 59 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_59_8_61_8_if_stmt:
+        %tmp.4 = lgetv %age.1;
+        symbol [ age %tmp.4 59 12 15 ];
+        %tmp.5 = null;
+        %tmp.6 = eq %tmp.4 %tmp.5;
+        bf %tmp.6 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_59_8_61_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_59_8_61_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_59_25_61_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 60 12 ]
+        %tmp.7 = null;
+        ret %tmp.7;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_59_25_61_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_59_8_61_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_59_8_61_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 63 8 ]
+        %tmp.8 = 220;
+        %tmp.9 = lgetv %age.1;
+        symbol [ age %tmp.9 63 22 25 ];
+        %tmp.10 = as %tmp.9 Number;
+        symbol [ Number %tmp.10 63 29 35 ];
+        %tmp.11 = sub %tmp.8 %tmp.10;
+        ret %tmp.11;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_57_42_64_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 66; @symbol_functiondef = [_readRangedNumber,66,21,38]; @symbol_param<0> = [key,66,39,42]; @symbol_param<0>_type<0> = [String,66,46,52]; @symbol_param<1> = [minVal,66,54,60]; @symbol_param<1>_type<0> = [Number,66,64,70]; @symbol_param<2> = [maxVal,66,72,78]; @symbol_param<2>_type<0> = [Number,66,82,88]; @symbol_return<0> = [Number,66,93,99]; ]
+    private
+    function _readRangedNumber(key as String, minVal as Number, maxVal as Number) as Number {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_66_100_78_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 67 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_66_100_78_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_66_100_78_4_stop" ]
+        %val.1 = local;
+        symbol [ val %val.1 67 12 15 ];
+        symbol [ Application %tmp.1 67 18 29 ];
+        %tmp.1 = getm $.Toybox.Application;
+        symbol [ Properties %tmp.2 67 30 40 ];
+        %tmp.2 = getv %tmp.1 :Properties;
+        symbol [ getValue %tmp.3 67 41 49 ];
+        %tmp.3 = getv function %tmp.2 :getValue;
+        %tmp.4 = lgetv %key;
+        symbol [ key %tmp.4 67 50 53 ];
+        %tmp.5 = invoke %tmp.2 %tmp.3(%tmp.4);
+        lputv %val.1 %tmp.5;
+        symbol [ val %val.1 67 12 15 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 68 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_68_8_70_8_if_stmt:
+        %tmp.6 = lgetv %val.1;
+        symbol [ val %tmp.6 68 12 15 ];
+        %tmp.7 = null;
+        %tmp.8 = eq %tmp.6 %tmp.7;
+        bf %tmp.8 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_68_8_70_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_68_8_70_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_68_25_70_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 69 12 ]
+        %tmp.9 = 0;
+        ret %tmp.9;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_68_25_70_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_68_8_70_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_68_8_70_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 72 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_66_100_78_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_66_100_78_4_stop" ]
+        %num.2 = local;
+        symbol [ num %num.2 72 12 15 ];
+        %tmp.10 = lgetv %val.1;
+        symbol [ val %tmp.10 72 18 21 ];
+        %tmp.11 = as %tmp.10 Number;
+        symbol [ Number %tmp.11 72 25 31 ];
+        lputv %num.2 %tmp.11;
+        symbol [ num %num.2 72 12 15 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 73 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_8_75_8_if_stmt:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_12_73_34_begin:
+        %tmp.12 = lgetv %num.2;
+        symbol [ num %tmp.12 73 12 15 ];
+        %tmp.13 = lgetv %minVal;
+        symbol [ minVal %tmp.13 73 18 24 ];
+        %tmp.14 = lt %tmp.12 %tmp.13;
+        bt %tmp.14 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_8_75_8_if_true;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_28_73_34_false:
+        %tmp.15 = lgetv %num.2;
+        symbol [ num %tmp.15 73 28 31 ];
+        %tmp.16 = lgetv %maxVal;
+        symbol [ maxVal %tmp.16 73 34 40 ];
+        %tmp.17 = gt %tmp.15 %tmp.16;
+        push %tmp.17;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_28_73_34_end:
+        %tmp.18 = phi [%tmp.14 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_12_73_34_begin] [%tmp.17 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_28_73_34_false] [%tmp.18 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_28_73_34_end];
+        bf %tmp.18 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_8_75_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_8_75_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_42_75_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 74 12 ]
+        %tmp.19 = 0;
+        ret %tmp.19;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_42_75_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_8_75_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_73_8_75_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc" 77 8 ]
+        %tmp.20 = lgetv %num.2;
+        symbol [ num %tmp.20 77 15 18 ];
+        ret %tmp.20;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_UserProfile_mc_66_100_78_4_stop:
+    }
+}
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/UserProfile.mc"; @line = 1; ]
+<init> {
+}

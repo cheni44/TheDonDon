@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Garmin Connect IQ local signing key
+/garmin-app/developer_key.der
+
+# Build outputs
+/garmin-app/bin/
+*.prg
+*.iq
+*.barrel
+*.fit
+
+# Debug/log artifacts
+*.log.zip

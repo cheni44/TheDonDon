@@ -1,0 +1,33 @@
+<settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+
+    <setting propertyKey="@Properties.ActivityType" title="@Strings.SettingActivityTypeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.ActivityRunning</listEntry>
+            <listEntry value="1">@Strings.ActivitySwimming</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.AccelSampleRate" title="@Strings.SettingAccelRateTitle">
+        <settingConfig type="list">
+            <listEntry value="25">@Strings.SampleRate25</listEntry>
+            <listEntry value="50">@Strings.SampleRate50</listEntry>
+            <listEntry value="100">@Strings.SampleRate100</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.GyroSampleRate" title="@Strings.SettingGyroRateTitle">
+        <settingConfig type="list">
+            <listEntry value="25">@Strings.SampleRate25</listEntry>
+            <listEntry value="50">@Strings.SampleRate50</listEntry>
+            <listEntry value="100">@Strings.SampleRate100</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.PoolLength" title="@Strings.SettingPoolLengthTitle">
+        <settingConfig type="list">
+            <listEntry value="25">@Strings.PoolLength25</listEntry>
+            <listEntry value="50">@Strings.PoolLength50</listEntry>
+        </settingConfig>
+    </setting>
+
+</settings>

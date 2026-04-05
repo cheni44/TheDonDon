@@ -1,0 +1,20 @@
+project.manifest = manifest.xml
+
+base.sourcePath = source
+base.resourcePath = resources
+
+# Target devices (Connect IQ 4.x+)
+fr955.sourcePath = $(base.sourcePath)
+fr955.resourcePath = $(base.resourcePath)
+
+fenix7.sourcePath = $(base.sourcePath)
+fenix7.resourcePath = $(base.resourcePath)
+
+fenix7s.sourcePath = $(base.sourcePath)
+fenix7s.resourcePath = $(base.resourcePath)
+
+fenix7x.sourcePath = $(base.sourcePath)
+fenix7x.resourcePath = $(base.resourcePath)
+
+epix2.sourcePath = $(base.sourcePath)
+epix2.resourcePath = $(base.resourcePath)

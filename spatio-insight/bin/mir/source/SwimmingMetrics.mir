@@ -1,0 +1,140 @@
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 1; @symbol_importdef<0> = [Toybox,1,7,13]; @symbol_importdef<1> = [Lang,1,14,18]; ]
+import Toybox.Lang;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 4; @symbol_classdef = [SwimmingMetricsResult,4,6,27]; ]
+class SwimmingMetricsResult {
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 4; ]
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 4; ]
+    static
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 5; @position = 8; @symbol_vardef = [strokeRate,5,8,18]; @symbol_type<0> = [Float,5,31,36]; ]
+    var strokeRate as Float or Null;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 6; @position = 8; @symbol_vardef = [strokeDistance,6,8,22]; @symbol_type<0> = [Float,6,31,36]; ]
+    var strokeDistance as Float or Null;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 7; @position = 8; @symbol_vardef = [verticalOscillation,7,8,27]; @symbol_type<0> = [Float,7,31,36]; ]
+    var verticalOscillation as Float or Null;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 8; @position = 8; @symbol_vardef = [lateralOscillation,8,8,26]; @symbol_type<0> = [Float,8,31,36]; ]
+    var lateralOscillation as Float or Null;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 10; @symbol_functiondef = [initialize,10,13,23]; ]
+    function initialize() as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SwimmingMetrics_mc_10_26_15_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc" 11 8 ]
+        %tmp.1 = null;
+        symbol [ strokeRate ? 11 8 18 ];
+        putv self :strokeRate %tmp.1;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc" 12 8 ]
+        %tmp.2 = null;
+        symbol [ strokeDistance ? 12 8 22 ];
+        putv self :strokeDistance %tmp.2;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc" 13 8 ]
+        %tmp.3 = null;
+        symbol [ verticalOscillation ? 13 8 27 ];
+        putv self :verticalOscillation %tmp.3;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc" 14 8 ]
+        %tmp.4 = null;
+        symbol [ lateralOscillation ? 14 8 26 ];
+        putv self :lateralOscillation %tmp.4;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SwimmingMetrics_mc_10_26_15_4_stop:
+    }
+}
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 20; @symbol_classdef = [SwimmingMetrics,20,6,21]; ]
+class SwimmingMetrics {
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 20; ]
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 20; ]
+    static
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 27; @symbol_functiondef = [calculate,27,20,29]; @symbol_param<0> = [accelBuffer,28,8,19]; @symbol_param<0>_type<0> = [RingBuffer,28,26,36]; @symbol_param<1> = [totalDistance,29,8,21]; @symbol_param<1>_type<0> = [Float,29,26,31]; @symbol_param<2> = [strokeCount,30,8,19]; @symbol_param<2>_type<0> = [Number,30,26,32]; @symbol_param<3> = [poolLength,31,8,18]; @symbol_param<3>_type<0> = [Number,31,26,32]; @symbol_param<4> = [lapCount,32,8,16]; @symbol_param<4>_type<0> = [Number,32,26,32]; @symbol_param<5> = [gpsAvailable,33,8,20]; @symbol_param<5>_type<0> = [Boolean,33,26,33]; @symbol_return<0> = [SwimmingMetricsResult,34,9,30]; ]
+    static
+    function calculate(accelBuffer as RingBuffer, totalDistance as Float or Null, strokeCount as Number, poolLength as Number, lapCount as Number, gpsAvailable as Boolean) as SwimmingMetricsResult {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SwimmingMetrics_mc_34_31_46_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc" 35 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SwimmingMetrics_mc_34_31_46_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SwimmingMetrics_mc_34_31_46_4_stop" ]
+        %result.1 = local;
+        symbol [ result %result.1 35 12 18 ];
+        symbol [ SwimmingMetricsResult %tmp.4 35 25 46 ];
+        %tmp.4 = getv ? :SwimmingMetricsResult;
+        %tmp.1 = newc %tmp.4 ();
+        lputv %result.1 %tmp.1;
+        symbol [ result %result.1 35 12 18 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc" 36 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SwimmingMetrics_mc_34_31_46_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SwimmingMetrics_mc_34_31_46_4_stop" ]
+        %buffer.2 = local;
+        symbol [ buffer %buffer.2 36 12 18 ];
+        %tmp.5 = lgetv %accelBuffer;
+        symbol [ accelBuffer %tmp.5 36 21 32 ];
+        symbol [ getAll %tmp.6 36 33 39 ];
+        %tmp.6 = getv function %tmp.5 :getAll;
+        %tmp.7 = invoke %tmp.5 %tmp.6();
+        lputv %buffer.2 %tmp.7;
+        symbol [ buffer %buffer.2 36 12 18 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc" 38 8 ]
+        %tmp.8 = lgetv %result.1;
+        symbol [ result %tmp.8 38 8 14 ];
+        symbol [ MetricsCalculator %tmp.10 38 37 54 ];
+        %tmp.10 = getv ? :MetricsCalculator;
+        symbol [ calculateStrokeRate %tmp.11 38 55 74 ];
+        %tmp.11 = getv function %tmp.10 :calculateStrokeRate;
+        %tmp.12 = lgetv %buffer.2;
+        symbol [ buffer %tmp.12 38 75 81 ];
+        %tmp.13 = invoke %tmp.10 %tmp.11(%tmp.12);
+        symbol [ strokeRate ? 38 15 25 ];
+        putv %tmp.8 :strokeRate %tmp.13;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc" 39 8 ]
+        %tmp.14 = lgetv %result.1;
+        symbol [ result %tmp.14 39 8 14 ];
+        symbol [ MetricsCalculator %tmp.16 39 37 54 ];
+        %tmp.16 = getv ? :MetricsCalculator;
+        symbol [ calculateStrokeDistance %tmp.17 39 55 78 ];
+        %tmp.17 = getv function %tmp.16 :calculateStrokeDistance;
+        %tmp.18 = lgetv %totalDistance;
+        symbol [ totalDistance %tmp.18 40 12 25 ];
+        %tmp.19 = lgetv %strokeCount;
+        symbol [ strokeCount %tmp.19 40 27 38 ];
+        %tmp.20 = lgetv %poolLength;
+        symbol [ poolLength %tmp.20 40 40 50 ];
+        %tmp.21 = lgetv %lapCount;
+        symbol [ lapCount %tmp.21 40 52 60 ];
+        %tmp.22 = lgetv %gpsAvailable;
+        symbol [ gpsAvailable %tmp.22 40 62 74 ];
+        %tmp.23 = invoke %tmp.16 %tmp.17(%tmp.18, %tmp.19, %tmp.20, %tmp.21, %tmp.22);
+        symbol [ strokeDistance ? 39 15 29 ];
+        putv %tmp.14 :strokeDistance %tmp.23;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc" 42 8 ]
+        %tmp.24 = lgetv %result.1;
+        symbol [ result %tmp.24 42 8 14 ];
+        symbol [ MetricsCalculator %tmp.26 42 37 54 ];
+        %tmp.26 = getv ? :MetricsCalculator;
+        symbol [ calculateVerticalOscillation %tmp.27 42 55 83 ];
+        %tmp.27 = getv function %tmp.26 :calculateVerticalOscillation;
+        %tmp.28 = lgetv %buffer.2;
+        symbol [ buffer %tmp.28 42 84 90 ];
+        %tmp.29 = invoke %tmp.26 %tmp.27(%tmp.28);
+        symbol [ verticalOscillation ? 42 15 34 ];
+        putv %tmp.24 :verticalOscillation %tmp.29;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc" 43 8 ]
+        %tmp.30 = lgetv %result.1;
+        symbol [ result %tmp.30 43 8 14 ];
+        symbol [ MetricsCalculator %tmp.32 43 37 54 ];
+        %tmp.32 = getv ? :MetricsCalculator;
+        symbol [ calculateLateralOscillation %tmp.33 43 55 82 ];
+        %tmp.33 = getv function %tmp.32 :calculateLateralOscillation;
+        %tmp.34 = lgetv %buffer.2;
+        symbol [ buffer %tmp.34 43 83 89 ];
+        %tmp.35 = invoke %tmp.32 %tmp.33(%tmp.34);
+        symbol [ lateralOscillation ? 43 15 33 ];
+        putv %tmp.30 :lateralOscillation %tmp.35;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc" 45 8 ]
+        %tmp.36 = lgetv %result.1;
+        symbol [ result %tmp.36 45 15 21 ];
+        ret %tmp.36;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SwimmingMetrics_mc_34_31_46_4_stop:
+    }
+}
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SwimmingMetrics.mc"; @line = 1; ]
+<init> {
+}

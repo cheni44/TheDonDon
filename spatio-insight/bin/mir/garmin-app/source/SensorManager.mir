@@ -1,0 +1,580 @@
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 1; @symbol_importdef<0> = [Toybox,1,7,13]; @symbol_importdef<1> = [Lang,1,14,18]; ]
+import Toybox.Lang;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 2; @symbol_importdef<0> = [Toybox,2,7,13]; @symbol_importdef<1> = [Sensor,2,14,20]; ]
+import Toybox.Sensor;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 3; @symbol_importdef<0> = [Toybox,3,7,13]; @symbol_importdef<1> = [System,3,14,20]; ]
+import Toybox.System;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 4; @symbol_importdef<0> = [Toybox,4,7,13]; @symbol_importdef<1> = [Time,4,14,18]; ]
+import Toybox.Time;
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 8; @symbol_classdef = [SensorEntry,8,6,17]; ]
+class SensorEntry {
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 8; ]
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 8; ]
+    static
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 9; @position = 8; @symbol_vardef = [timestamp,9,8,17]; @symbol_type<0> = [Number,9,21,27]; ]
+    var timestamp as Number;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 10; @position = 8; @symbol_vardef = [values,10,8,14]; @symbol_type<0> = [Array,10,18,23]; ]
+    var values as Array;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 12; @symbol_functiondef = [initialize,12,13,23]; @symbol_param<0> = [ts,12,24,26]; @symbol_param<0>_type<0> = [Number,12,30,36]; @symbol_param<1> = [vals,12,38,42]; @symbol_param<1>_type<0> = [Array,12,46,51]; ]
+    function initialize(ts as Number, vals as Array) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_12_53_15_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 13 8 ]
+        %tmp.1 = lgetv %ts;
+        symbol [ ts %tmp.1 13 20 22 ];
+        symbol [ timestamp ? 13 8 17 ];
+        putv self :timestamp %tmp.1;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 14 8 ]
+        %tmp.2 = lgetv %vals;
+        symbol [ vals %tmp.2 14 17 21 ];
+        symbol [ values ? 14 8 14 ];
+        putv self :values %tmp.2;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_12_53_15_4_stop:
+    }
+}
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 20; @symbol_classdef = [SensorManager,20,6,19]; ]
+class SensorManager {
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 20; ]
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 20; ]
+    static
+    <init> {
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 22; @position = 17; @symbol_constdef = [BUFFER_CAPACITY,22,17,32]; ]
+    static
+    const BUFFER_CAPACITY = 200;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 23; @position = 17; @symbol_constdef = [ACTIVITY_RUNNING,23,17,33]; ]
+    static
+    const ACTIVITY_RUNNING = 0;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 24; @position = 17; @symbol_constdef = [ACTIVITY_SWIMMING,24,17,34]; ]
+    static
+    const ACTIVITY_SWIMMING = 1;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 26; @position = 8; @symbol_vardef = [accelBuffer,26,8,19]; @symbol_type<0> = [RingBuffer,26,24,34]; ]
+    var accelBuffer as RingBuffer;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 27; @position = 8; @symbol_vardef = [gyroBuffer,27,8,18]; @symbol_type<0> = [RingBuffer,27,24,34]; ]
+    var gyroBuffer as RingBuffer;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 28; @position = 8; @symbol_vardef = [hrBuffer,28,8,16]; @symbol_type<0> = [RingBuffer,28,24,34]; ]
+    var hrBuffer as RingBuffer;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 29; @position = 8; @symbol_vardef = [gyroAvailable,29,8,21]; @symbol_type<0> = [Boolean,29,26,33]; ]
+    var gyroAvailable as Boolean;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 30; @position = 8; @symbol_vardef = [accelAvailable,30,8,22]; @symbol_type<0> = [Boolean,30,26,33]; ]
+    var accelAvailable as Boolean;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 31; @position = 8; @symbol_vardef = [hrAvailable,31,8,19]; @symbol_type<0> = [Boolean,31,26,33]; ]
+    var hrAvailable as Boolean;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 33; @position = 16; @symbol_vardef = [_sampleRateHz,33,16,29]; @symbol_type<0> = [Number,33,33,39]; ]
+    private
+    var _sampleRateHz as Number;
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 35; @symbol_functiondef = [initialize,35,13,23]; @symbol_param<0> = [sampleRateHz,35,24,36]; @symbol_param<0>_type<0> = [Number,35,40,46]; ]
+    function initialize(sampleRateHz as Number) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_35_48_45_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 36 8 ]
+        %tmp.1 = lgetv %sampleRateHz;
+        symbol [ sampleRateHz %tmp.1 36 24 36 ];
+        symbol [ _sampleRateHz ? 36 8 21 ];
+        putv self :_sampleRateHz %tmp.1;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 37 8 ]
+        symbol [ RingBuffer %tmp.5 37 27 37 ];
+        %tmp.5 = getv ? :RingBuffer;
+        symbol [ BUFFER_CAPACITY %tmp.7 37 38 53 ];
+        %tmp.7 = getv ? :BUFFER_CAPACITY;
+        %tmp.2 = newc %tmp.5 (%tmp.7);
+        symbol [ accelBuffer ? 37 8 19 ];
+        putv self :accelBuffer %tmp.2;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 38 8 ]
+        symbol [ RingBuffer %tmp.11 38 27 37 ];
+        %tmp.11 = getv ? :RingBuffer;
+        symbol [ BUFFER_CAPACITY %tmp.13 38 38 53 ];
+        %tmp.13 = getv ? :BUFFER_CAPACITY;
+        %tmp.8 = newc %tmp.11 (%tmp.13);
+        symbol [ gyroBuffer ? 38 8 18 ];
+        putv self :gyroBuffer %tmp.8;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 39 8 ]
+        symbol [ RingBuffer %tmp.17 39 27 37 ];
+        %tmp.17 = getv ? :RingBuffer;
+        symbol [ BUFFER_CAPACITY %tmp.19 39 38 53 ];
+        %tmp.19 = getv ? :BUFFER_CAPACITY;
+        %tmp.14 = newc %tmp.17 (%tmp.19);
+        symbol [ hrBuffer ? 39 8 16 ];
+        putv self :hrBuffer %tmp.14;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 40 8 ]
+        %tmp.20 = false;
+        symbol [ gyroAvailable ? 40 8 21 ];
+        putv self :gyroAvailable %tmp.20;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 41 8 ]
+        %tmp.21 = false;
+        symbol [ accelAvailable ? 41 8 22 ];
+        putv self :accelAvailable %tmp.21;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 42 8 ]
+        %tmp.22 = false;
+        symbol [ hrAvailable ? 42 8 19 ];
+        putv self :hrAvailable %tmp.22;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 44 8 ]
+        %tmp.23 = self;
+        symbol [ _detectAndEnable %tmp.24 44 8 24 ];
+        %tmp.24 = getv function %tmp.23 :_detectAndEnable;
+        invoke %tmp.23 %tmp.24();
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_35_48_45_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 48; @symbol_functiondef = [stop,48,13,17]; ]
+    function stop() as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_48_28_51_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 49 8 ]
+        symbol [ Sensor %tmp.1 49 8 14 ];
+        %tmp.1 = getm $.Toybox.Sensor;
+        symbol [ setEnabledSensors %tmp.2 49 15 32 ];
+        %tmp.2 = getv function %tmp.1 :setEnabledSensors;
+        %tmp.3 = newa 0;
+        invoke %tmp.1 %tmp.2(%tmp.3);
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 50 8 ]
+        symbol [ Sensor %tmp.4 50 8 14 ];
+        %tmp.4 = getm $.Toybox.Sensor;
+        symbol [ unregisterSensorDataListener %tmp.5 50 15 43 ];
+        %tmp.5 = getv function %tmp.4 :unregisterSensorDataListener;
+        invoke %tmp.4 %tmp.5();
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_48_28_51_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 57; @symbol_functiondef = [_detectAndEnable,57,21,37]; ]
+    private
+    function _detectAndEnable() as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_57_48_78_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 59 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_57_48_78_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_57_48_78_4_stop" ]
+        %sensorInfo.1 = local;
+        symbol [ sensorInfo %sensorInfo.1 59 12 22 ];
+        symbol [ Sensor %tmp.1 59 25 31 ];
+        %tmp.1 = getm $.Toybox.Sensor;
+        symbol [ getInfo %tmp.2 59 32 39 ];
+        %tmp.2 = getv function %tmp.1 :getInfo;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %sensorInfo.1 %tmp.3;
+        symbol [ sensorInfo %sensorInfo.1 59 12 22 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 60 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_60_25_60_77_begin:
+        %tmp.4 = lgetv %sensorInfo.1;
+        symbol [ sensorInfo %tmp.4 60 26 36 ];
+        %tmp.6 = const :accel;
+        symbol [ accel %tmp.6 60 42 47 const ];
+        %tmp.7 = canhazplz %tmp.4 %tmp.6;
+        %tmp.8 = dup %tmp.7;
+        bf %tmp.8 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_60_52_60_77_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_60_52_60_77_true:
+        %tmp.9 = lgetv %sensorInfo.1;
+        symbol [ sensorInfo %tmp.9 60 53 63 ];
+        %tmp.10 = as %tmp.9 { (interface { var accel; }) };
+        symbol [ accel %tmp.11 60 64 69 ];
+        %tmp.11 = getv %tmp.10 :accel;
+        %tmp.12 = null;
+        %tmp.13 = ne %tmp.11 %tmp.12;
+        %tmp.14 = and %tmp.7 %tmp.13;
+        push %tmp.14;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_60_52_60_77_end:
+        %tmp.15 = phi [%tmp.8 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_60_25_60_77_begin] [%tmp.14 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_60_52_60_77_true] [%tmp.15 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_60_52_60_77_end];
+        symbol [ accelAvailable ? 60 8 22 ];
+        putv self :accelAvailable %tmp.15;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 61 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_61_25_61_85_begin:
+        %tmp.16 = lgetv %sensorInfo.1;
+        symbol [ sensorInfo %tmp.16 61 26 36 ];
+        %tmp.18 = const :gyroscope;
+        symbol [ gyroscope %tmp.18 61 42 51 const ];
+        %tmp.19 = canhazplz %tmp.16 %tmp.18;
+        %tmp.20 = dup %tmp.19;
+        bf %tmp.20 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_61_56_61_85_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_61_56_61_85_true:
+        %tmp.21 = lgetv %sensorInfo.1;
+        symbol [ sensorInfo %tmp.21 61 57 67 ];
+        %tmp.22 = as %tmp.21 { (interface { var gyroscope; }) };
+        symbol [ gyroscope %tmp.23 61 68 77 ];
+        %tmp.23 = getv %tmp.22 :gyroscope;
+        %tmp.24 = null;
+        %tmp.25 = ne %tmp.23 %tmp.24;
+        %tmp.26 = and %tmp.19 %tmp.25;
+        push %tmp.26;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_61_56_61_85_end:
+        %tmp.27 = phi [%tmp.20 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_61_25_61_85_begin] [%tmp.26 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_61_56_61_85_true] [%tmp.27 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_61_56_61_85_end];
+        symbol [ gyroAvailable ? 61 8 21 ];
+        putv self :gyroAvailable %tmp.27;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 62 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_62_25_62_85_begin:
+        %tmp.28 = lgetv %sensorInfo.1;
+        symbol [ sensorInfo %tmp.28 62 26 36 ];
+        %tmp.30 = const :heartRate;
+        symbol [ heartRate %tmp.30 62 42 51 const ];
+        %tmp.31 = canhazplz %tmp.28 %tmp.30;
+        %tmp.32 = dup %tmp.31;
+        bf %tmp.32 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_62_56_62_85_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_62_56_62_85_true:
+        %tmp.33 = lgetv %sensorInfo.1;
+        symbol [ sensorInfo %tmp.33 62 57 67 ];
+        %tmp.34 = as %tmp.33 { (interface { var heartRate; }) };
+        symbol [ heartRate %tmp.35 62 68 77 ];
+        %tmp.35 = getv %tmp.34 :heartRate;
+        %tmp.36 = null;
+        %tmp.37 = ne %tmp.35 %tmp.36;
+        %tmp.38 = and %tmp.31 %tmp.37;
+        push %tmp.38;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_62_56_62_85_end:
+        %tmp.39 = phi [%tmp.32 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_62_25_62_85_begin] [%tmp.38 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_62_56_62_85_true] [%tmp.39 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_62_56_62_85_end];
+        symbol [ hrAvailable ? 62 8 19 ];
+        putv self :hrAvailable %tmp.39;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 65 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_57_48_78_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_57_48_78_4_stop" ]
+        %options.2 = local;
+        symbol [ options %options.2 65 12 19 ];
+        %tmp.40 = newd 3;
+        %tmp.42 = const :period;
+        symbol [ period %tmp.42 66 13 19 const ];
+        %tmp.43 = 1;
+        %tmp.44 = dup %tmp.40;
+        %tmp.45 = aputv %tmp.44 %tmp.42 %tmp.43;
+        %tmp.47 = const :accelerometer;
+        symbol [ accelerometer %tmp.47 67 13 26 const ];
+        %tmp.48 = newd 2;
+        %tmp.50 = const :enabled;
+        symbol [ enabled %tmp.50 68 17 24 const ];
+        symbol [ accelAvailable %tmp.52 68 31 45 ];
+        %tmp.52 = getv ? :accelAvailable;
+        %tmp.53 = dup %tmp.48;
+        %tmp.54 = aputv %tmp.53 %tmp.50 %tmp.52;
+        %tmp.56 = const :sampleRate;
+        symbol [ sampleRate %tmp.56 69 17 27 const ];
+        symbol [ _sampleRateHz %tmp.58 69 31 44 ];
+        %tmp.58 = getv ? :_sampleRateHz;
+        %tmp.59 = dup %tmp.54;
+        %tmp.60 = aputv %tmp.59 %tmp.56 %tmp.58;
+        %tmp.61 = dup %tmp.45;
+        %tmp.62 = aputv %tmp.61 %tmp.47 %tmp.60;
+        %tmp.64 = const :gyroscope;
+        symbol [ gyroscope %tmp.64 71 13 22 const ];
+        %tmp.65 = newd 2;
+        %tmp.67 = const :enabled;
+        symbol [ enabled %tmp.67 72 17 24 const ];
+        symbol [ gyroAvailable %tmp.69 72 31 44 ];
+        %tmp.69 = getv ? :gyroAvailable;
+        %tmp.70 = dup %tmp.65;
+        %tmp.71 = aputv %tmp.70 %tmp.67 %tmp.69;
+        %tmp.73 = const :sampleRate;
+        symbol [ sampleRate %tmp.73 73 17 27 const ];
+        symbol [ _sampleRateHz %tmp.75 73 31 44 ];
+        %tmp.75 = getv ? :_sampleRateHz;
+        %tmp.76 = dup %tmp.71;
+        %tmp.77 = aputv %tmp.76 %tmp.73 %tmp.75;
+        %tmp.78 = dup %tmp.62;
+        %tmp.79 = aputv %tmp.78 %tmp.64 %tmp.77;
+        lputv %options.2 %tmp.79;
+        symbol [ options %options.2 65 12 19 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 77 8 ]
+        symbol [ Sensor %tmp.80 77 8 14 ];
+        %tmp.80 = getm $.Toybox.Sensor;
+        symbol [ registerSensorDataListener %tmp.81 77 15 41 ];
+        %tmp.81 = getv function %tmp.80 :registerSensorDataListener;
+        %tmp.82 = self;
+        symbol [ method %tmp.83 77 42 48 ];
+        %tmp.83 = getv function %tmp.82 :method;
+        %tmp.85 = const :onSensorData;
+        symbol [ onSensorData %tmp.85 77 50 62 const ];
+        %tmp.86 = invoke %tmp.82 %tmp.83(%tmp.85);
+        %tmp.87 = lgetv %options.2;
+        symbol [ options %tmp.87 77 65 72 ];
+        invoke %tmp.80 %tmp.81(%tmp.86, %tmp.87);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_57_48_78_4_stop:
+    }
+    [ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 81; @symbol_functiondef = [onSensorData,81,13,25]; @symbol_param<0> = [sensorData,81,26,36]; @symbol_param<0>_type<0> = [Sensor,81,40,46]; @symbol_param<0>_type<1> = [SensorData,81,47,57]; ]
+    function onSensorData(sensorData as Sensor.SensorData) as Void {
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_81_67_106_4_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 82 8 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_81_67_106_4_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_81_67_106_4_stop" ]
+        %now.1 = local;
+        symbol [ now %now.1 82 12 15 ];
+        symbol [ System %tmp.1 82 18 24 ];
+        %tmp.1 = getm $.Toybox.System;
+        symbol [ getTimer %tmp.2 82 25 33 ];
+        %tmp.2 = getv function %tmp.1 :getTimer;
+        %tmp.3 = invoke %tmp.1 %tmp.2();
+        lputv %now.1 %tmp.3;
+        symbol [ now %now.1 82 12 15 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 85 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_8_90_8_if_stmt:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_12_85_75_begin:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_12_85_46_begin:
+        symbol [ accelAvailable %tmp.5 85 12 26 ];
+        %tmp.5 = getv ? :accelAvailable;
+        bf %tmp.5 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_8_90_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_30_85_46_true:
+        %tmp.6 = lgetv %sensorData;
+        symbol [ sensorData %tmp.6 85 30 40 ];
+        %tmp.8 = const :accel;
+        symbol [ accel %tmp.8 85 46 51 const ];
+        %tmp.9 = canhazplz %tmp.6 %tmp.8;
+        push %tmp.9;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_30_85_46_end:
+        %tmp.10 = phi [%tmp.5 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_12_85_46_begin] [%tmp.9 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_30_85_46_true] [%tmp.10 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_30_85_46_end];
+        bf %tmp.10 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_8_90_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_55_85_75_true:
+        %tmp.11 = lgetv %sensorData;
+        symbol [ sensorData %tmp.11 85 55 65 ];
+        %tmp.12 = as %tmp.11 { (interface { var accel; }) };
+        symbol [ accel %tmp.13 85 66 71 ];
+        %tmp.13 = getv %tmp.12 :accel;
+        %tmp.14 = null;
+        %tmp.15 = ne %tmp.13 %tmp.14;
+        push %tmp.15;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_55_85_75_end:
+        %tmp.16 = phi [%tmp.10 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_12_85_75_begin] [%tmp.15 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_55_85_75_true] [%tmp.16 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_55_85_75_end];
+        bf %tmp.16 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_8_90_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_8_90_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_81_90_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 86 12 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_81_90_8_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_81_90_8_stop" ]
+        %a.2 = local;
+        symbol [ a %a.2 86 16 17 ];
+        %tmp.17 = lgetv %sensorData;
+        symbol [ sensorData %tmp.17 86 20 30 ];
+        %tmp.18 = as %tmp.17 { (interface { var accel; }) };
+        symbol [ accel %tmp.19 86 31 36 ];
+        %tmp.19 = getv %tmp.18 :accel;
+        lputv %a.2 %tmp.19;
+        symbol [ a %a.2 86 16 17 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 87 12 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_12_89_12_if_stmt:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_16_87_53_begin:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_16_87_38_begin:
+        %tmp.20 = lgetv %a.2;
+        symbol [ a %tmp.20 87 16 17 ];
+        symbol [ x %tmp.21 87 18 19 ];
+        %tmp.21 = getv %tmp.20 :x;
+        %tmp.22 = null;
+        %tmp.23 = ne %tmp.21 %tmp.22;
+        bf %tmp.23 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_12_89_12_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_31_87_38_true:
+        %tmp.24 = lgetv %a.2;
+        symbol [ a %tmp.24 87 31 32 ];
+        symbol [ y %tmp.25 87 33 34 ];
+        %tmp.25 = getv %tmp.24 :y;
+        %tmp.26 = null;
+        %tmp.27 = ne %tmp.25 %tmp.26;
+        push %tmp.27;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_31_87_38_end:
+        %tmp.28 = phi [%tmp.23 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_16_87_38_begin] [%tmp.27 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_31_87_38_true] [%tmp.28 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_31_87_38_end];
+        bf %tmp.28 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_12_89_12_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_46_87_53_true:
+        %tmp.29 = lgetv %a.2;
+        symbol [ a %tmp.29 87 46 47 ];
+        symbol [ z %tmp.30 87 48 49 ];
+        %tmp.30 = getv %tmp.29 :z;
+        %tmp.31 = null;
+        %tmp.32 = ne %tmp.30 %tmp.31;
+        push %tmp.32;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_46_87_53_end:
+        %tmp.33 = phi [%tmp.28 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_16_87_53_begin] [%tmp.32 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_46_87_53_true] [%tmp.33 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_46_87_53_end];
+        bf %tmp.33 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_12_89_12_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_12_89_12_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_59_89_12_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 88 16 ]
+        symbol [ accelBuffer %tmp.35 88 16 27 ];
+        %tmp.35 = getv ? :accelBuffer;
+        symbol [ push %tmp.36 88 28 32 ];
+        %tmp.36 = getv function %tmp.35 :push;
+        symbol [ SensorEntry %tmp.40 88 37 48 ];
+        %tmp.40 = getv ? :SensorEntry;
+        %tmp.41 = lgetv %now.1;
+        symbol [ now %tmp.41 88 49 52 ];
+        %tmp.42 = newa 3;
+        %tmp.43 = lgetv %a.2;
+        symbol [ a %tmp.43 88 55 56 ];
+        symbol [ x %tmp.44 88 57 58 ];
+        %tmp.44 = getv %tmp.43 :x;
+        %tmp.45 = dup %tmp.42;
+        %tmp.46 = aputv %tmp.45 0 %tmp.44;
+        %tmp.47 = lgetv %a.2;
+        symbol [ a %tmp.47 88 60 61 ];
+        symbol [ y %tmp.48 88 62 63 ];
+        %tmp.48 = getv %tmp.47 :y;
+        %tmp.49 = dup %tmp.46;
+        %tmp.50 = aputv %tmp.49 1 %tmp.48;
+        %tmp.51 = lgetv %a.2;
+        symbol [ a %tmp.51 88 65 66 ];
+        symbol [ z %tmp.52 88 67 68 ];
+        %tmp.52 = getv %tmp.51 :z;
+        %tmp.53 = dup %tmp.50;
+        %tmp.54 = aputv %tmp.53 2 %tmp.52;
+        %tmp.37 = newc %tmp.40 (%tmp.41, %tmp.54);
+        invoke %tmp.35 %tmp.36(%tmp.37);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_59_89_12_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_12_89_12_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_87_12_89_12_if_end:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_81_90_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_8_90_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_85_8_90_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 93 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_8_98_8_if_stmt:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_12_93_82_begin:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_12_93_45_begin:
+        symbol [ gyroAvailable %tmp.56 93 12 25 ];
+        %tmp.56 = getv ? :gyroAvailable;
+        bf %tmp.56 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_8_98_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_29_93_45_true:
+        %tmp.57 = lgetv %sensorData;
+        symbol [ sensorData %tmp.57 93 29 39 ];
+        %tmp.59 = const :gyroscope;
+        symbol [ gyroscope %tmp.59 93 45 54 const ];
+        %tmp.60 = canhazplz %tmp.57 %tmp.59;
+        push %tmp.60;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_29_93_45_end:
+        %tmp.61 = phi [%tmp.56 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_12_93_45_begin] [%tmp.60 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_29_93_45_true] [%tmp.61 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_29_93_45_end];
+        bf %tmp.61 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_8_98_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_58_93_82_true:
+        %tmp.62 = lgetv %sensorData;
+        symbol [ sensorData %tmp.62 93 58 68 ];
+        %tmp.63 = as %tmp.62 { (interface { var gyroscope; }) };
+        symbol [ gyroscope %tmp.64 93 69 78 ];
+        %tmp.64 = getv %tmp.63 :gyroscope;
+        %tmp.65 = null;
+        %tmp.66 = ne %tmp.64 %tmp.65;
+        push %tmp.66;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_58_93_82_end:
+        %tmp.67 = phi [%tmp.61 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_12_93_82_begin] [%tmp.66 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_58_93_82_true] [%tmp.67 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_58_93_82_end];
+        bf %tmp.67 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_8_98_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_8_98_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_88_98_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 94 12 ]
+        [ "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_88_98_8_start" "_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_88_98_8_stop" ]
+        %g.3 = local;
+        symbol [ g %g.3 94 16 17 ];
+        %tmp.68 = lgetv %sensorData;
+        symbol [ sensorData %tmp.68 94 20 30 ];
+        %tmp.69 = as %tmp.68 { (interface { var gyroscope; }) };
+        symbol [ gyroscope %tmp.70 94 31 40 ];
+        %tmp.70 = getv %tmp.69 :gyroscope;
+        lputv %g.3 %tmp.70;
+        symbol [ g %g.3 94 16 17 ];
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 95 12 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_12_97_12_if_stmt:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_16_95_53_begin:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_16_95_38_begin:
+        %tmp.71 = lgetv %g.3;
+        symbol [ g %tmp.71 95 16 17 ];
+        symbol [ x %tmp.72 95 18 19 ];
+        %tmp.72 = getv %tmp.71 :x;
+        %tmp.73 = null;
+        %tmp.74 = ne %tmp.72 %tmp.73;
+        bf %tmp.74 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_12_97_12_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_31_95_38_true:
+        %tmp.75 = lgetv %g.3;
+        symbol [ g %tmp.75 95 31 32 ];
+        symbol [ y %tmp.76 95 33 34 ];
+        %tmp.76 = getv %tmp.75 :y;
+        %tmp.77 = null;
+        %tmp.78 = ne %tmp.76 %tmp.77;
+        push %tmp.78;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_31_95_38_end:
+        %tmp.79 = phi [%tmp.74 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_16_95_38_begin] [%tmp.78 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_31_95_38_true] [%tmp.79 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_31_95_38_end];
+        bf %tmp.79 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_12_97_12_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_46_95_53_true:
+        %tmp.80 = lgetv %g.3;
+        symbol [ g %tmp.80 95 46 47 ];
+        symbol [ z %tmp.81 95 48 49 ];
+        %tmp.81 = getv %tmp.80 :z;
+        %tmp.82 = null;
+        %tmp.83 = ne %tmp.81 %tmp.82;
+        push %tmp.83;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_46_95_53_end:
+        %tmp.84 = phi [%tmp.79 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_16_95_53_begin] [%tmp.83 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_46_95_53_true] [%tmp.84 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_46_95_53_end];
+        bf %tmp.84 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_12_97_12_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_12_97_12_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_59_97_12_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 96 16 ]
+        symbol [ gyroBuffer %tmp.86 96 16 26 ];
+        %tmp.86 = getv ? :gyroBuffer;
+        symbol [ push %tmp.87 96 27 31 ];
+        %tmp.87 = getv function %tmp.86 :push;
+        symbol [ SensorEntry %tmp.91 96 36 47 ];
+        %tmp.91 = getv ? :SensorEntry;
+        %tmp.92 = lgetv %now.1;
+        symbol [ now %tmp.92 96 48 51 ];
+        %tmp.93 = newa 3;
+        %tmp.94 = lgetv %g.3;
+        symbol [ g %tmp.94 96 54 55 ];
+        symbol [ x %tmp.95 96 56 57 ];
+        %tmp.95 = getv %tmp.94 :x;
+        %tmp.96 = dup %tmp.93;
+        %tmp.97 = aputv %tmp.96 0 %tmp.95;
+        %tmp.98 = lgetv %g.3;
+        symbol [ g %tmp.98 96 59 60 ];
+        symbol [ y %tmp.99 96 61 62 ];
+        %tmp.99 = getv %tmp.98 :y;
+        %tmp.100 = dup %tmp.97;
+        %tmp.101 = aputv %tmp.100 1 %tmp.99;
+        %tmp.102 = lgetv %g.3;
+        symbol [ g %tmp.102 96 64 65 ];
+        symbol [ z %tmp.103 96 66 67 ];
+        %tmp.103 = getv %tmp.102 :z;
+        %tmp.104 = dup %tmp.101;
+        %tmp.105 = aputv %tmp.104 2 %tmp.103;
+        %tmp.88 = newc %tmp.91 (%tmp.92, %tmp.105);
+        invoke %tmp.86 %tmp.87(%tmp.88);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_59_97_12_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_12_97_12_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_95_12_97_12_if_end:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_88_98_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_8_98_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_93_8_98_8_if_end:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 102 8 ]
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_8_105_8_if_stmt:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_12_102_65_begin:
+        %tmp.106 = lgetv %sensorData;
+        symbol [ sensorData %tmp.106 102 12 22 ];
+        %tmp.108 = const :heartRate;
+        symbol [ heartRate %tmp.108 102 28 37 const ];
+        %tmp.109 = canhazplz %tmp.106 %tmp.108;
+        bf %tmp.109 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_8_105_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_41_102_65_true:
+        %tmp.110 = lgetv %sensorData;
+        symbol [ sensorData %tmp.110 102 41 51 ];
+        %tmp.111 = as %tmp.110 { (interface { var heartRate; }) };
+        symbol [ heartRate %tmp.112 102 52 61 ];
+        %tmp.112 = getv %tmp.111 :heartRate;
+        %tmp.113 = null;
+        %tmp.114 = ne %tmp.112 %tmp.113;
+        push %tmp.114;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_41_102_65_end:
+        %tmp.115 = phi [%tmp.109 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_12_102_65_begin] [%tmp.114 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_41_102_65_true] [%tmp.115 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_41_102_65_end];
+        bf %tmp.115 @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_8_105_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_8_105_8_if_true:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_71_105_8_start:
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 103 12 ]
+        %tmp.116 = true;
+        symbol [ hrAvailable ? 103 12 23 ];
+        putv self :hrAvailable %tmp.116;
+[ "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc" 104 12 ]
+        symbol [ hrBuffer %tmp.118 104 12 20 ];
+        %tmp.118 = getv ? :hrBuffer;
+        symbol [ push %tmp.119 104 21 25 ];
+        %tmp.119 = getv function %tmp.118 :push;
+        symbol [ SensorEntry %tmp.123 104 30 41 ];
+        %tmp.123 = getv ? :SensorEntry;
+        %tmp.124 = lgetv %now.1;
+        symbol [ now %tmp.124 104 42 45 ];
+        %tmp.125 = newa 1;
+        %tmp.126 = lgetv %sensorData;
+        symbol [ sensorData %tmp.126 104 48 58 ];
+        %tmp.127 = as %tmp.126 { (interface { var heartRate; }) };
+        symbol [ heartRate %tmp.128 104 59 68 ];
+        %tmp.128 = getv %tmp.127 :heartRate;
+        %tmp.129 = dup %tmp.125;
+        %tmp.130 = aputv %tmp.129 0 %tmp.128;
+        %tmp.120 = newc %tmp.123 (%tmp.124, %tmp.130);
+        invoke %tmp.118 %tmp.119(%tmp.120);
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_71_105_8_stop:
+        goto @_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_8_105_8_if_end;
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_102_8_105_8_if_end:
+_Users_mac_Software_ai_vibe_projects_personal_spatio_insight_garmin_app_source_SensorManager_mc_81_67_106_4_stop:
+    }
+}
+[ @file = "/Users/mac/Software/ai-vibe-projects-personal/spatio-insight/garmin-app/source/SensorManager.mc"; @line = 1; ]
+<init> {
+}
