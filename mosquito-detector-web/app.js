@@ -606,16 +606,19 @@ function updateProximityUI(score) {
 // ── Start / Stop ──────────────────────────────────────────────────────────
 startBtn.addEventListener('click', async () => {
   if (!running) {
-    stream = await startCamera(facingMode);
-    if (!stream) return;   // startCamera already showed the error
-
-    await initMicListener();
-
-    lastDetectionTime = 0;
-    running           = true;
-    startBtn.textContent = '⏹ Stop';
-    flipBtn.disabled     = false;
-    rafId = requestAnimationFrame(animationLoop);
+    try {
+      stream = await startCamera(facingMode);
+      if (!stream) return;
+      await initMicListener();
+      lastDetectionTime    = 0;
+      running              = true;
+      startBtn.textContent = '⏹ 停止';
+      flipBtn.disabled     = false;
+      rafId = requestAnimationFrame(animationLoop);
+    } catch (err) {
+      console.error('Start error:', err);
+      showError(`啟動失敗：${err.message}`, true);
+    }
   } else {
     cancelAnimationFrame(rafId);
     rafId = null;
@@ -627,7 +630,7 @@ startBtn.addEventListener('click', async () => {
     updateSoundUI(0);
     stableTracker.clear();
     overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
-    startBtn.textContent = '▶ Start';
+    startBtn.textContent = '▶ 開始';
     flipBtn.disabled     = true;
   }
 });
@@ -653,7 +656,7 @@ flipBtn.addEventListener('click', async () => {
   } else {
     // Camera switch failed — reset to stopped state
     running              = false;
-    startBtn.textContent = '▶ Start';
+    startBtn.textContent = '▶ 開始';
     flipBtn.disabled     = true;
   }
 });
@@ -661,14 +664,19 @@ flipBtn.addEventListener('click', async () => {
 // ── Retry button (inside error box) ──────────────────────────────────────
 retryBtn.addEventListener('click', async () => {
   hideError();
-  stream = await startCamera(facingMode);
-  if (stream) {
-    await initMicListener();
-    lastDetectionTime = 0;
-    running           = true;
-    startBtn.textContent = '⏹ Stop';
-    flipBtn.disabled     = false;
-    rafId = requestAnimationFrame(animationLoop);
+  try {
+    stream = await startCamera(facingMode);
+    if (stream) {
+      await initMicListener();
+      lastDetectionTime    = 0;
+      running              = true;
+      startBtn.textContent = '⏹ 停止';
+      flipBtn.disabled     = false;
+      rafId = requestAnimationFrame(animationLoop);
+    }
+  } catch (err) {
+    console.error('Retry error:', err);
+    showError(`啟動失敗：${err.message}`, true);
   }
 });
 

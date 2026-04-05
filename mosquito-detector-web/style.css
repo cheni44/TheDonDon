@@ -1,4 +1,7 @@
 /* ── Reset & base ─────────────────────────────────────────────────────────── */
+/* Ensure [hidden] always wins regardless of any display class */
+[hidden] { display: none !important; }
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
