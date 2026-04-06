@@ -288,59 +288,88 @@ function playBlinkerTick(highTone) {
 }
 
 // ─── Passenger scream (合成尖叫聲) ───────────────────────────────────────────
-// isChild=true → 兒子 (高頻); false → 老婆 (中高頻)
+// isChild=true → 兒子 (中低頻厚實); false → 老婆 (中高頻)
 function playScream(isChild) {
   if (!audioCtx || !masterGainNode || !noiseBuf) return;
   try {
-    const t        = audioCtx.currentTime;
-    const dur      = 0.55 + Math.random() * 0.55;
-    const baseFreq = isChild
-      ? 1080 + Math.random() * 320   // 兒子: 1080–1400 Hz
-      :  730 + Math.random() * 220;  // 老婆:  730– 950 Hz
+    const t   = audioCtx.currentTime;
+    const dur = 1.4 + Math.random() * 0.9;  // 1.4–2.3 秒長叫
 
-    // Dedicated scream gain (比雨聲大)
+    // 老婆: 760–960 Hz; 兒子: 480–680 Hz (較低頻、厚實)
+    const baseFreq = isChild
+      ? 480 + Math.random() * 200
+      : 760 + Math.random() * 200;
+
+    // 專屬尖叫增益（比雨聲大）
     const screamGain = audioCtx.createGain();
-    screamGain.gain.value = 1.6;
+    screamGain.gain.value = 1.9;
     screamGain.connect(masterGainNode);
 
-    // 鋸齒波主振盪器 (豐富泛音 → 尖叫感)
+    // ── 主振盪器（鋸齒波，豐富泛音）──────────────────────────────────────────
     const osc = audioCtx.createOscillator();
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(baseFreq * 0.88, t);
-    osc.frequency.linearRampToValueAtTime(baseFreq * 1.14, t + 0.07);
-    osc.frequency.setValueAtTime(baseFreq * 1.10, t + 0.12);
-    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.94, t + dur);
+    // 音高輪廓：快速衝上 → 持穩顫抖 → 緩緩落下（啊啊啊感）
+    osc.frequency.setValueAtTime(baseFreq * 0.80, t);
+    osc.frequency.linearRampToValueAtTime(baseFreq * 1.18, t + 0.05);
+    osc.frequency.setValueAtTime(baseFreq * 1.12, t + 0.15);
+    osc.frequency.linearRampToValueAtTime(baseFreq * 1.06, t + dur * 0.65);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.88, t + dur);
 
-    // 顫音 LFO (6–11 Hz)
-    const lfo     = audioCtx.createOscillator();
-    lfo.frequency.value = 6 + Math.random() * 5;
+    // ── 第二振盪器（兒子用方波增厚度，老婆用鋸齒）─────────────────────────
+    const osc2 = audioCtx.createOscillator();
+    osc2.type = isChild ? 'square' : 'sawtooth';
+    osc2.frequency.setValueAtTime(baseFreq * 0.80 * 1.006, t);
+    osc2.frequency.linearRampToValueAtTime(baseFreq * 1.18 * 1.006, t + 0.05);
+    osc2.frequency.setValueAtTime(baseFreq * 1.12 * 1.006, t + 0.15);
+    osc2.frequency.linearRampToValueAtTime(baseFreq * 1.06 * 1.006, t + dur * 0.65);
+    osc2.frequency.exponentialRampToValueAtTime(baseFreq * 0.88 * 1.006, t + dur);
+    const osc2Gain = audioCtx.createGain();
+    osc2Gain.gain.value = isChild ? 0.50 : 0.22;  // 兒子第二軌更響
+
+    // ── 顫音 LFO（6–12 Hz 自然抖動）─────────────────────────────────────────
+    const lfo = audioCtx.createOscillator();
+    lfo.frequency.value = 6 + Math.random() * 6;
     const lfoGain = audioCtx.createGain();
-    lfoGain.gain.value = baseFreq * 0.036;
+    lfoGain.gain.value = baseFreq * 0.042;
     lfo.connect(lfoGain);
     lfoGain.connect(osc.frequency);
+    lfoGain.connect(osc2.frequency);
 
-    // 噪聲層 (呼吸感/沙啞)
+    // ── 噪聲層（呼吸/沙啞）──────────────────────────────────────────────────
     const noiseSrc = audioCtx.createBufferSource();
     noiseSrc.buffer = noiseBuf; noiseSrc.loop = true;
     const noiseFlt = audioCtx.createBiquadFilter();
     noiseFlt.type = 'bandpass';
-    noiseFlt.frequency.value = baseFreq * 1.35;
-    noiseFlt.Q.value = 2.8;
+    noiseFlt.frequency.value = baseFreq * 1.4;
+    noiseFlt.Q.value = 2.5;
     const noiseGain = audioCtx.createGain();
-    noiseGain.gain.value = 0.20;
-    noiseSrc.connect(noiseFlt); noiseFlt.connect(noiseGain);
+    noiseGain.gain.value = isChild ? 0.10 : 0.18;
 
-    // Envelope
+    // ── 「啊」母音共鳴（Formant peaking ~800–900 Hz）────────────────────────
+    const formant = audioCtx.createBiquadFilter();
+    formant.type = 'peaking';
+    formant.frequency.value = isChild ? 900 : 820;
+    formant.gain.value = 9;
+    formant.Q.value = 1.8;
+
+    // ── 振幅包絡：快速起音 → 持穩 → 緩落尾 ─────────────────────────────────
     const env = audioCtx.createGain();
     env.gain.setValueAtTime(0, t);
-    env.gain.linearRampToValueAtTime(0.92, t + 0.035);
-    env.gain.setValueAtTime(0.92, t + dur * 0.28);
+    env.gain.linearRampToValueAtTime(0.96, t + 0.04);
+    env.gain.setValueAtTime(0.96, t + dur * 0.25);
+    env.gain.linearRampToValueAtTime(0.82, t + dur * 0.75);
     env.gain.exponentialRampToValueAtTime(0.001, t + dur);
 
-    osc.connect(env); noiseGain.connect(env); env.connect(screamGain);
-    osc.start(t);      osc.stop(t + dur + 0.05);
-    lfo.start(t);      lfo.stop(t + dur + 0.05);
-    noiseSrc.start(t); noiseSrc.stop(t + dur + 0.05);
+    noiseSrc.connect(noiseFlt); noiseFlt.connect(noiseGain);
+    osc.connect(formant); osc2Gain.connect(formant); noiseGain.connect(formant);
+    formant.connect(env);
+    osc2.connect(osc2Gain);
+    env.connect(screamGain);
+
+    osc.start(t);      osc.stop(t + dur + 0.06);
+    osc2.start(t);     osc2.stop(t + dur + 0.06);
+    lfo.start(t);      lfo.stop(t + dur + 0.06);
+    noiseSrc.start(t); noiseSrc.stop(t + dur + 0.06);
   } catch(_) {}
 }
 
