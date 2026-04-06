@@ -101,17 +101,17 @@ const VEHICLE_TYPES = [
 ];
 // ─── 後座乘客台詞 ─────────────────────────────────────────────────────────────
 const PASSENGER_LINES = [
-  { speaker: '老婆', text: '啊！小心！',     pitch: 1.5, rate: 1.3 },
-  { speaker: '老婆', text: '你在幹嘛！',     pitch: 1.4, rate: 1.2 },
-  { speaker: '老婆', text: '慢一點啦！',     pitch: 1.5, rate: 1.1 },
-  { speaker: '老婆', text: '我的天哪！',     pitch: 1.6, rate: 1.3 },
-  { speaker: '老婆', text: '嚇死我了！',     pitch: 1.4, rate: 1.2 },
-  { speaker: '老婆', text: '你要命嗎！',     pitch: 1.5, rate: 1.4 },
-  { speaker: '兒子', text: '爸爸前面有車！', pitch: 1.8, rate: 1.4 },
-  { speaker: '兒子', text: '好可怕喔！',     pitch: 1.9, rate: 1.3 },
-  { speaker: '兒子', text: '啊～我要下車！', pitch: 2.0, rate: 1.5 },
-  { speaker: '兒子', text: '爸爸小心！',     pitch: 1.8, rate: 1.5 },
-  { speaker: '兒子', text: '撞到了啦！',     pitch: 2.0, rate: 1.6 },
+  { speaker: '老婆', text: '啊！小心！'     },
+  { speaker: '老婆', text: '你在幹嘛！'     },
+  { speaker: '老婆', text: '慢一點啦！'     },
+  { speaker: '老婆', text: '我的天哪！'     },
+  { speaker: '老婆', text: '嚇死我了！'     },
+  { speaker: '老婆', text: '你要命嗎！'     },
+  { speaker: '兒子', text: '爸爸前面有車！' },
+  { speaker: '兒子', text: '好可怕喔！'     },
+  { speaker: '兒子', text: '啊～我要下車！' },
+  { speaker: '兒子', text: '爸爸小心！'     },
+  { speaker: '兒子', text: '撞到了啦！'     },
 ];
 
 function pickVehicleType() {
@@ -284,6 +284,63 @@ function playBlinkerTick(highTone) {
     env.gain.exponentialRampToValueAtTime(0.001, t + 0.065);
     osc.connect(env); env.connect(masterGainNode);
     osc.start(t); osc.stop(t + 0.08);
+  } catch(_) {}
+}
+
+// ─── Passenger scream (合成尖叫聲) ───────────────────────────────────────────
+// isChild=true → 兒子 (高頻); false → 老婆 (中高頻)
+function playScream(isChild) {
+  if (!audioCtx || !masterGainNode || !noiseBuf) return;
+  try {
+    const t        = audioCtx.currentTime;
+    const dur      = 0.55 + Math.random() * 0.55;
+    const baseFreq = isChild
+      ? 1080 + Math.random() * 320   // 兒子: 1080–1400 Hz
+      :  730 + Math.random() * 220;  // 老婆:  730– 950 Hz
+
+    // Dedicated scream gain (比雨聲大)
+    const screamGain = audioCtx.createGain();
+    screamGain.gain.value = 1.6;
+    screamGain.connect(masterGainNode);
+
+    // 鋸齒波主振盪器 (豐富泛音 → 尖叫感)
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(baseFreq * 0.88, t);
+    osc.frequency.linearRampToValueAtTime(baseFreq * 1.14, t + 0.07);
+    osc.frequency.setValueAtTime(baseFreq * 1.10, t + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.94, t + dur);
+
+    // 顫音 LFO (6–11 Hz)
+    const lfo     = audioCtx.createOscillator();
+    lfo.frequency.value = 6 + Math.random() * 5;
+    const lfoGain = audioCtx.createGain();
+    lfoGain.gain.value = baseFreq * 0.036;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+
+    // 噪聲層 (呼吸感/沙啞)
+    const noiseSrc = audioCtx.createBufferSource();
+    noiseSrc.buffer = noiseBuf; noiseSrc.loop = true;
+    const noiseFlt = audioCtx.createBiquadFilter();
+    noiseFlt.type = 'bandpass';
+    noiseFlt.frequency.value = baseFreq * 1.35;
+    noiseFlt.Q.value = 2.8;
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.value = 0.20;
+    noiseSrc.connect(noiseFlt); noiseFlt.connect(noiseGain);
+
+    // Envelope
+    const env = audioCtx.createGain();
+    env.gain.setValueAtTime(0, t);
+    env.gain.linearRampToValueAtTime(0.92, t + 0.035);
+    env.gain.setValueAtTime(0.92, t + dur * 0.28);
+    env.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+    osc.connect(env); noiseGain.connect(env); env.connect(screamGain);
+    osc.start(t);      osc.stop(t + dur + 0.05);
+    lfo.start(t);      lfo.stop(t + dur + 0.05);
+    noiseSrc.start(t); noiseSrc.stop(t + dur + 0.05);
   } catch(_) {}
 }
 
@@ -698,17 +755,7 @@ function maybeScream(dt) {
   g.screamDisplay  = { text: `${line.speaker}：「${line.text}」`, timer: 2.8 };
   g.screamCooldown = 5.0 + Math.random() * 6.0;
 
-  try {
-    if ('speechSynthesis' in window) {
-      speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(line.text);
-      utt.lang   = 'zh-TW';
-      utt.rate   = line.rate;
-      utt.pitch  = line.pitch;
-      utt.volume = 0.95;
-      speechSynthesis.speak(utt);
-    }
-  } catch(_) {}
+  playScream(line.speaker === '兒子');
 }
 
 // ─── Draw: Sky (daytime overcast, scene-aware) ───────────────────────────────
@@ -1636,7 +1683,6 @@ function startGame() {
 }
 function showGameOver() {
   running = false;
-  try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch(_) {}
   document.getElementById('leftControls').classList.add('hidden');
   document.getElementById('rightControls').classList.add('hidden');
   if (g.score > bestScore) bestScore = g.score;
