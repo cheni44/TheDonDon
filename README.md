@@ -4,7 +4,7 @@ A collection of personal AI-powered side projects. Each project lives in its own
 
 ## 🌐 Live Portal
 
-> **https://&lt;your-github-username&gt;.github.io/&lt;your-repo-name&gt;/**
+> **https://cheni44.github.io/TheDonDon/**
 >
 > The portal links to all project demos. Enable GitHub Pages (Settings → Pages → Source: **GitHub Actions**) to activate.
 
@@ -15,6 +15,7 @@ A collection of personal AI-powered side projects. Each project lives in its own
 | [🦟 Mosquito Detector Web](./mosquito-detector-web/) | Web (GitHub Pages) | Real-time in-browser mosquito detection via camera (dark blob) + mic FFT sound detection |
 | [🦟 Mosquito Detector iOS](./mosquito-detector-ios/) | Pythonista 3 (iOS) | Same detector as a Pythonista 3 Python app using AVFoundation + Web Audio |
 | [🌧 暴雨開車](./rainy-drive/) | Web (GitHub Pages) | First-person highway driving game — dodge traffic in a torrential downpour. Lane-change controls, 5 scenic zones, daytime POV with branded NPC vehicles |
+| [🏙 Spatial Trace](./building-footprint-map/) | Web (GitHub Pages) | Explore real public building footprints, dimensions, floor metadata, and available layouts by map point or address |
 
 ## Repository Structure
 
@@ -26,6 +27,7 @@ A collection of personal AI-powered side projects. Each project lives in its own
 ├── mosquito-detector-web/     # Web app (HTML + JS, deployed to GitHub Pages)
 ├── mosquito-detector-ios/     # Pythonista 3 iOS app (Python)
 ├── rainy-drive/               # 暴雨開車 driving game (HTML5 Canvas + Web Audio)
+├── building-footprint-map/    # Open-data building footprint explorer
 ├── openspec/                  # OpenSpec change management docs
 │   └── changes/
 └── .github/
@@ -40,6 +42,7 @@ All web assets are deployed automatically on every push to `main`.
 ```
 https://<user>.github.io/<repo>/                          → Portal
 https://<user>.github.io/<repo>/mosquito-detector-web/    → Mosquito Detector Web App
+https://cheni44.github.io/TheDonDon/building-footprint-map/ → Spatial Trace
 ```
 
 To enable:
