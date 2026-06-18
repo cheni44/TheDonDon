@@ -15,11 +15,10 @@ const progressBar = document.querySelector("#progressBar");
 const addressForm = document.querySelector("#addressForm");
 const addressInput = document.querySelector("#addressInput");
 const placeSelect = document.querySelector("#placeSelect");
-const layoutList = document.querySelector("#layoutList");
+const buildingSelect = document.querySelector("#buildingSelect");
 const floorList = document.querySelector("#floorList");
 const floorPlan = document.querySelector("#floorPlan");
 const sourceSummary = document.querySelector("#sourceSummary");
-const choiceTemplate = document.querySelector("#choiceTemplate");
 const tileCache = new Map();
 let renderToken = 0;
 
@@ -318,6 +317,26 @@ async function geocodeAddress(query) {
   };
 }
 
+async function reverseGeocode(lat, lon) {
+  const url = new URL("https://nominatim.openstreetmap.org/reverse");
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("lat", String(lat));
+  url.searchParams.set("lon", String(lon));
+  url.searchParams.set("zoom", "18");
+  url.searchParams.set("addressdetails", "1");
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return null;
+    const result = await response.json();
+    return result.display_name || null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchBuildings(place, options = {}) {
   if (!options.silent) {
     setStatus(`分析「${place.name}」周邊建築 footprint`, 3, 62);
@@ -328,14 +347,17 @@ async function fetchBuildings(place, options = {}) {
     fetchOpenBuildingMapBuildings(place),
   ]);
 
-  return mergeBuildings([...osmBuildings, ...openBuildingMapBuildings]).slice(0, 8);
+  return mergeBuildings([...osmBuildings, ...openBuildingMapBuildings])
+    .filter((building) => building.distance <= 1000)
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 60);
 }
 
 async function fetchOsmBuildings(place) {
   const query = `
     [out:json][timeout:12];
-    way(around:240,${place.lat},${place.lon})[building];
-    out center tags geom 12;
+    way(around:1000,${place.lat},${place.lon})[building];
+    out center tags geom 80;
   `;
 
   try {
@@ -347,17 +369,19 @@ async function fetchOsmBuildings(place) {
     const data = await response.json();
     const buildings = data.elements
       .filter((item) => item.geometry?.length >= 3)
-      .slice(0, 5)
+      .slice(0, 80)
       .map((item, index) => {
         const tags = item.tags || {};
         const geometry = item.geometry || [];
         const area = estimateArea(geometry);
         const dimensions = estimateDimensions(geometry);
+        const center = item.center || centroid(geometry) || { lat: place.lat, lon: place.lon };
         return {
           id: `osm-${item.id}`,
           name: tags.name || `${place.name} 建築 ${index + 1}`,
           source: "OpenStreetMap",
-          center: item.center || centroid(geometry) || { lat: place.lat, lon: place.lon },
+          center,
+          distance: distanceMeters(place, center),
           floors: readFloorCount(tags),
           kind: tags.building || "building",
           area,
@@ -374,7 +398,7 @@ async function fetchOsmBuildings(place) {
 }
 
 async function fetchOpenBuildingMapBuildings(place) {
-  const bbox = bboxAround(place.lat, place.lon, 240);
+  const bbox = bboxAround(place.lat, place.lon, 1000);
   for (const endpoint of OPEN_BUILDING_MAP_ENDPOINTS) {
     try {
       const url = new URL(endpoint);
@@ -416,6 +440,16 @@ function bboxAround(lat, lon, radiusMeters) {
   };
 }
 
+function distanceMeters(a, b) {
+  const earthRadius = 6371000;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const deltaLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const deltaLon = ((b.lon - a.lon) * Math.PI) / 180;
+  const haversine = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) ** 2;
+  return Math.round(2 * earthRadius * Math.asin(Math.sqrt(haversine)));
+}
+
 function normalizeOpenBuildingMap(data, place) {
   const features = Array.isArray(data?.features) ? data.features : [];
   return features
@@ -424,11 +458,13 @@ function normalizeOpenBuildingMap(data, place) {
       if (geometry.length < 3) return null;
       const tags = feature.properties || {};
       const area = estimateArea(geometry);
+      const center = centroid(geometry) || { lat: place.lat, lon: place.lon };
       return {
         id: `obm-${tags.id || tags.osm_id || index}`,
         name: tags.name || `${place.name} 建築 ${index + 1}`,
         source: "OpenBuildingMap",
-        center: centroid(geometry) || { lat: place.lat, lon: place.lon },
+        center,
+        distance: distanceMeters(place, center),
         floors: readFloorCount(tags),
         kind: tags.building || tags.type || "building",
         area,
@@ -506,25 +542,6 @@ function readFloorCount(tags) {
   return Math.round(value);
 }
 
-function renderChoices(container, items, onSelect, selectedId) {
-  container.replaceChildren();
-  if (!items.length) {
-    renderListEmpty(container, "沒有可用資料");
-    return;
-  }
-  items.forEach((item) => {
-    const node = choiceTemplate.content.firstElementChild.cloneNode(true);
-    node.dataset.id = item.id;
-    node.classList.toggle("selected", item.id === selectedId);
-    node.querySelector(".choice-title").textContent = item.name;
-    const dimensionText = item.dimensions ? ` · ${item.dimensions.width}m x ${item.dimensions.depth}m` : "";
-    const floorText = item.floors ? ` · ${item.floors} 層` : "";
-    node.querySelector(".choice-meta").textContent = item.meta || `${item.kind || item.type}${floorText} · ${Math.round(item.area || 0)} m²${dimensionText} · ${item.source || "OSM"}`;
-    node.addEventListener("click", () => onSelect(item));
-    container.append(node);
-  });
-}
-
 function renderListEmpty(container, text) {
   const empty = document.createElement("div");
   empty.className = "empty-state";
@@ -553,6 +570,29 @@ function renderPlaceSelect(places, selectedId = "") {
   });
 }
 
+function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里內沒有可用建築資料") {
+  buildingSelect.replaceChildren();
+  if (!buildings.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = emptyText;
+    buildingSelect.append(option);
+    buildingSelect.disabled = true;
+    return;
+  }
+
+  buildingSelect.disabled = false;
+  buildings.forEach((building) => {
+    const option = document.createElement("option");
+    const dimensions = building.dimensions ? `${building.dimensions.width}m x ${building.dimensions.depth}m` : "";
+    const floors = building.floors ? `${building.floors} 層` : "";
+    option.value = building.id;
+    option.textContent = [building.name, `${building.distance}m`, building.kind, `${Math.round(building.area)}m²`, dimensions, floors, building.source].filter(Boolean).join(" · ");
+    option.selected = building.id === selectedId;
+    buildingSelect.append(option);
+  });
+}
+
 function renderPlanEmpty(title, detail = "") {
   floorPlan.replaceChildren();
   const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -573,13 +613,9 @@ function renderPlanEmpty(title, detail = "") {
 }
 
 function renderEmptyState(title, detail) {
-  layoutList.replaceChildren();
   floorList.replaceChildren();
   sourceSummary.textContent = "資料來源：無可用結果";
-  const emptyLayout = document.createElement("div");
-  emptyLayout.className = "empty-state";
-  emptyLayout.textContent = title;
-  layoutList.append(emptyLayout);
+  renderBuildingSelect([], "", title);
   renderPlanEmpty(title, detail);
 }
 
@@ -597,7 +633,7 @@ function applyBuildingResults(buildings, emptyTitle = "此位置沒有可用建�
     return;
   }
 
-  renderChoices(layoutList, state.buildings, selectBuilding, state.selectedLayout.id);
+  renderBuildingSelect(state.buildings, state.selectedLayout.id);
   renderBuildingOutline(state.selectedLayout);
   renderFloorOptions(state.selectedLayout);
   setStatus(state.selectedLayout.floors ? "已取得建築物輪廓與尺寸，請確認樓層" : "已取得建築物輪廓與尺寸，公開資料未標註樓層", 3, 78);
@@ -774,6 +810,7 @@ async function selectPlace(place) {
   const requestId = ++state.requestId;
   state.selectedPlace = place;
   state.center = { lat: place.lat, lon: place.lon, label: place.name };
+  addressInput.value = place.meta || place.name;
   markSelection();
   burst(48, 48);
   renderTiles(state.center);
@@ -809,7 +846,7 @@ async function selectMapPoint(event) {
   state.selectedLayout = null;
   state.buildings = [];
   state.center = { lat: picked.lat, lon: picked.lon, label: picked.name };
-  layoutList.replaceChildren();
+  renderBuildingSelect([], "", "正在查詢一公里內的建築資料");
   floorList.replaceChildren();
   floorPlan.replaceChildren();
   buildingLayer.replaceChildren();
@@ -821,12 +858,21 @@ async function selectMapPoint(event) {
   state.places = [picked];
   renderPlaceSelect(state.places, picked.id);
   renderEmptyState("正在查詢此位置的開放建築資料", "只會顯示 OSM / OpenBuildingMap 實際 footprint");
-  setStatus("已鎖定地圖選點，查詢開放建築資料", 3, 62);
+  addressInput.value = `${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}`;
+  setStatus("已鎖定地圖選點，查詢地址與一公里內建築", 3, 62);
 
+  const addressPromise = reverseGeocode(point.lat, point.lon);
   const nearbyPlacesPromise = fetchNearbyPlaces(state.center, { silent: true });
   const buildingsPromise = fetchBuildings(picked, { silent: true });
-  const [nearbyPlaces, buildings] = await Promise.all([nearbyPlacesPromise, buildingsPromise]);
+  const [address, nearbyPlaces, buildings] = await Promise.all([addressPromise, nearbyPlacesPromise, buildingsPromise]);
   if (requestId !== state.requestId) return;
+
+  if (address) {
+    picked.name = address.split(",").slice(0, 2).join(",");
+    picked.meta = address;
+    state.center.label = picked.name;
+    addressInput.value = address;
+  }
 
   state.places = [picked, ...nearbyPlaces.filter((place) => place.id !== picked.id)].slice(0, 7);
 
@@ -882,7 +928,7 @@ function selectBuilding(layout) {
   state.selectedFloor = null;
   burst(63, 42);
   renderFootprints();
-  renderChoices(layoutList, state.buildings, selectBuilding, layout.id);
+  renderBuildingSelect(state.buildings, layout.id);
   renderBuildingOutline(layout);
   renderFloorOptions(layout);
   setStatus(layout.floors ? "已選定建築物輪廓，請確認樓層" : "已選定建築物輪廓，公開資料未標註樓層", 3, 82);
@@ -910,6 +956,7 @@ async function boot() {
     const place = state.places[0];
     state.selectedPlace = place;
     state.center = { lat: place.lat, lon: place.lon, label: place.name };
+    addressInput.value = place.meta || place.name;
     markSelection();
     burst(48, 48);
     renderTiles(state.center);
@@ -928,7 +975,7 @@ async function searchAddress(event) {
   const requestId = ++state.requestId;
   setStatus("搜尋地址座標", 1, 22);
   floorList.replaceChildren();
-  layoutList.replaceChildren();
+  renderBuildingSelect([], "", "正在查詢一公里內的建築資料");
   renderPlanEmpty("正在搜尋地址", "使用 OpenStreetMap Nominatim");
   sourceSummary.textContent = "資料來源：查詢中";
 
@@ -945,6 +992,7 @@ async function searchAddress(event) {
 
     state.center = { lat: place.lat, lon: place.lon, label: place.name };
     state.selectedPlace = place;
+    addressInput.value = place.meta || place.name;
     markSelection();
     renderTiles(state.center);
     renderPlaceSelect([place], place.id);
@@ -981,6 +1029,10 @@ addressForm.addEventListener("submit", searchAddress);
 placeSelect.addEventListener("change", () => {
   const place = state.places.find((item) => item.id === placeSelect.value);
   if (place) selectPlace(place);
+});
+buildingSelect.addEventListener("change", () => {
+  const building = state.buildings.find((item) => item.id === buildingSelect.value);
+  if (building) selectBuilding(building);
 });
 zoomInButton.addEventListener("click", () => zoomMap(1));
 zoomOutButton.addEventListener("click", () => zoomMap(-1));

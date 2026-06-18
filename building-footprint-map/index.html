@@ -65,7 +65,7 @@
               <h2>建築物輪廓</h2>
             </div>
             <p id="sourceSummary" class="source-summary">資料來源：尚未查詢</p>
-            <div id="layoutList" class="choice-list compact" aria-live="polite"></div>
+            <select id="buildingSelect" class="place-select building-select" aria-label="一公里內有資料的建築"></select>
           </div>
 
           <div id="statusCard" class="status-card compact-status">
@@ -80,13 +80,6 @@
       </section>
     </main>
 
-    <template id="choiceTemplate">
-      <button class="choice-card" type="button">
-        <span class="choice-title"></span>
-        <span class="choice-meta"></span>
-      </button>
-    </template>
-
-    <script src="./app.js?v=obm-1" type="module"></script>
+    <script src="./app.js?v=radius-1km" type="module"></script>
   </body>
 </html>

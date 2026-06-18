@@ -424,6 +424,10 @@ h2 {
   margin-top: 6px;
 }
 
+.building-select {
+  margin-top: 0;
+}
+
 .primary-button {
   display: inline-grid;
   place-items: center;
