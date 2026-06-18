@@ -356,7 +356,7 @@ async function fetchBuildings(place, options = {}) {
 async function fetchOverpass(query) {
   for (const endpoint of OVERPASS_ENDPOINTS) {
     const controller = new AbortController();
-    const timer = window.setTimeout(() => controller.abort(), 25000);
+    const timer = window.setTimeout(() => controller.abort(), 15000);
     try {
       const url = new URL(endpoint);
       url.searchParams.set("data", query);
@@ -379,14 +379,14 @@ async function fetchOsmBuildings(place) {
   const query = `
     [out:json][timeout:12];
     way(around:1000,${place.lat},${place.lon})[building];
-    out tags center geom 80;
+    out tags center geom 40;
   `;
 
   try {
     const data = await fetchOverpass(query);
     const buildings = data.elements
       .filter((item) => item.geometry?.length >= 3)
-      .slice(0, 80)
+      .slice(0, 40)
       .map((item, index) => {
         const tags = item.tags || {};
         const geometry = item.geometry || [];
@@ -875,13 +875,13 @@ async function selectMapPoint(event) {
   state.places = [picked];
   renderPlaceSelect(state.places, picked.id);
   renderEmptyState("正在查詢此位置的開放建築資料", "只會顯示 OSM / OpenBuildingMap 實際 footprint");
+  sourceSummary.textContent = "資料來源：查詢中";
   addressInput.value = `${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}`;
   setStatus("已鎖定地圖選點，查詢地址與一公里內建築", 3, 62);
 
   const addressPromise = reverseGeocode(point.lat, point.lon);
-  const nearbyPlacesPromise = fetchNearbyPlaces(state.center, { silent: true });
   const buildingsPromise = fetchBuildings(picked, { silent: true });
-  const [address, nearbyPlaces, buildings] = await Promise.all([addressPromise, nearbyPlacesPromise, buildingsPromise]);
+  const address = await addressPromise;
   if (requestId !== state.requestId) return;
 
   if (address) {
@@ -891,10 +891,13 @@ async function selectMapPoint(event) {
     addressInput.value = address;
   }
 
-  state.places = [picked, ...nearbyPlaces.filter((place) => place.id !== picked.id)].slice(0, 7);
+  state.places = [picked];
+  renderPlaceSelect(state.places, picked.id);
+
+  const buildings = await buildingsPromise;
+  if (requestId !== state.requestId) return;
 
   markSelection();
-  renderPlaceSelect(state.places, picked.id);
   applyBuildingResults(buildings);
 }
 
