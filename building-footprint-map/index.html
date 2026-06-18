@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spatial Trace | 建築配置探索</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=layout-2" />
   </head>
   <body>
     <main class="app-shell">
@@ -37,40 +37,6 @@
             </div>
           </div>
 
-          <div id="statusCard" class="status-card">
-            <p class="status-label">目前流程</p>
-            <p id="statusText" class="status-text">等待定位訊號</p>
-            <div class="progress-rail" aria-hidden="true">
-              <span id="progressBar"></span>
-            </div>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-heading">
-              <h2>地址定位</h2>
-            </div>
-            <form id="addressForm" class="address-form">
-              <input id="addressInput" class="address-input" type="search" autocomplete="street-address" placeholder="輸入住址或地標" />
-              <button class="primary-button" type="submit">定位</button>
-            </form>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-heading">
-              <h2>附近位置</h2>
-              <button id="refreshPlaces" class="icon-button" type="button" title="重新搜尋附近位置">↻</button>
-            </div>
-            <select id="placeSelect" class="place-select" aria-label="附近位置"></select>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-heading">
-              <h2>建築物輪廓</h2>
-            </div>
-            <p id="sourceSummary" class="source-summary">資料來源：尚未查詢</p>
-            <div id="layoutList" class="choice-list compact" aria-live="polite"></div>
-          </div>
-
           <div class="panel-section floor-section">
             <div class="section-heading">
               <h2>樓層與 Layout</h2>
@@ -81,6 +47,35 @@
               <svg id="floorPlan" viewBox="0 0 420 300" role="img" aria-label="建築內部配置圖"></svg>
             </div>
           </div>
+
+          <div class="panel-section location-section">
+            <div class="section-heading compact-heading">
+              <h2>定位與附近位置</h2>
+              <button id="refreshPlaces" class="icon-button compact-icon" type="button" title="重新搜尋附近位置">↻</button>
+            </div>
+            <form id="addressForm" class="address-form">
+              <input id="addressInput" class="address-input" type="search" autocomplete="street-address" placeholder="輸入住址或地標" />
+              <button class="primary-button" type="submit">定位</button>
+            </form>
+            <select id="placeSelect" class="place-select" aria-label="附近位置"></select>
+          </div>
+
+          <div class="panel-section building-section">
+            <div class="section-heading">
+              <h2>建築物輪廓</h2>
+            </div>
+            <p id="sourceSummary" class="source-summary">資料來源：尚未查詢</p>
+            <div id="layoutList" class="choice-list compact" aria-live="polite"></div>
+          </div>
+
+          <div id="statusCard" class="status-card compact-status">
+            <p class="status-label">目前流程</p>
+            <p id="statusText" class="status-text">等待定位訊號</p>
+            <div class="progress-rail" aria-hidden="true">
+              <span id="progressBar"></span>
+            </div>
+          </div>
+
         </aside>
       </section>
     </main>

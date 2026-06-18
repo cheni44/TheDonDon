@@ -34,15 +34,15 @@ button {
 
 .app-shell {
   min-height: 100vh;
-  padding: clamp(14px, 2.5vw, 30px);
+  padding: clamp(10px, 1.5vw, 18px);
 }
 
 .stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
   gap: 18px;
-  height: calc(100vh - clamp(28px, 5vw, 60px));
-  min-height: 680px;
+  height: calc(100vh - clamp(20px, 3vw, 36px));
+  min-height: 620px;
 }
 
 .map-panel {
@@ -274,9 +274,9 @@ button {
 .control-panel {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  overflow: hidden auto;
-  padding: 18px;
+  gap: 8px;
+  overflow: hidden;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -287,12 +287,12 @@ button {
 .brand-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
 }
 
 .brand-mark {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   border: 1px solid rgba(85, 240, 255, 0.6);
   border-radius: 8px;
   background:
@@ -320,7 +320,7 @@ p {
 
 h1 {
   margin-bottom: 0;
-  font-size: 30px;
+  font-size: 22px;
   line-height: 1.05;
 }
 
@@ -337,14 +337,14 @@ h2 {
 }
 
 .status-card {
-  padding: 14px;
+  padding: 8px 10px;
 }
 
 .status-text {
-  min-height: 54px;
-  margin: 8px 0 12px;
-  font-size: 22px;
-  line-height: 1.22;
+  min-height: 0;
+  margin: 3px 0 7px;
+  font-size: 13px;
+  line-height: 1.3;
 }
 
 .progress-rail {
@@ -387,20 +387,20 @@ h2 {
 }
 
 .panel-section {
-  padding: 12px;
+  padding: 9px;
 }
 
 .address-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 74px;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 62px;
+  gap: 6px;
 }
 
 .address-input,
 .place-select {
   width: 100%;
   min-width: 0;
-  height: 42px;
+  height: 34px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
   background: rgba(8, 12, 18, 0.72);
@@ -421,12 +421,13 @@ h2 {
 
 .place-select {
   padding: 0 10px;
+  margin-top: 6px;
 }
 
 .primary-button {
   display: inline-grid;
   place-items: center;
-  height: 42px;
+  height: 34px;
   border: 1px solid rgba(164, 255, 143, 0.38);
   border-radius: 8px;
   background: rgba(164, 255, 143, 0.1);
@@ -447,7 +448,28 @@ h2 {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
+}
+
+.compact-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.location-section,
+.building-section,
+.compact-status {
+  flex: 0 0 auto;
+}
+
+.building-section {
+  min-height: 0;
+}
+
+.building-section .choice-list {
+  max-height: 105px;
+  overflow: auto;
+  scrollbar-width: thin;
 }
 
 .choice-list {
@@ -456,7 +478,7 @@ h2 {
 }
 
 .source-summary {
-  margin: -2px 0 10px;
+  margin: -2px 0 5px;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.35;
@@ -466,8 +488,8 @@ h2 {
   display: grid;
   gap: 4px;
   width: 100%;
-  min-height: 66px;
-  padding: 12px;
+  min-height: 48px;
+  padding: 8px 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
@@ -490,8 +512,8 @@ h2 {
 }
 
 .empty-state {
-  min-height: 64px;
-  padding: 14px;
+  min-height: 46px;
+  padding: 9px;
   border: 1px dashed rgba(255, 255, 255, 0.18);
   border-radius: 8px;
   color: var(--muted);
@@ -507,17 +529,22 @@ h2 {
 }
 
 .compact .choice-card {
-  min-height: 54px;
+  min-height: 46px;
 }
 
 .floor-section {
-  min-height: 280px;
+  display: flex;
+  flex: 1 1 280px;
+  flex-direction: column;
+  min-height: 220px;
 }
 
 .floor-list {
   display: grid;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
+  max-height: 74px;
+  overflow: auto;
 }
 
 .floor-help {
@@ -534,7 +561,7 @@ h2 {
 }
 
 .floor-button {
-  min-height: 36px;
+  min-height: 30px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
@@ -551,6 +578,8 @@ h2 {
 }
 
 .floor-wrap {
+  flex: 1;
+  min-height: 170px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
@@ -564,7 +593,7 @@ h2 {
 #floorPlan {
   display: block;
   width: 100%;
-  aspect-ratio: 1.4 / 1;
+  height: 100%;
 }
 
 .room {
