@@ -27,6 +27,11 @@ const OPEN_BUILDING_MAP_ENDPOINTS = [
   "https://openbuildingmap.org/api/0.1/buildings",
 ];
 
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+];
+
 const state = {
   center: { lat: 25.033, lon: 121.5654, label: "台北 101 周邊" },
   places: [],
@@ -262,16 +267,11 @@ async function fetchNearbyPlaces(center, options = {}) {
       node(around:850,${center.lat},${center.lon})[name][office];
       way(around:850,${center.lat},${center.lon})[name][building];
     );
-    out center tags 18;
+    out tags center 18;
   `;
 
   try {
-    const response = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      body: query,
-    });
-    if (!response.ok) throw new Error("Overpass place query failed");
-    const data = await response.json();
+    const data = await fetchOverpass(query);
     const places = data.elements
       .map((element) => {
         const lat = element.lat ?? element.center?.lat;
@@ -353,20 +353,37 @@ async function fetchBuildings(place, options = {}) {
     .slice(0, 60);
 }
 
+async function fetchOverpass(query) {
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 25000);
+    try {
+      const url = new URL(endpoint);
+      url.searchParams.set("data", query);
+      const response = await fetch(url.toString(), {
+        headers: { Accept: "application/json" },
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error("Overpass request failed");
+      return await response.json();
+    } catch {
+      // Try the next public Overpass instance.
+    } finally {
+      window.clearTimeout(timer);
+    }
+  }
+  throw new Error("No Overpass endpoint available");
+}
+
 async function fetchOsmBuildings(place) {
   const query = `
     [out:json][timeout:12];
     way(around:1000,${place.lat},${place.lon})[building];
-    out center tags geom 80;
+    out tags center geom 80;
   `;
 
   try {
-    const response = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      body: query,
-    });
-    if (!response.ok) throw new Error("Overpass building query failed");
-    const data = await response.json();
+    const data = await fetchOverpass(query);
     const buildings = data.elements
       .filter((item) => item.geometry?.length >= 3)
       .slice(0, 80)
