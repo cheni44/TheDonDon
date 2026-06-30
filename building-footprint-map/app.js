@@ -23,6 +23,7 @@ const floorPlan = document.querySelector("#floorPlan");
 const sourceSummary = document.querySelector("#sourceSummary");
 const tileCache = new Map();
 let renderToken = 0;
+const LONG_PRESS_MOVE_TOLERANCE = 12;
 
 const OPEN_BUILDING_MAP_ENDPOINTS = [
   "https://openbuildingmap.org/api/buildings",
@@ -977,7 +978,11 @@ async function selectMapPoint(event) {
 
 function startMapDrag(event) {
   if (event.target.closest("button")) return;
-  mapPanel.setPointerCapture(event.pointerId);
+  try {
+    mapPanel.setPointerCapture(event.pointerId);
+  } catch {
+    // Some browsers can start pointer events without supporting capture here.
+  }
   state.drag = {
     pointerId: event.pointerId,
     startX: event.clientX,
@@ -1001,7 +1006,7 @@ function moveMapDrag(event) {
   if (!state.drag || state.drag.pointerId !== event.pointerId) return;
   const totalDx = event.clientX - state.drag.startX;
   const totalDy = event.clientY - state.drag.startY;
-  if (Math.hypot(totalDx, totalDy) < 4) return;
+  if (Math.hypot(totalDx, totalDy) < LONG_PRESS_MOVE_TOLERANCE) return;
 
   state.drag.moved = true;
   clearLongPress();
@@ -1067,8 +1072,17 @@ async function boot() {
   setStatus("可手動輸入住址、選擇附近位置，或在地圖長按選點", 2, 42);
 }
 
+function usePickerSelection() {
+  activatePickerOption(selectedPickerOption());
+}
+
+function handleAddressKeydown(event) {
+  if (event.key !== "Enter" || event.isComposing) return;
+  searchAddress(event);
+}
+
 async function searchAddress(event) {
-  event.preventDefault();
+  event?.preventDefault();
   if (activatePickerOption(selectedPickerOption())) return;
 
   const query = addressInput.value.trim();
@@ -1140,12 +1154,19 @@ locateButton.addEventListener("click", () => {
   boot();
 });
 addressForm.addEventListener("submit", searchAddress);
+addressInput.addEventListener("input", usePickerSelection);
+addressInput.addEventListener("change", usePickerSelection);
+addressInput.addEventListener("keydown", handleAddressKeydown);
 zoomInButton.addEventListener("click", () => zoomMap(1));
 zoomOutButton.addEventListener("click", () => zoomMap(-1));
 mapPanel.addEventListener("pointerdown", startMapDrag);
 mapPanel.addEventListener("pointermove", moveMapDrag);
 mapPanel.addEventListener("pointerup", endMapDrag);
 mapPanel.addEventListener("pointercancel", endMapDrag);
+mapPanel.addEventListener("contextmenu", (event) => {
+  event.preventDefault();
+  selectMapPoint(event);
+});
 mapPanel.addEventListener("wheel", (event) => {
   event.preventDefault();
   zoomMap(event.deltaY < 0 ? 1 : -1, event);

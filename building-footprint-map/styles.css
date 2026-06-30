@@ -450,7 +450,7 @@ h2 {
 
 .address-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 58px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
 }
 
@@ -488,25 +488,6 @@ h2 {
   position: absolute;
   right: 7px;
   bottom: 7px;
-}
-
-.primary-button {
-  display: inline-grid;
-  place-items: center;
-  height: 32px;
-  border: 1px solid rgba(164, 255, 143, 0.38);
-  border-radius: 8px;
-  background: rgba(164, 255, 143, 0.1);
-  color: var(--text);
-  cursor: pointer;
-  font-weight: 750;
-  transition: transform 180ms, border-color 180ms, background 180ms;
-}
-
-.primary-button:hover {
-  transform: translateY(-1px);
-  border-color: rgba(164, 255, 143, 0.7);
-  background: rgba(164, 255, 143, 0.15);
 }
 
 .section-heading {
