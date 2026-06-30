@@ -39,6 +39,9 @@ button {
 
 .stage {
   position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
   height: calc(100vh - clamp(20px, 3vw, 36px));
   min-height: 620px;
   overflow: hidden;
@@ -49,6 +52,13 @@ button {
   isolation: isolate;
 }
 
+.map-zone {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
 .map-panel {
   position: relative;
   overflow: hidden;
@@ -56,7 +66,7 @@ button {
   height: 100%;
   min-height: 0;
   border: 0;
-  border-radius: 0;
+  border-radius: 8px;
   background: #111820;
   cursor: grab;
   touch-action: none;
@@ -107,7 +117,7 @@ button {
   background: linear-gradient(180deg, rgba(7, 9, 13, 0.2), transparent 20%, transparent 78%, rgba(7, 9, 13, 0.3));
 }
 
-.stage.layout-mode::before {
+.map-zone::before {
   content: "";
   position: absolute;
   inset: -20%;
@@ -116,8 +126,12 @@ button {
   background:
     radial-gradient(circle at var(--portal-x, 50%) var(--portal-y, 50%), rgba(85, 240, 255, 0.44), transparent 0 12%, rgba(164, 255, 143, 0.18) 18%, transparent 34%),
     conic-gradient(from 90deg at var(--portal-x, 50%) var(--portal-y, 50%), transparent, rgba(85, 240, 255, 0.26), transparent, rgba(255, 209, 102, 0.14), transparent);
-  animation: portalSweep 980ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  opacity: 0;
   mix-blend-mode: screen;
+}
+
+.stage.layout-mode .map-zone::before {
+  animation: portalSweep 980ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .flow-canvas,
@@ -297,40 +311,35 @@ button {
 }
 
 .control-panel {
-  position: absolute;
-  left: 16px;
-  top: 16px;
+  position: relative;
   z-index: 7;
-  width: min(420px, calc(100% - 32px));
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(180px, 250px) minmax(320px, 1fr) minmax(220px, 300px);
+  gap: 10px;
+  align-items: stretch;
   overflow: hidden;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
+  padding: 10px;
+  border-top: 1px solid var(--line);
+  background: rgba(7, 10, 15, 0.88);
   backdrop-filter: blur(18px);
   transition: opacity 360ms, transform 360ms;
 }
 
 .stage.layout-mode .control-panel {
-  opacity: 0;
+  opacity: 0.42;
   pointer-events: none;
-  transform: translateY(-14px) scale(0.98);
 }
 
 .control-panel.map-locked {
-  opacity: 0;
+  opacity: 0.42;
   pointer-events: none;
-  transform: translateY(-14px) scale(0.98);
 }
 
 .brand-row {
   display: flex;
   align-items: center;
   gap: 9px;
+  min-width: 0;
 }
 
 .brand-mark {
@@ -381,6 +390,7 @@ h2 {
 
 .status-card {
   padding: 8px 10px;
+  align-self: stretch;
 }
 
 .status-text {
@@ -507,6 +517,10 @@ h2 {
 .building-section,
 .compact-status {
   flex: 0 0 auto;
+}
+
+.location-section {
+  min-width: 0;
 }
 
 .building-section {
@@ -886,6 +900,7 @@ h2 {
   }
 
   .stage {
+    grid-template-rows: minmax(0, 1fr) auto;
     height: calc(100vh - 20px);
     min-height: 0;
   }
@@ -895,6 +910,7 @@ h2 {
   }
 
   .control-panel {
+    grid-template-columns: 1fr;
     overflow: hidden;
   }
 
@@ -921,7 +937,7 @@ h2 {
   }
 
   .control-panel {
-    padding: 12px;
+    padding: 10px;
   }
 
   .layout-panel {

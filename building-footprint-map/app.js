@@ -46,6 +46,7 @@ const state = {
   selectedFloor: null,
   zoom: 16,
   drag: null,
+  longPress: null,
   suppressNextClick: false,
   animationFrame: 0,
   requestId: 0,
@@ -94,6 +95,19 @@ function showMapView() {
   layoutPanel.classList.remove("active");
   layoutPanel.setAttribute("aria-hidden", "true");
   setStatus("已返回地圖，可拖拉縮放並重新選點", 2, 42);
+}
+
+function clearLongPress() {
+  if (state.longPress?.timer) {
+    window.clearTimeout(state.longPress.timer);
+  }
+  state.longPress = null;
+}
+
+function selectedPlaceLabel(place) {
+  if (!place) return "尚未選定";
+  if (place.type === "address" || place.type === "map-point") return place.meta || place.name;
+  return place.meta ? `${place.name} · ${place.meta}` : place.name;
 }
 
 function lon2tile(lon, zoom) {
@@ -613,6 +627,12 @@ function renderPlaceSelect(places, selectedId = "") {
   }
 
   placeSelect.disabled = false;
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "選擇附近位置";
+  placeholder.selected = !selectedId;
+  placeSelect.append(placeholder);
+
   places.forEach((place) => {
     const option = document.createElement("option");
     option.value = place.id;
@@ -678,7 +698,7 @@ function applyBuildingResults(buildings, emptyTitle = "此位置沒有可用建�
   renderFootprints();
   floorList.replaceChildren();
   renderSourceSummary(state.buildings);
-  selectedAddressText.textContent = state.selectedPlace?.meta || state.selectedPlace?.name || "尚未選定";
+  selectedAddressText.textContent = selectedPlaceLabel(state.selectedPlace);
 
   if (!state.selectedLayout) {
     renderEmptyState(emptyTitle, "OSM / OpenBuildingMap 未提供可用 building polygon");
@@ -865,8 +885,8 @@ async function selectPlace(place) {
   const requestId = ++state.requestId;
   state.selectedPlace = place;
   state.center = { lat: place.lat, lon: place.lon, label: place.name };
-  addressInput.value = place.meta || place.name;
-  selectedAddressText.textContent = place.meta || place.name;
+  addressInput.value = place.name;
+  selectedAddressText.textContent = selectedPlaceLabel(place);
   setPortalOrigin();
   markSelection();
   burst(48, 48);
@@ -882,6 +902,7 @@ async function selectPlace(place) {
 }
 
 async function selectMapPoint(event) {
+  if (state.view !== "map") return;
   if (event.target.closest("button")) return;
   if (state.suppressNextClick) {
     state.suppressNextClick = false;
@@ -953,6 +974,16 @@ function startMapDrag(event) {
     startY: event.clientY,
     moved: false,
   };
+  clearLongPress();
+  state.longPress = {
+    pointerId: event.pointerId,
+    triggered: false,
+    timer: window.setTimeout(() => {
+      if (!state.drag || state.drag.pointerId !== event.pointerId || state.drag.moved) return;
+      state.longPress.triggered = true;
+      selectMapPoint(event);
+    }, 900),
+  };
   mapPanel.classList.add("dragging");
 }
 
@@ -963,6 +994,7 @@ function moveMapDrag(event) {
   if (Math.hypot(totalDx, totalDy) < 4) return;
 
   state.drag.moved = true;
+  clearLongPress();
   tileGrid.style.transform = `translate3d(${totalDx}px, ${totalDy}px, 0)`;
   buildingLayer.style.transform = `translate3d(${totalDx}px, ${totalDy}px, 0)`;
 }
@@ -971,13 +1003,17 @@ function endMapDrag(event) {
   if (!state.drag || state.drag.pointerId !== event.pointerId) return;
   const totalDx = event.clientX - state.drag.startX;
   const totalDy = event.clientY - state.drag.startY;
-  state.suppressNextClick = state.drag.moved;
+  const longPressTriggered = state.longPress?.triggered;
+  state.suppressNextClick = state.drag.moved || longPressTriggered;
   if (state.drag.moved) {
     tileGrid.style.transform = "";
     buildingLayer.style.transform = "";
     moveMapByScreenDelta(totalDx, totalDy);
+  } else if (!longPressTriggered) {
+    setStatus("長按地圖可選定位置，拖拉或縮放可調整視角", 2, 42);
   }
   state.drag = null;
+  clearLongPress();
   mapPanel.classList.remove("dragging");
   try {
     mapPanel.releasePointerCapture(event.pointerId);
@@ -1011,23 +1047,12 @@ async function boot() {
   const places = await fetchNearbyPlaces(center);
   if (requestId !== state.requestId) return;
   state.places = places;
-  renderPlaceSelect(state.places, state.places[0]?.id);
+  renderPlaceSelect(state.places);
   if (!state.places.length) {
-    applyBuildingResults([], "附近沒有可用開放資料");
+    setStatus("可手動輸入住址，或在地圖長按選定位置", 2, 36);
+    return;
   }
-  if (state.places[0] && requestId === state.requestId) {
-    const place = state.places[0];
-    state.selectedPlace = place;
-    state.center = { lat: place.lat, lon: place.lon, label: place.name };
-    addressInput.value = place.meta || place.name;
-    markSelection();
-    burst(48, 48);
-    renderTiles(state.center);
-    await sleep(320);
-    const buildings = await fetchBuildings(place);
-    if (requestId !== state.requestId) return;
-    applyBuildingResults(buildings);
-  }
+  setStatus("可手動輸入住址、選擇附近位置，或在地圖長按選點", 2, 42);
 }
 
 async function searchAddress(event) {
@@ -1036,6 +1061,10 @@ async function searchAddress(event) {
   if (!query) return;
 
   const requestId = ++state.requestId;
+  clearLongPress();
+  state.drag = null;
+  state.selectedPlace = null;
+  state.selectedLayout = null;
   setStatus("搜尋地址座標", 1, 22);
   floorList.replaceChildren();
   renderBuildingSelect([], "", "正在查詢一公里內的建築資料");
@@ -1110,7 +1139,6 @@ mapPanel.addEventListener("wheel", (event) => {
   event.preventDefault();
   zoomMap(event.deltaY < 0 ? 1 : -1, event);
 }, { passive: false });
-mapPanel.addEventListener("click", selectMapPoint);
 refreshPlaces.addEventListener("click", async () => {
   state.places = await fetchNearbyPlaces(state.center);
   renderPlaceSelect(state.places, state.selectedPlace?.id);
