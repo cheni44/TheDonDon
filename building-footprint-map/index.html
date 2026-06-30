@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spatial Trace | 建築配置探索</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
-    <link rel="stylesheet" href="./styles.css?v=unified-picker-1" />
+    <link rel="stylesheet" href="./styles.css?v=expanded-map-2" />
   </head>
   <body>
     <main class="app-shell">
@@ -43,26 +43,23 @@
               <p class="eyebrow">Open Data Spatial System</p>
               <h1>Spatial Trace</h1>
             </div>
+            <button id="backToMapButton" class="back-button" type="button">返回</button>
           </div>
 
           <div class="panel-section location-section">
-            <div class="section-heading compact-heading">
-              <h2>定位與建築</h2>
-              <button id="refreshPlaces" class="icon-button compact-icon" type="button" title="重新搜尋附近位置">↻</button>
-            </div>
             <form id="addressForm" class="address-form">
               <input id="addressInput" class="address-input" type="search" autocomplete="street-address" placeholder="輸入住址或地標，或在地圖長按選點" />
-              <button class="primary-button" type="submit">定位</button>
+              <button class="primary-button" type="submit">搜尋</button>
             </form>
             <select id="placeSelect" class="place-select" aria-label="附近位置與建築物"></select>
-            <p id="sourceSummary" class="source-summary">資料來源：尚未查詢</p>
+            <button id="refreshPlaces" class="icon-button compact-icon refresh-inline" type="button" title="重新搜尋附近位置">↻</button>
+            <p id="sourceSummary" class="source-summary" hidden>資料來源：尚未查詢</p>
           </div>
 
           <div class="panel-section floor-section">
             <div class="section-heading">
               <h2>樓層</h2>
               <div class="inline-actions">
-                <button id="backToMapButton" class="back-button" type="button">返回</button>
                 <button id="exportButton" class="icon-button compact-icon" type="button" title="匯出 SVG">⇩</button>
               </div>
             </div>
@@ -80,6 +77,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=unified-picker-1" type="module"></script>
+    <script src="./app.js?v=expanded-map-2" type="module"></script>
   </body>
 </html>
