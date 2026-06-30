@@ -314,7 +314,7 @@ button {
   position: relative;
   z-index: 7;
   display: grid;
-  grid-template-columns: minmax(130px, 0.7fr) minmax(220px, 1fr) minmax(220px, 1fr) minmax(190px, 0.9fr) minmax(150px, 0.75fr) minmax(170px, 0.75fr);
+  grid-template-columns: minmax(130px, 0.7fr) minmax(360px, 1.5fr) minmax(220px, 1fr) minmax(190px, 0.85fr);
   gap: 10px;
   align-items: stretch;
   overflow: hidden;
@@ -477,10 +477,6 @@ h2 {
   margin-top: 6px;
 }
 
-.building-select {
-  margin-top: 0;
-}
-
 .primary-button {
   display: inline-grid;
   place-items: center;
@@ -514,26 +510,13 @@ h2 {
 }
 
 .location-section,
-.building-section,
 .compact-status {
   flex: 0 0 auto;
 }
 
 .location-section,
-.building-section,
-.floor-section,
-.selected-address {
+.floor-section {
   min-width: 0;
-}
-
-.building-section {
-  min-height: 0;
-}
-
-.building-section .choice-list {
-  max-height: 105px;
-  overflow: auto;
-  scrollbar-width: thin;
 }
 
 .choice-list {
@@ -542,7 +525,7 @@ h2 {
 }
 
 .source-summary {
-  margin: -2px 0 5px;
+  margin: 6px 0 0;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.35;
@@ -704,18 +687,6 @@ h2 {
   display: flex;
   gap: 6px;
   align-items: center;
-}
-
-.selected-address-text {
-  margin: 4px 0 0;
-  color: var(--text);
-  font-size: 13px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 #floorPlan {

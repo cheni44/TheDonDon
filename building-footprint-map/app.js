@@ -18,12 +18,10 @@ const progressBar = document.querySelector("#progressBar");
 const addressForm = document.querySelector("#addressForm");
 const addressInput = document.querySelector("#addressInput");
 const placeSelect = document.querySelector("#placeSelect");
-const buildingSelect = document.querySelector("#buildingSelect");
 const backToMapButton = document.querySelector("#backToMapButton");
 const floorList = document.querySelector("#floorList");
 const floorPlan = document.querySelector("#floorPlan");
 const sourceSummary = document.querySelector("#sourceSummary");
-const selectedAddressText = document.querySelector("#selectedAddressText");
 const tileCache = new Map();
 let renderToken = 0;
 
@@ -105,12 +103,6 @@ function clearLongPress() {
     window.clearTimeout(state.longPress.timer);
   }
   state.longPress = null;
-}
-
-function selectedPlaceLabel(place) {
-  if (!place) return "尚未選定";
-  if (place.type === "address" || place.type === "map-point" || place.id?.startsWith("address-")) return place.meta || place.name;
-  return place.meta ? `${place.name} · ${place.meta}` : place.name;
 }
 
 function lon2tile(lon, zoom) {
@@ -638,7 +630,7 @@ function renderPlaceSelect(places, selectedId = "") {
 
   places.forEach((place) => {
     const option = document.createElement("option");
-    option.value = place.id;
+    option.value = `place:${place.id}`;
     option.textContent = place.meta ? `${place.name} · ${place.meta}` : place.name;
     option.selected = place.id === selectedId;
     placeSelect.append(option);
@@ -646,25 +638,31 @@ function renderPlaceSelect(places, selectedId = "") {
 }
 
 function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里內沒有可用建築資料") {
-  buildingSelect.replaceChildren();
+  placeSelect.replaceChildren();
   if (!buildings.length) {
     const option = document.createElement("option");
     option.value = "";
     option.textContent = emptyText;
-    buildingSelect.append(option);
-    buildingSelect.disabled = true;
+    placeSelect.append(option);
+    placeSelect.disabled = true;
     return;
   }
 
-  buildingSelect.disabled = false;
+  placeSelect.disabled = false;
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "選擇附近建築物";
+  placeholder.selected = !selectedId;
+  placeSelect.append(placeholder);
+
   buildings.forEach((building) => {
     const option = document.createElement("option");
     const dimensions = building.dimensions ? `${building.dimensions.width}m x ${building.dimensions.depth}m` : "";
     const floors = building.floors ? `${building.floors} 層` : "";
-    option.value = building.id;
+    option.value = `building:${building.id}`;
     option.textContent = [building.name, `${building.distance}m`, building.kind, `${Math.round(building.area)}m²`, dimensions, floors, building.source].filter(Boolean).join(" · ");
     option.selected = building.id === selectedId;
-    buildingSelect.append(option);
+    placeSelect.append(option);
   });
 }
 
@@ -701,7 +699,6 @@ function applyBuildingResults(buildings, emptyTitle = "此位置沒有可用建�
   renderFootprints();
   floorList.replaceChildren();
   renderSourceSummary(state.buildings);
-  selectedAddressText.textContent = selectedPlaceLabel(state.selectedPlace);
 
   if (!state.selectedLayout) {
     renderEmptyState(emptyTitle, "OSM / OpenBuildingMap 未提供可用 building polygon");
@@ -890,7 +887,6 @@ async function selectPlace(place) {
   state.selectedPlace = place;
   state.center = { lat: place.lat, lon: place.lon, label: place.name };
   addressInput.value = place.name;
-  selectedAddressText.textContent = selectedPlaceLabel(place);
   setPortalOrigin();
   markSelection();
   burst(48, 48);
@@ -944,7 +940,6 @@ async function selectMapPoint(event) {
   renderEmptyState("正在查詢此位置的開放建築資料", "只會顯示 OSM / OpenBuildingMap 實際 footprint");
   sourceSummary.textContent = "資料來源：查詢中";
   addressInput.value = `${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}`;
-  selectedAddressText.textContent = addressInput.value;
   setStatus("已鎖定地圖選點，查詢地址與一公里內建築", 3, 62);
 
   const addressPromise = reverseGeocode(point.lat, point.lon);
@@ -957,7 +952,6 @@ async function selectMapPoint(event) {
     picked.meta = address;
     state.center.label = picked.name;
     addressInput.value = address;
-    selectedAddressText.textContent = address;
   }
 
   state.places = [picked];
@@ -1093,7 +1087,6 @@ async function searchAddress(event) {
     state.center = { lat: place.lat, lon: place.lon, label: place.name };
     state.selectedPlace = place;
     addressInput.value = place.meta || place.name;
-    selectedAddressText.textContent = place.meta || place.name;
     setPortalOrigin();
     markSelection();
     renderTiles(state.center);
@@ -1129,12 +1122,15 @@ function exportSvg() {
 locateButton.addEventListener("click", boot);
 addressForm.addEventListener("submit", searchAddress);
 placeSelect.addEventListener("change", () => {
-  const place = state.places.find((item) => item.id === placeSelect.value);
-  if (place) selectPlace(place);
-});
-buildingSelect.addEventListener("change", () => {
-  const building = state.buildings.find((item) => item.id === buildingSelect.value);
-  if (building) selectBuilding(building);
+  const [kind, id] = placeSelect.value.split(":");
+  if (kind === "place") {
+    const place = state.places.find((item) => item.id === id);
+    if (place) selectPlace(place);
+  }
+  if (kind === "building") {
+    const building = state.buildings.find((item) => item.id === id);
+    if (building) selectBuilding(building);
+  }
 });
 zoomInButton.addEventListener("click", () => zoomMap(1));
 zoomOutButton.addEventListener("click", () => zoomMap(-1));
