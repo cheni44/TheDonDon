@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spatial Trace | 建築配置探索</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
-    <link rel="stylesheet" href="./styles.css?v=longpress-1" />
+    <link rel="stylesheet" href="./styles.css?v=control-dock-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -30,40 +30,8 @@
           </div>
 
           <section id="layoutPanel" class="layout-panel" aria-label="樓層與配置檢視" aria-hidden="true">
-            <div class="layout-toolbar">
-              <button id="backToMapButton" class="back-button" type="button">返回地圖</button>
-              <div class="layout-title">
-                <p class="eyebrow">Selected Building</p>
-                <h2>樓層與 Layout</h2>
-              </div>
-              <button id="exportButton" class="icon-button" type="button" title="匯出 SVG">⇩</button>
-            </div>
-
-            <div class="layout-grid">
-              <div class="panel-section floor-section">
-                <div class="section-heading">
-                  <h2>樓層與 Layout</h2>
-                </div>
-                <div id="floorList" class="floor-list" aria-live="polite"></div>
-                <div class="floor-wrap">
-                  <svg id="floorPlan" viewBox="0 0 420 300" role="img" aria-label="建築內部配置圖"></svg>
-                </div>
-              </div>
-
-              <div class="layout-side">
-                <div class="panel-section building-section">
-                  <div class="section-heading">
-                    <h2>附近建築物</h2>
-                  </div>
-                  <p id="sourceSummary" class="source-summary">資料來源：尚未查詢</p>
-                  <select id="buildingSelect" class="place-select building-select" aria-label="一公里內有資料的建築"></select>
-                </div>
-
-                <div class="panel-section selected-address">
-                  <p class="status-label">選定地址</p>
-                  <p id="selectedAddressText" class="selected-address-text">尚未選定</p>
-                </div>
-              </div>
+            <div class="floor-wrap">
+              <svg id="floorPlan" viewBox="0 0 420 300" role="img" aria-label="建築內部配置圖"></svg>
             </div>
           </section>
         </div>
@@ -89,6 +57,30 @@
             <select id="placeSelect" class="place-select" aria-label="附近位置"></select>
           </div>
 
+          <div class="panel-section building-section">
+            <div class="section-heading">
+              <h2>附近建築物</h2>
+            </div>
+            <p id="sourceSummary" class="source-summary">資料來源：尚未查詢</p>
+            <select id="buildingSelect" class="place-select building-select" aria-label="一公里內有資料的建築"></select>
+          </div>
+
+          <div class="panel-section floor-section">
+            <div class="section-heading">
+              <h2>樓層</h2>
+              <div class="inline-actions">
+                <button id="backToMapButton" class="back-button" type="button">返回</button>
+                <button id="exportButton" class="icon-button compact-icon" type="button" title="匯出 SVG">⇩</button>
+              </div>
+            </div>
+            <div id="floorList" class="floor-list" aria-live="polite"></div>
+          </div>
+
+          <div class="panel-section selected-address">
+            <p class="status-label">選定位置</p>
+            <p id="selectedAddressText" class="selected-address-text">尚未選定</p>
+          </div>
+
           <div id="statusCard" class="status-card compact-status">
             <p class="status-label">目前流程</p>
             <p id="statusText" class="status-text">等待定位訊號</p>
@@ -100,6 +92,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=longpress-1" type="module"></script>
+    <script src="./app.js?v=control-dock-1" type="module"></script>
   </body>
 </html>
