@@ -314,7 +314,7 @@ button {
   position: relative;
   z-index: 7;
   display: grid;
-  grid-template-columns: minmax(220px, 0.8fr) minmax(380px, 1.7fr) minmax(220px, 1fr) minmax(180px, 0.75fr);
+  grid-template-columns: minmax(220px, 0.8fr) minmax(420px, 2fr) minmax(220px, 1fr);
   gap: 8px;
   align-items: stretch;
   overflow: hidden;
@@ -454,8 +454,7 @@ h2 {
   gap: 6px;
 }
 
-.address-input,
-.place-select {
+.address-input {
   width: 100%;
   min-width: 0;
   height: 32px;
@@ -472,14 +471,12 @@ h2 {
   padding: 0 12px;
 }
 
-.address-input:focus,
-.place-select:focus {
+.address-input:focus {
   border-color: rgba(85, 240, 255, 0.68);
 }
 
-.place-select {
-  padding: 0 10px;
-  margin-top: 5px;
+#placeOptions {
+  display: none;
 }
 
 .location-section {
@@ -518,6 +515,10 @@ h2 {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 6px;
+}
+
+.floor-section .section-heading {
+  margin-bottom: 0;
 }
 
 .compact-icon {
@@ -599,7 +600,10 @@ h2 {
 }
 
 .floor-section {
-  display: block;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
   min-height: 0;
 }
 
@@ -608,26 +612,23 @@ h2 {
 }
 
 .floor-list {
-  display: grid;
-  gap: 8px;
-  max-height: 58px;
-  overflow: auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .floor-help {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.35;
+  display: none;
 }
 
 .floor-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  display: flex;
   gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 1px;
 }
 
 .floor-button {
+  flex: 0 0 44px;
   min-height: 26px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;

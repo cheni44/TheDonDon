@@ -17,8 +17,7 @@ const statusText = document.querySelector("#statusText");
 const progressBar = document.querySelector("#progressBar");
 const addressForm = document.querySelector("#addressForm");
 const addressInput = document.querySelector("#addressInput");
-const placeSelect = document.querySelector("#placeSelect");
-const backToMapButton = document.querySelector("#backToMapButton");
+const placeOptions = document.querySelector("#placeOptions");
 const floorList = document.querySelector("#floorList");
 const floorPlan = document.querySelector("#floorPlan");
 const sourceSummary = document.querySelector("#sourceSummary");
@@ -49,6 +48,7 @@ const state = {
   animationFrame: 0,
   requestId: 0,
   view: "map",
+  pickerOptions: [],
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -83,6 +83,8 @@ function showLayoutView() {
   stage.classList.add("layout-mode");
   layoutPanel.classList.add("active");
   layoutPanel.setAttribute("aria-hidden", "false");
+  locateButton.textContent = "返回";
+  locateButton.title = "返回地圖";
 }
 
 function hideLayoutView() {
@@ -91,6 +93,8 @@ function hideLayoutView() {
   controlPanel.classList.remove("map-locked");
   layoutPanel.classList.remove("active");
   layoutPanel.setAttribute("aria-hidden", "true");
+  locateButton.textContent = "定位";
+  locateButton.title = "重新定位";
 }
 
 function showMapView() {
@@ -103,6 +107,31 @@ function clearLongPress() {
     window.clearTimeout(state.longPress.timer);
   }
   state.longPress = null;
+}
+
+function selectedPickerOption() {
+  const value = addressInput.value.trim();
+  if (!value) return null;
+  return state.pickerOptions.find((option) => option.label === value) || null;
+}
+
+function activatePickerOption(option) {
+  if (!option) return false;
+  if (option.kind === "place") {
+    const place = state.places.find((item) => item.id === option.id);
+    if (place) {
+      selectPlace(place);
+      return true;
+    }
+  }
+  if (option.kind === "building") {
+    const building = state.buildings.find((item) => item.id === option.id);
+    if (building) {
+      selectBuilding(building);
+      return true;
+    }
+  }
+  return false;
 }
 
 function lon2tile(lon, zoom) {
@@ -611,58 +640,41 @@ function renderListEmpty(container, text) {
 }
 
 function renderPlaceSelect(places, selectedId = "") {
-  placeSelect.replaceChildren();
+  placeOptions.replaceChildren();
+  state.pickerOptions = [];
+  addressInput.placeholder = "輸入住址、選附近位置，或在地圖長按";
   if (!places.length) {
-    const option = document.createElement("option");
-    option.value = "";
-    option.textContent = "沒有可用附近位置";
-    placeSelect.append(option);
-    placeSelect.disabled = true;
     return;
   }
 
-  placeSelect.disabled = false;
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = "選擇附近位置";
-  placeholder.selected = !selectedId;
-  placeSelect.append(placeholder);
-
   places.forEach((place) => {
     const option = document.createElement("option");
-    option.value = `place:${place.id}`;
-    option.textContent = place.meta ? `${place.name} · ${place.meta}` : place.name;
-    option.selected = place.id === selectedId;
-    placeSelect.append(option);
+    const label = place.meta ? `${place.name} · ${place.meta}` : place.name;
+    option.value = label;
+    placeOptions.append(option);
+    state.pickerOptions.push({ kind: "place", id: place.id, label });
+    if (place.id === selectedId) addressInput.value = label;
   });
 }
 
 function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里內沒有可用建築資料") {
-  placeSelect.replaceChildren();
+  placeOptions.replaceChildren();
+  state.pickerOptions = [];
   if (!buildings.length) {
-    const option = document.createElement("option");
-    option.value = "";
-    option.textContent = emptyText;
-    placeSelect.append(option);
-    placeSelect.disabled = true;
+    addressInput.placeholder = emptyText;
     return;
   }
 
-  placeSelect.disabled = false;
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = "選擇附近建築物";
-  placeholder.selected = !selectedId;
-  placeSelect.append(placeholder);
-
+  addressInput.placeholder = "選附近建築物或輸入住址";
   buildings.forEach((building) => {
     const option = document.createElement("option");
     const dimensions = building.dimensions ? `${building.dimensions.width}m x ${building.dimensions.depth}m` : "";
     const floors = building.floors ? `${building.floors} 層` : "";
-    option.value = `building:${building.id}`;
-    option.textContent = [building.name, `${building.distance}m`, building.kind, `${Math.round(building.area)}m²`, dimensions, floors, building.source].filter(Boolean).join(" · ");
-    option.selected = building.id === selectedId;
-    placeSelect.append(option);
+    const label = [building.name, `${building.distance}m`, building.kind, `${Math.round(building.area)}m²`, dimensions, floors, building.source].filter(Boolean).join(" · ");
+    option.value = label;
+    placeOptions.append(option);
+    state.pickerOptions.push({ kind: "building", id: building.id, label });
+    if (building.id === selectedId) addressInput.value = label;
   });
 }
 
@@ -792,7 +804,6 @@ function renderBuildingOutline(building) {
 function renderFloorOptions(building) {
   floorList.replaceChildren();
   if (!building.floors) {
-    renderListEmpty(floorList, "公開資料未標註樓層");
     return;
   }
 
@@ -1058,6 +1069,8 @@ async function boot() {
 
 async function searchAddress(event) {
   event.preventDefault();
+  if (activatePickerOption(selectedPickerOption())) return;
+
   const query = addressInput.value.trim();
   if (!query) return;
 
@@ -1119,22 +1132,16 @@ function exportSvg() {
   URL.revokeObjectURL(url);
 }
 
-locateButton.addEventListener("click", boot);
-addressForm.addEventListener("submit", searchAddress);
-placeSelect.addEventListener("change", () => {
-  const [kind, id] = placeSelect.value.split(":");
-  if (kind === "place") {
-    const place = state.places.find((item) => item.id === id);
-    if (place) selectPlace(place);
+locateButton.addEventListener("click", () => {
+  if (state.view === "layout") {
+    showMapView();
+    return;
   }
-  if (kind === "building") {
-    const building = state.buildings.find((item) => item.id === id);
-    if (building) selectBuilding(building);
-  }
+  boot();
 });
+addressForm.addEventListener("submit", searchAddress);
 zoomInButton.addEventListener("click", () => zoomMap(1));
 zoomOutButton.addEventListener("click", () => zoomMap(-1));
-backToMapButton.addEventListener("click", showMapView);
 mapPanel.addEventListener("pointerdown", startMapDrag);
 mapPanel.addEventListener("pointermove", moveMapDrag);
 mapPanel.addEventListener("pointerup", endMapDrag);

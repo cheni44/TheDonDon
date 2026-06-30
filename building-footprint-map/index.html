@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spatial Trace | 建築配置探索</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
-    <link rel="stylesheet" href="./styles.css?v=expanded-map-2" />
+    <link rel="stylesheet" href="./styles.css?v=single-locator-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -16,10 +16,6 @@
             <canvas id="flowCanvas" class="flow-canvas" aria-hidden="true"></canvas>
             <div id="buildingLayer" class="building-layer" aria-hidden="true"></div>
             <div id="selectionMarker" class="selection-marker" aria-hidden="true"></div>
-            <button id="locateButton" class="locate-button" type="button" title="重新定位">
-              <span aria-hidden="true">◎</span>
-              <span class="sr-only">重新定位</span>
-            </button>
             <div class="map-controls" aria-label="地圖控制">
               <button id="zoomInButton" class="map-control-button" type="button" title="放大">+</button>
               <button id="zoomOutButton" class="map-control-button" type="button" title="縮小">−</button>
@@ -43,15 +39,15 @@
               <p class="eyebrow">Open Data Spatial System</p>
               <h1>Spatial Trace</h1>
             </div>
-            <button id="backToMapButton" class="back-button" type="button">返回</button>
+            <button id="locateButton" class="back-button" type="button">定位</button>
           </div>
 
           <div class="panel-section location-section">
             <form id="addressForm" class="address-form">
-              <input id="addressInput" class="address-input" type="search" autocomplete="street-address" placeholder="輸入住址或地標，或在地圖長按選點" />
+              <input id="addressInput" class="address-input" type="search" list="placeOptions" autocomplete="street-address" placeholder="輸入住址、選附近位置，或在地圖長按" />
+              <datalist id="placeOptions"></datalist>
               <button class="primary-button" type="submit">搜尋</button>
             </form>
-            <select id="placeSelect" class="place-select" aria-label="附近位置與建築物"></select>
             <button id="refreshPlaces" class="icon-button compact-icon refresh-inline" type="button" title="重新搜尋附近位置">↻</button>
             <p id="sourceSummary" class="source-summary" hidden>資料來源：尚未查詢</p>
           </div>
@@ -77,6 +73,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=expanded-map-2" type="module"></script>
+    <script src="./app.js?v=single-locator-1" type="module"></script>
   </body>
 </html>
