@@ -80,6 +80,7 @@ const state = {
   lastMotionAt: 0,
   autoHeadingCalibration: false,
   pickerTimer: null,
+  trackingPrepared: false,
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -461,22 +462,38 @@ function stopLayoutTracking() {
   state.traceWatchId = null;
 }
 
-async function startLayoutTracking() {
-  if (state.tracking) return;
-
-  if (!state.traceAnchor) setTraceAnchor({ x: 210, y: 150 });
-
+async function prepareLayoutTracking() {
+  if (state.trackingPrepared) return true;
   try {
     if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
       const permission = await DeviceOrientationEvent.requestPermission();
       if (permission !== "granted") throw new Error("orientation denied");
     }
     if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
-      await DeviceMotionEvent.requestPermission();
+      const permission = await DeviceMotionEvent.requestPermission();
+      if (permission && permission !== "granted") throw new Error("motion denied");
     }
+    state.trackingPrepared = true;
+    return true;
+  } catch {
+    state.trackingPrepared = false;
+    setStatus("手機方向或動作權限未開啟，請允許後重新定位", 4, 82);
+    return false;
+  }
+}
+
+async function startLayoutTracking() {
+  if (state.tracking) return;
+
+  if (!state.traceAnchor) setTraceAnchor({ x: 210, y: 150 });
+
+  try {
+    const prepared = await prepareLayoutTracking();
+    if (!prepared) return;
     window.addEventListener("deviceorientation", handleDeviceOrientation, true);
     window.addEventListener("devicemotion", handleDeviceMotion, true);
     state.tracking = true;
+    renderTraceOverlay();
     if (navigator.geolocation?.watchPosition) {
       state.traceWatchId = navigator.geolocation.watchPosition(handleTracePosition, () => {
         setStatus("無法取得手機位置，仍可使用方向與手動起點", 4, 88);
@@ -542,6 +559,7 @@ function addPickerMenuOption(label, index, selected = false) {
   button.addEventListener("click", () => {
     const option = state.pickerOptions[index];
     if (!option) return;
+    prepareLayoutTracking();
     addressInput.value = option.label;
     hidePickerMenu();
     activatePickerOption(option);
@@ -1453,6 +1471,7 @@ function startMapDrag(event) {
     timer: window.setTimeout(() => {
       if (!state.drag || state.drag.pointerId !== event.pointerId || state.drag.moved) return;
       state.longPress.triggered = true;
+      prepareLayoutTracking();
       selectMapPoint(event, state.drag.mapPoint);
     }, 900),
   };
@@ -1545,6 +1564,7 @@ function startLayoutHold(event) {
     timer: window.setTimeout(() => {
       if (!state.layoutHold || state.layoutHold.pointerId !== event.pointerId || state.layoutHold.triggered) return;
       state.layoutHold.triggered = true;
+      prepareLayoutTracking();
       setTraceAnchor(state.layoutHold.layoutPoint, { startTracking: true });
     }, 700),
   };
@@ -1661,6 +1681,7 @@ function handleAddressKeydown(event) {
 
 async function searchAddress(event) {
   event?.preventDefault();
+  prepareLayoutTracking();
   if (activatePickerOption(selectedPickerOption())) return;
 
   const query = addressInput.value.trim();
@@ -1753,6 +1774,7 @@ floorPlan.addEventListener("pointerup", endLayoutHold);
 floorPlan.addEventListener("pointercancel", endLayoutHold);
 floorPlan.addEventListener("contextmenu", (event) => {
   event.preventDefault();
+  prepareLayoutTracking();
   setTraceAnchor(pointFromLayoutEvent(event), { startTracking: true });
 });
 floorPlan.addEventListener("wheel", (event) => {
