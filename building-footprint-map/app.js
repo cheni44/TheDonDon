@@ -229,13 +229,24 @@ function panLayoutByPixels(dx, dy) {
   setLayoutViewBox();
 }
 
-function pointFromLayoutEvent(event) {
+function pointFromLayoutPosition(clientX, clientY) {
+  const screenMatrix = floorPlan.getScreenCTM?.();
+  if (floorPlan.createSVGPoint && screenMatrix) {
+    const point = floorPlan.createSVGPoint();
+    point.x = clientX;
+    point.y = clientY;
+    return point.matrixTransform(screenMatrix.inverse());
+  }
   const rect = floorPlan.getBoundingClientRect();
   const viewBox = state.layoutViewBox;
   return {
-    x: viewBox.x + ((event.clientX - rect.left) / rect.width) * viewBox.width,
-    y: viewBox.y + ((event.clientY - rect.top) / rect.height) * viewBox.height,
+    x: viewBox.x + ((clientX - rect.left) / rect.width) * viewBox.width,
+    y: viewBox.y + ((clientY - rect.top) / rect.height) * viewBox.height,
   };
+}
+
+function pointFromLayoutEvent(event) {
+  return pointFromLayoutPosition(event.clientX, event.clientY);
 }
 
 function normalizeAngle(angle) {
@@ -506,22 +517,26 @@ function clampLon(lon) {
   return ((((lon + 180) % 360) + 360) % 360) - 180;
 }
 
-function pointFromMapClick(event) {
+function pointFromMapPosition(clientX, clientY) {
   const zoom = state.zoom;
   const rect = mapPanel.getBoundingClientRect();
-  const xRatio = (event.clientX - rect.left) / rect.width;
-  const yRatio = (event.clientY - rect.top) / rect.height;
+  const xRatio = (clientX - rect.left) / rect.width;
+  const yRatio = (clientY - rect.top) / rect.height;
   const centerX = lonToPixel(state.center.lon, zoom);
   const centerY = latToPixel(state.center.lat, zoom);
-  const targetX = centerX + event.clientX - rect.left - rect.width / 2;
-  const targetY = centerY + event.clientY - rect.top - rect.height / 2;
+  const targetX = centerX + clientX - rect.left - rect.width / 2;
+  const targetY = centerY + clientY - rect.top - rect.height / 2;
 
   return {
-    xRatio,
-    yRatio,
-    lat: pixelToLat(targetY, zoom),
-    lon: pixelToLon(targetX, zoom),
+    xRatio: Math.max(0, Math.min(1, xRatio)),
+    yRatio: Math.max(0, Math.min(1, yRatio)),
+    lat: clampLat(pixelToLat(targetY, zoom)),
+    lon: clampLon(pixelToLon(targetX, zoom)),
   };
+}
+
+function pointFromMapClick(event) {
+  return pointFromMapPosition(event.clientX, event.clientY);
 }
 
 function renderTiles(center = state.center) {
@@ -1262,17 +1277,17 @@ async function selectPlace(place) {
   applyBuildingResults(buildings, "此位置沒有可用建築資料", { openLayout: true });
 }
 
-async function selectMapPoint(event) {
+async function selectMapPoint(event, presetPoint = null) {
   if (state.view !== "map") return;
-  if (event.target.closest("button")) return;
+  if (event?.target?.closest("button")) return;
   if (state.suppressNextClick) {
     state.suppressNextClick = false;
     return;
   }
 
   const requestId = ++state.requestId;
+  const point = presetPoint || pointFromMapClick(event);
   hideLayoutView();
-  const point = pointFromMapClick(event);
   setPortalOrigin(point.xRatio, point.yRatio);
   const picked = {
     id: `picked-${Date.now()}`,
@@ -1347,6 +1362,7 @@ function startMapDrag(event) {
     pointerId: event.pointerId,
     startX: event.clientX,
     startY: event.clientY,
+    mapPoint: pointFromMapClick(event),
     moved: false,
   };
   clearLongPress();
@@ -1356,7 +1372,7 @@ function startMapDrag(event) {
     timer: window.setTimeout(() => {
       if (!state.drag || state.drag.pointerId !== event.pointerId || state.drag.moved) return;
       state.longPress.triggered = true;
-      selectMapPoint(event);
+      selectMapPoint(event, state.drag.mapPoint);
     }, 900),
   };
   mapPanel.classList.add("dragging");
@@ -1434,6 +1450,7 @@ function startLayoutHold(event) {
   }
   const startX = event.clientX;
   const startY = event.clientY;
+  const layoutPoint = pointFromLayoutEvent(event);
   clearLayoutHold();
   state.layoutHold = {
     pointerId: event.pointerId,
@@ -1441,12 +1458,13 @@ function startLayoutHold(event) {
     startY,
     lastX: startX,
     lastY: startY,
+    layoutPoint,
     panning: false,
     triggered: false,
     timer: window.setTimeout(() => {
       if (!state.layoutHold || state.layoutHold.pointerId !== event.pointerId || state.layoutHold.triggered) return;
       state.layoutHold.triggered = true;
-      setTraceAnchor(pointFromLayoutEvent(event), { startTracking: true });
+      setTraceAnchor(state.layoutHold.layoutPoint, { startTracking: true });
     }, 700),
   };
 }
