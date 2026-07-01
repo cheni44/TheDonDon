@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spatial Trace | 建築配置探索</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
-    <link rel="stylesheet" href="./styles.css?v=auto-trace-z6-1" />
+    <link rel="stylesheet" href="./styles.css?v=loading-picker-ip-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -34,6 +34,14 @@
               <svg id="floorPlan" viewBox="0 0 420 300" role="img" aria-label="建築內部配置圖"></svg>
             </div>
           </section>
+
+          <div id="loadingOverlay" class="loading-overlay" aria-live="polite" aria-hidden="true">
+            <div class="loading-pulse" aria-hidden="true"></div>
+            <div>
+              <p id="loadingText" class="loading-title">正在下載開放建築資料</p>
+              <p id="loadingDetail" class="loading-detail">讀取 OSM / OpenBuildingMap footprint</p>
+            </div>
+          </div>
         </div>
 
         <aside id="controlPanel" class="control-panel" aria-label="位置與建築選擇">
@@ -43,7 +51,7 @@
               <p class="eyebrow">Open Data Spatial System</p>
               <h1>Spatial Trace</h1>
             </div>
-            <button id="locateButton" class="back-button" type="button">定位</button>
+            <button id="locateButton" class="back-button" type="button" title="使用 IP 取得大略位置">IP 定位</button>
           </div>
 
           <div class="panel-section location-section">
@@ -76,6 +84,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=auto-trace-z6-1" type="module"></script>
+    <script src="./app.js?v=loading-picker-ip-1" type="module"></script>
   </body>
 </html>
