@@ -539,6 +539,27 @@ h2 {
   border-color: rgba(85, 240, 255, 0.68);
 }
 
+.quick-picker {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  border: 1px solid rgba(164, 255, 143, 0.24);
+  border-radius: 8px;
+  background: rgba(8, 12, 18, 0.82);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.quick-picker:focus {
+  border-color: rgba(164, 255, 143, 0.7);
+}
+
+.quick-picker[hidden] {
+  display: none;
+}
+
 #placeOptions {
   display: none;
 }

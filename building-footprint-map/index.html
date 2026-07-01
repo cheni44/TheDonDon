@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spatial Trace | 建築配置探索</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
-    <link rel="stylesheet" href="./styles.css?v=full-layout-fit-1" />
+    <link rel="stylesheet" href="./styles.css?v=native-picker-2" />
   </head>
   <body>
     <main class="app-shell">
@@ -57,6 +57,7 @@
           <div class="panel-section location-section">
             <form id="addressForm" class="address-form">
               <input id="addressInput" class="address-input" type="search" list="placeOptions" autocomplete="street-address" placeholder="輸入住址、選附近位置，或在地圖長按" />
+              <select id="quickPicker" class="quick-picker" aria-label="選擇附近位置或建築" hidden></select>
               <datalist id="placeOptions"></datalist>
             </form>
             <button id="refreshPlaces" class="icon-button compact-icon refresh-inline" type="button" title="重新搜尋附近位置">↻</button>
@@ -84,6 +85,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=full-layout-fit-1" type="module"></script>
+    <script src="./app.js?v=native-picker-2" type="module"></script>
   </body>
 </html>

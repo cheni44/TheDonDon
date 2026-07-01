@@ -22,6 +22,7 @@ const statusText = document.querySelector("#statusText");
 const progressBar = document.querySelector("#progressBar");
 const addressForm = document.querySelector("#addressForm");
 const addressInput = document.querySelector("#addressInput");
+const quickPicker = document.querySelector("#quickPicker");
 const placeOptions = document.querySelector("#placeOptions");
 const floorList = document.querySelector("#floorList");
 const floorPlan = document.querySelector("#floorPlan");
@@ -496,6 +497,12 @@ function selectedPickerOption() {
   return state.pickerOptions.find((option) => option.label === value || option.value === value) || null;
 }
 
+function selectedQuickPickerOption() {
+  const index = Number(quickPicker.value);
+  if (!Number.isInteger(index) || index < 0) return null;
+  return state.pickerOptions[index] || null;
+}
+
 function activatePickerOption(option) {
   if (!option) return false;
   if (option.kind === "place") {
@@ -513,6 +520,24 @@ function activatePickerOption(option) {
     }
   }
   return false;
+}
+
+function resetQuickPicker(placeholder = "選擇附近位置") {
+  quickPicker.replaceChildren();
+  const option = document.createElement("option");
+  option.value = "-1";
+  option.textContent = placeholder;
+  quickPicker.append(option);
+  quickPicker.value = "-1";
+  quickPicker.hidden = true;
+}
+
+function addQuickPickerOption(label, index, selected = false) {
+  const option = document.createElement("option");
+  option.value = String(index);
+  option.textContent = label;
+  quickPicker.append(option);
+  if (selected) quickPicker.value = option.value;
 }
 
 function lon2tile(lon, zoom) {
@@ -1027,6 +1052,7 @@ function renderListEmpty(container, text) {
 function renderPlaceSelect(places, selectedId = "") {
   placeOptions.replaceChildren();
   state.pickerOptions = [];
+  resetQuickPicker("選擇附近位置");
   addressInput.placeholder = "輸入住址、選附近位置，或在地圖長按";
   if (!places.length) {
     return;
@@ -1037,16 +1063,29 @@ function renderPlaceSelect(places, selectedId = "") {
     const label = place.meta ? `位置 #${index + 1} · ${place.name} · ${place.meta}` : `位置 #${index + 1} · ${place.name}`;
     option.value = label;
     placeOptions.append(option);
-    state.pickerOptions.push({ kind: "place", id: place.id, label, value: label });
+    const pickerIndex = state.pickerOptions.push({ kind: "place", id: place.id, label, value: label }) - 1;
+    addQuickPickerOption(label, pickerIndex, place.id === selectedId);
     if (place.id === selectedId) addressInput.value = label;
   });
+  quickPicker.hidden = false;
 }
 
 function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里內沒有可用建築資料") {
   placeOptions.replaceChildren();
   state.pickerOptions = [];
+  resetQuickPicker("選擇附近位置 / 建築物");
+  const places = state.places || [];
+  places.forEach((place, index) => {
+    const option = document.createElement("option");
+    const label = place.meta ? `位置 #${index + 1} · ${place.name} · ${place.meta}` : `位置 #${index + 1} · ${place.name}`;
+    option.value = label;
+    placeOptions.append(option);
+    const pickerIndex = state.pickerOptions.push({ kind: "place", id: place.id, label, value: label }) - 1;
+    addQuickPickerOption(label, pickerIndex, place.id === state.selectedPlace?.id && !selectedId);
+  });
   if (!buildings.length) {
     addressInput.placeholder = emptyText;
+    quickPicker.hidden = !state.pickerOptions.length;
     return;
   }
 
@@ -1059,9 +1098,11 @@ function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里
     const label = [`建築 #${index + 1}`, building.name, `${building.distance}m`, building.kind, `${Math.round(building.area)}m²`, dimensions, floors, building.source, coordinate].filter(Boolean).join(" · ");
     option.value = label;
     placeOptions.append(option);
-    state.pickerOptions.push({ kind: "building", id: building.id, label, value: label });
+    const pickerIndex = state.pickerOptions.push({ kind: "building", id: building.id, label, value: label }) - 1;
+    addQuickPickerOption(label, pickerIndex, building.id === selectedId);
     if (building.id === selectedId) addressInput.value = label;
   });
+  quickPicker.hidden = false;
 }
 
 function renderPlanEmpty(title, detail = "") {
@@ -1601,6 +1642,13 @@ function usePickerSelection() {
   }, 80);
 }
 
+function useQuickPickerSelection() {
+  const option = selectedQuickPickerOption();
+  if (!option) return;
+  addressInput.value = option.label;
+  activatePickerOption(option);
+}
+
 function handleAddressKeydown(event) {
   if (event.key !== "Enter" || event.isComposing) return;
   searchAddress(event);
@@ -1684,6 +1732,7 @@ addressForm.addEventListener("submit", searchAddress);
 addressInput.addEventListener("input", usePickerSelection);
 addressInput.addEventListener("change", usePickerSelection);
 addressInput.addEventListener("keydown", handleAddressKeydown);
+quickPicker.addEventListener("change", useQuickPickerSelection);
 zoomInButton.addEventListener("click", () => zoomMap(1));
 zoomOutButton.addEventListener("click", () => zoomMap(-1));
 layoutZoomInButton.addEventListener("click", () => zoomLayout(0.25));
