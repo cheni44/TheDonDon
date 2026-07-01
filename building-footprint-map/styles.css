@@ -381,7 +381,7 @@ button {
   grid-template-columns: minmax(220px, 0.8fr) minmax(420px, 2fr) minmax(220px, 1fr);
   gap: 8px;
   align-items: stretch;
-  overflow: hidden;
+  overflow: visible;
   padding: 8px;
   border-top: 1px solid var(--line);
   background: rgba(7, 10, 15, 0.88);
@@ -513,6 +513,7 @@ h2 {
 }
 
 .address-form {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 6px;
@@ -539,25 +540,49 @@ h2 {
   border-color: rgba(85, 240, 255, 0.68);
 }
 
-.quick-picker {
-  width: 100%;
-  min-width: 0;
-  height: 30px;
+.picker-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 5px);
+  z-index: 12;
+  max-height: min(260px, 45vh);
+  overflow-y: auto;
   border: 1px solid rgba(164, 255, 143, 0.24);
   border-radius: 8px;
   background: rgba(8, 12, 18, 0.82);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(16px);
+}
+
+.picker-menu[hidden] {
+  display: none;
+}
+
+.picker-option {
+  display: block;
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
   color: var(--text);
+  cursor: pointer;
   font: inherit;
   font-size: 12px;
+  line-height: 1.25;
+  text-align: left;
   outline: none;
 }
 
-.quick-picker:focus {
-  border-color: rgba(164, 255, 143, 0.7);
+.picker-option:last-child {
+  border-bottom: 0;
 }
 
-.quick-picker[hidden] {
-  display: none;
+.picker-option:hover,
+.picker-option.active {
+  background: rgba(164, 255, 143, 0.12);
 }
 
 #placeOptions {

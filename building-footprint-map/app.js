@@ -22,7 +22,7 @@ const statusText = document.querySelector("#statusText");
 const progressBar = document.querySelector("#progressBar");
 const addressForm = document.querySelector("#addressForm");
 const addressInput = document.querySelector("#addressInput");
-const quickPicker = document.querySelector("#quickPicker");
+const pickerMenu = document.querySelector("#pickerMenu");
 const placeOptions = document.querySelector("#placeOptions");
 const floorList = document.querySelector("#floorList");
 const floorPlan = document.querySelector("#floorPlan");
@@ -497,12 +497,6 @@ function selectedPickerOption() {
   return state.pickerOptions.find((option) => option.label === value || option.value === value) || null;
 }
 
-function selectedQuickPickerOption() {
-  const index = Number(quickPicker.value);
-  if (!Number.isInteger(index) || index < 0) return null;
-  return state.pickerOptions[index] || null;
-}
-
 function activatePickerOption(option) {
   if (!option) return false;
   if (option.kind === "place") {
@@ -522,22 +516,37 @@ function activatePickerOption(option) {
   return false;
 }
 
-function resetQuickPicker(placeholder = "選擇附近位置") {
-  quickPicker.replaceChildren();
-  const option = document.createElement("option");
-  option.value = "-1";
-  option.textContent = placeholder;
-  quickPicker.append(option);
-  quickPicker.value = "-1";
-  quickPicker.hidden = true;
+function hidePickerMenu() {
+  pickerMenu.hidden = true;
 }
 
-function addQuickPickerOption(label, index, selected = false) {
-  const option = document.createElement("option");
-  option.value = String(index);
-  option.textContent = label;
-  quickPicker.append(option);
-  if (selected) quickPicker.value = option.value;
+function showPickerMenu() {
+  pickerMenu.hidden = !state.pickerOptions.length;
+}
+
+function resetPickerMenu() {
+  pickerMenu.replaceChildren();
+  pickerMenu.hidden = true;
+}
+
+function addPickerMenuOption(label, index, selected = false) {
+  const button = document.createElement("button");
+  button.className = "picker-option";
+  button.classList.toggle("active", selected);
+  button.type = "button";
+  button.role = "option";
+  button.textContent = label;
+  button.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+  });
+  button.addEventListener("click", () => {
+    const option = state.pickerOptions[index];
+    if (!option) return;
+    addressInput.value = option.label;
+    hidePickerMenu();
+    activatePickerOption(option);
+  });
+  pickerMenu.append(button);
 }
 
 function lon2tile(lon, zoom) {
@@ -1052,7 +1061,7 @@ function renderListEmpty(container, text) {
 function renderPlaceSelect(places, selectedId = "") {
   placeOptions.replaceChildren();
   state.pickerOptions = [];
-  resetQuickPicker("選擇附近位置");
+  resetPickerMenu();
   addressInput.placeholder = "輸入住址、選附近位置，或在地圖長按";
   if (!places.length) {
     return;
@@ -1064,16 +1073,15 @@ function renderPlaceSelect(places, selectedId = "") {
     option.value = label;
     placeOptions.append(option);
     const pickerIndex = state.pickerOptions.push({ kind: "place", id: place.id, label, value: label }) - 1;
-    addQuickPickerOption(label, pickerIndex, place.id === selectedId);
+    addPickerMenuOption(label, pickerIndex, place.id === selectedId);
     if (place.id === selectedId) addressInput.value = label;
   });
-  quickPicker.hidden = false;
 }
 
 function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里內沒有可用建築資料") {
   placeOptions.replaceChildren();
   state.pickerOptions = [];
-  resetQuickPicker("選擇附近位置 / 建築物");
+  resetPickerMenu();
   const places = state.places || [];
   places.forEach((place, index) => {
     const option = document.createElement("option");
@@ -1081,11 +1089,10 @@ function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里
     option.value = label;
     placeOptions.append(option);
     const pickerIndex = state.pickerOptions.push({ kind: "place", id: place.id, label, value: label }) - 1;
-    addQuickPickerOption(label, pickerIndex, place.id === state.selectedPlace?.id && !selectedId);
+    addPickerMenuOption(label, pickerIndex, place.id === state.selectedPlace?.id && !selectedId);
   });
   if (!buildings.length) {
     addressInput.placeholder = emptyText;
-    quickPicker.hidden = !state.pickerOptions.length;
     return;
   }
 
@@ -1099,10 +1106,9 @@ function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里
     option.value = label;
     placeOptions.append(option);
     const pickerIndex = state.pickerOptions.push({ kind: "building", id: building.id, label, value: label }) - 1;
-    addQuickPickerOption(label, pickerIndex, building.id === selectedId);
+    addPickerMenuOption(label, pickerIndex, building.id === selectedId);
     if (building.id === selectedId) addressInput.value = label;
   });
-  quickPicker.hidden = false;
 }
 
 function renderPlanEmpty(title, detail = "") {
@@ -1637,20 +1643,19 @@ async function boot() {
 
 function usePickerSelection() {
   window.clearTimeout(state.pickerTimer);
+  showPickerMenu();
   state.pickerTimer = window.setTimeout(() => {
     activatePickerOption(selectedPickerOption());
   }, 80);
 }
 
-function useQuickPickerSelection() {
-  const option = selectedQuickPickerOption();
-  if (!option) return;
-  addressInput.value = option.label;
-  activatePickerOption(option);
-}
-
 function handleAddressKeydown(event) {
+  if (event.key === "Escape") {
+    hidePickerMenu();
+    return;
+  }
   if (event.key !== "Enter" || event.isComposing) return;
+  hidePickerMenu();
   searchAddress(event);
 }
 
@@ -1729,10 +1734,15 @@ locateButton.addEventListener("click", () => {
   boot();
 });
 addressForm.addEventListener("submit", searchAddress);
+addressInput.addEventListener("focus", showPickerMenu);
+addressInput.addEventListener("click", showPickerMenu);
 addressInput.addEventListener("input", usePickerSelection);
 addressInput.addEventListener("change", usePickerSelection);
 addressInput.addEventListener("keydown", handleAddressKeydown);
-quickPicker.addEventListener("change", useQuickPickerSelection);
+document.addEventListener("pointerdown", (event) => {
+  if (addressForm.contains(event.target)) return;
+  hidePickerMenu();
+});
 zoomInButton.addEventListener("click", () => zoomMap(1));
 zoomOutButton.addEventListener("click", () => zoomMap(-1));
 layoutZoomInButton.addEventListener("click", () => zoomLayout(0.25));
