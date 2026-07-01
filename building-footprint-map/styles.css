@@ -695,8 +695,8 @@ h2 {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
+  border: 0;
+  border-radius: 0;
   background:
     linear-gradient(rgba(85, 240, 255, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(85, 240, 255, 0.06) 1px, transparent 1px),
@@ -706,12 +706,12 @@ h2 {
 
 .layout-panel {
   position: absolute;
-  inset: 16px;
+  inset: 0;
   z-index: 9;
   display: block;
-  padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.17);
-  border-radius: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   background: rgba(7, 10, 15, 0.9);
   box-shadow: 0 34px 90px rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(22px);
@@ -736,8 +736,8 @@ h2 {
 
 .layout-controls {
   position: absolute;
-  top: 22px;
-  right: 22px;
+  top: 10px;
+  right: 10px;
   z-index: 2;
   display: flex;
   gap: 6px;
@@ -1114,9 +1114,9 @@ h2 {
   }
 
   .layout-panel {
-    inset: 6px;
-    padding: 6px;
-    border-radius: 7px;
+    inset: 0;
+    padding: 0;
+    border-radius: 0;
   }
 
   .layout-controls {
@@ -1149,8 +1149,8 @@ h2 {
 
 @media (max-height: 520px) {
   .layout-panel {
-    inset: 8px;
-    padding: 7px;
+    inset: 0;
+    padding: 0;
   }
 
   .layout-controls {

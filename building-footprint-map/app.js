@@ -59,6 +59,7 @@ const state = {
   requestId: 0,
   view: "map",
   pickerOptions: [],
+  layoutBaseViewBox: { ...BASE_LAYOUT_VIEWBOX },
   layoutViewBox: { ...BASE_LAYOUT_VIEWBOX },
   layoutZoom: 1,
   layoutHold: null,
@@ -183,12 +184,17 @@ function setLayoutViewBox() {
   floorPlan.setAttribute("viewBox", `${x} ${y} ${width} ${height}`);
 }
 
+function currentLayoutBaseViewBox() {
+  return state.layoutBaseViewBox || BASE_LAYOUT_VIEWBOX;
+}
+
 function clampLayoutViewBox(viewBox = state.layoutViewBox) {
-  const width = Math.min(BASE_LAYOUT_VIEWBOX.width, viewBox.width);
-  const height = Math.min(BASE_LAYOUT_VIEWBOX.height, viewBox.height);
+  const base = currentLayoutBaseViewBox();
+  const width = Math.min(base.width, viewBox.width);
+  const height = Math.min(base.height, viewBox.height);
   return {
-    x: Math.max(BASE_LAYOUT_VIEWBOX.x, Math.min(BASE_LAYOUT_VIEWBOX.x + BASE_LAYOUT_VIEWBOX.width - width, viewBox.x)),
-    y: Math.max(BASE_LAYOUT_VIEWBOX.y, Math.min(BASE_LAYOUT_VIEWBOX.y + BASE_LAYOUT_VIEWBOX.height - height, viewBox.y)),
+    x: Math.max(base.x, Math.min(base.x + base.width - width, viewBox.x)),
+    y: Math.max(base.y, Math.min(base.y + base.height - height, viewBox.y)),
     width,
     height,
   };
@@ -196,18 +202,45 @@ function clampLayoutViewBox(viewBox = state.layoutViewBox) {
 
 function resetLayoutViewport() {
   state.layoutZoom = 1;
-  state.layoutViewBox = { ...BASE_LAYOUT_VIEWBOX };
+  state.layoutViewBox = { ...currentLayoutBaseViewBox() };
   setLayoutViewBox();
+}
+
+function resetLayoutBaseViewBox() {
+  state.layoutBaseViewBox = { ...BASE_LAYOUT_VIEWBOX };
+  resetLayoutViewport();
+}
+
+function fitLayoutViewportToContent(padding = 16) {
+  try {
+    if (!floorPlan.children.length || !floorPlan.getBBox) {
+      resetLayoutBaseViewBox();
+      return;
+    }
+    const box = floorPlan.getBBox();
+    const width = Math.max(1, box.width + padding * 2);
+    const height = Math.max(1, box.height + padding * 2);
+    state.layoutBaseViewBox = {
+      x: box.x - padding,
+      y: box.y - padding,
+      width,
+      height,
+    };
+    resetLayoutViewport();
+  } catch {
+    resetLayoutBaseViewBox();
+  }
 }
 
 function zoomLayout(delta) {
   const nextZoom = Math.max(1, Math.min(5, state.layoutZoom + delta));
   if (nextZoom === state.layoutZoom) return;
+  const base = currentLayoutBaseViewBox();
   const centerX = state.layoutViewBox.x + state.layoutViewBox.width / 2;
   const centerY = state.layoutViewBox.y + state.layoutViewBox.height / 2;
   state.layoutZoom = nextZoom;
-  const width = BASE_LAYOUT_VIEWBOX.width / nextZoom;
-  const height = BASE_LAYOUT_VIEWBOX.height / nextZoom;
+  const width = base.width / nextZoom;
+  const height = base.height / nextZoom;
   state.layoutViewBox = clampLayoutViewBox({
     x: centerX - width / 2,
     y: centerY - height / 2,
@@ -1050,6 +1083,7 @@ function renderPlanEmpty(title, detail = "") {
   meta.textContent = detail;
   floorPlan.append(meta);
   renderTraceOverlay();
+  resetLayoutBaseViewBox();
 }
 
 function renderEmptyState(title, detail, options = {}) {
@@ -1078,7 +1112,6 @@ function applyBuildingResults(buildings, emptyTitle = "此位置沒有可用建�
 
   renderBuildingSelect(state.buildings, state.selectedLayout.id);
   resetTraceForLayout(state.selectedLayout);
-  resetLayoutViewport();
   renderBuildingOutline(state.selectedLayout);
   renderFloorOptions(state.selectedLayout);
   setStatus(state.selectedLayout.floors ? "已取得建築物輪廓與尺寸，請確認樓層" : "已取得建築物輪廓與尺寸，公開資料未標註樓層", 3, 78);
@@ -1162,6 +1195,7 @@ function renderBuildingOutline(building) {
   title.textContent = `${Math.round(building.area)} m² · ${building.source}`;
   floorPlan.append(title);
   renderTraceOverlay();
+  fitLayoutViewportToContent(18);
 }
 
 function renderFloorOptions(building) {
@@ -1527,7 +1561,6 @@ function selectBuilding(layout) {
   state.selectedLayout = layout;
   state.selectedFloor = null;
   resetTraceForLayout(layout);
-  resetLayoutViewport();
   burst(63, 42);
   renderFootprints();
   renderBuildingSelect(state.buildings, layout.id);
