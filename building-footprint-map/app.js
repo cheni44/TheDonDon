@@ -71,6 +71,7 @@ const state = {
   layoutPointers: new Map(),
   mapPinch: null,
   layoutPinch: null,
+  layoutHasDirection: false,
   lastMotionAt: 0,
 };
 
@@ -144,6 +145,17 @@ function setLayoutViewBox() {
   floorPlan.setAttribute("viewBox", `${x} ${y} ${width} ${height}`);
 }
 
+function clampLayoutViewBox(viewBox = state.layoutViewBox) {
+  const width = Math.min(BASE_LAYOUT_VIEWBOX.width, viewBox.width);
+  const height = Math.min(BASE_LAYOUT_VIEWBOX.height, viewBox.height);
+  return {
+    x: Math.max(BASE_LAYOUT_VIEWBOX.x, Math.min(BASE_LAYOUT_VIEWBOX.x + BASE_LAYOUT_VIEWBOX.width - width, viewBox.x)),
+    y: Math.max(BASE_LAYOUT_VIEWBOX.y, Math.min(BASE_LAYOUT_VIEWBOX.y + BASE_LAYOUT_VIEWBOX.height - height, viewBox.y)),
+    width,
+    height,
+  };
+}
+
 function resetLayoutViewport() {
   state.layoutZoom = 1;
   state.layoutViewBox = { ...BASE_LAYOUT_VIEWBOX };
@@ -151,19 +163,32 @@ function resetLayoutViewport() {
 }
 
 function zoomLayout(delta) {
-  const nextZoom = Math.max(0.7, Math.min(5, state.layoutZoom + delta));
+  const nextZoom = Math.max(1, Math.min(5, state.layoutZoom + delta));
   if (nextZoom === state.layoutZoom) return;
+  const centerX = state.layoutViewBox.x + state.layoutViewBox.width / 2;
+  const centerY = state.layoutViewBox.y + state.layoutViewBox.height / 2;
   state.layoutZoom = nextZoom;
   const width = BASE_LAYOUT_VIEWBOX.width / nextZoom;
   const height = BASE_LAYOUT_VIEWBOX.height / nextZoom;
-  state.layoutViewBox = {
-    x: BASE_LAYOUT_VIEWBOX.x + (BASE_LAYOUT_VIEWBOX.width - width) / 2,
-    y: BASE_LAYOUT_VIEWBOX.y + (BASE_LAYOUT_VIEWBOX.height - height) / 2,
+  state.layoutViewBox = clampLayoutViewBox({
+    x: centerX - width / 2,
+    y: centerY - height / 2,
     width,
     height,
-  };
+  });
   setLayoutViewBox();
   setStatus(`配置圖縮放 ${Math.round(nextZoom * 100)}%`, 4, 100);
+}
+
+function panLayoutByPixels(dx, dy) {
+  if (state.layoutZoom <= 1) return;
+  const rect = floorPlan.getBoundingClientRect();
+  state.layoutViewBox = clampLayoutViewBox({
+    ...state.layoutViewBox,
+    x: state.layoutViewBox.x - (dx / rect.width) * state.layoutViewBox.width,
+    y: state.layoutViewBox.y - (dy / rect.height) * state.layoutViewBox.height,
+  });
+  setLayoutViewBox();
 }
 
 function pointFromLayoutEvent(event) {
@@ -207,6 +232,8 @@ function resetTraceForLayout(building = state.selectedLayout) {
   state.baseGps = null;
   state.headingOffset = 0;
   state.metersToSvg = estimateLayoutScale(building);
+  state.layoutHasDirection = Boolean(building?.geometry?.length);
+  layoutAlignButton.hidden = state.layoutHasDirection;
 }
 
 function currentSvgPosition() {
@@ -262,7 +289,7 @@ function setTraceAnchor(point) {
   state.tracePoints = [point];
   state.baseGps = null;
   renderTraceOverlay();
-  setStatus("已設定 layout 起點，面向圖上方後按 ⇧ 校準", 4, 100);
+  setStatus(state.layoutHasDirection ? "已設定 layout 起點，可開始追蹤軌跡" : "已設定 layout 起點，面向圖上方後按 ⇧ 校準", 4, 100);
 }
 
 function calibrateLayoutHeading() {
@@ -305,7 +332,7 @@ function gpsToLayoutPoint(coords) {
 function handleTracePosition(position) {
   const nextPoint = gpsToLayoutPoint(position.coords);
   const previous = state.tracePoints[state.tracePoints.length - 1];
-  if (!previous || Math.hypot(nextPoint.x - previous.x, nextPoint.y - previous.y) > 1.5) {
+  if (!previous || Math.hypot(nextPoint.x - previous.x, nextPoint.y - previous.y) > 0.4) {
     state.tracePoints.push(nextPoint);
     state.tracePoints = state.tracePoints.slice(-240);
   }
@@ -331,13 +358,14 @@ function addMotionTraceStep(distanceMeters = 0.55) {
 function handleDeviceMotion(event) {
   if (!state.tracking) return;
   const now = Date.now();
-  if (now - state.lastMotionAt < 650) return;
-  const acceleration = event.accelerationIncludingGravity || event.acceleration;
-  if (!acceleration) return;
-  const magnitude = Math.hypot(acceleration.x || 0, acceleration.y || 0, acceleration.z || 0);
-  if (magnitude < 11.8) return;
+  if (now - state.lastMotionAt < 240) return;
+  const acceleration = event.acceleration;
+  const gravityAcceleration = event.accelerationIncludingGravity;
+  const motionMagnitude = acceleration ? Math.hypot(acceleration.x || 0, acceleration.y || 0, acceleration.z || 0) : 0;
+  const gravityMagnitude = gravityAcceleration ? Math.abs(Math.hypot(gravityAcceleration.x || 0, gravityAcceleration.y || 0, gravityAcceleration.z || 0) - 9.8) : 0;
+  if (motionMagnitude < 0.85 && gravityMagnitude < 0.9) return;
   state.lastMotionAt = now;
-  addMotionTraceStep(0.45);
+  addMotionTraceStep(0.28);
 }
 
 async function startLayoutTracking() {
@@ -369,11 +397,11 @@ async function startLayoutTracking() {
     if (navigator.geolocation?.watchPosition) {
       state.traceWatchId = navigator.geolocation.watchPosition(handleTracePosition, () => {
         setStatus("無法取得手機位置，仍可使用方向與手動起點", 4, 88);
-      }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 12000 });
+      }, { enableHighAccuracy: true, maximumAge: 250, timeout: 8000 });
     } else {
       setStatus("此瀏覽器沒有提供定位追蹤", 4, 88);
     }
-    setStatus("已啟動追蹤，面向 layout 上方後按 ⇧ 校準", 4, 100);
+    setStatus(state.layoutHasDirection ? "已啟動追蹤，會依手機方向與移動繪製軌跡" : "已啟動追蹤，面向 layout 上方後按 ⇧ 校準", 4, 100);
   } catch {
     state.tracking = false;
     layoutTraceButton.classList.remove("active");
@@ -951,6 +979,8 @@ function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里
 }
 
 function renderPlanEmpty(title, detail = "") {
+  state.layoutHasDirection = false;
+  layoutAlignButton.hidden = false;
   floorPlan.replaceChildren();
   const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
   text.setAttribute("x", "210");
@@ -1364,6 +1394,9 @@ function startLayoutHold(event) {
     pointerId: event.pointerId,
     startX,
     startY,
+    lastX: startX,
+    lastY: startY,
+    panning: false,
     triggered: false,
     timer: window.setTimeout(() => {
       if (!state.layoutHold || state.layoutHold.pointerId !== event.pointerId || state.layoutHold.triggered) return;
@@ -1393,6 +1426,25 @@ function moveLayoutHold(event) {
   }
   if (!state.layoutHold || state.layoutHold.pointerId !== event.pointerId) return;
   const moved = Math.hypot(event.clientX - state.layoutHold.startX, event.clientY - state.layoutHold.startY);
+  if (state.layoutZoom > 1 && (state.layoutHold.panning || moved > 4)) {
+    if (!state.layoutHold.panning) {
+      clearLayoutHold();
+      state.layoutHold = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        lastX: event.clientX,
+        lastY: event.clientY,
+        panning: true,
+        triggered: false,
+      };
+      return;
+    }
+    panLayoutByPixels(event.clientX - state.layoutHold.lastX, event.clientY - state.layoutHold.lastY);
+    state.layoutHold.lastX = event.clientX;
+    state.layoutHold.lastY = event.clientY;
+    return;
+  }
   if (moved > LONG_PRESS_MOVE_TOLERANCE) clearLayoutHold();
 }
 
