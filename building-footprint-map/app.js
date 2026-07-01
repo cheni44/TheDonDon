@@ -102,6 +102,23 @@ function hideLoading() {
   loadingOverlay.setAttribute("aria-hidden", "true");
 }
 
+function resetMapInteraction() {
+  clearLongPress();
+  state.drag = null;
+  state.mapPinch = null;
+  state.mapPointers.clear();
+  state.suppressNextClick = false;
+  tileGrid.style.transform = "";
+  buildingLayer.style.transform = "";
+  mapPanel.classList.remove("dragging");
+}
+
+function resetLayoutInteraction() {
+  clearLayoutHold();
+  state.layoutPinch = null;
+  state.layoutPointers.clear();
+}
+
 function burst(x = 50, y = 50) {
   scanBurst.style.setProperty("--x", `${x}%`);
   scanBurst.style.setProperty("--y", `${y}%`);
@@ -120,6 +137,7 @@ function setPortalOrigin(xRatio = 0.5, yRatio = 0.5) {
 }
 
 function showLayoutView() {
+  resetMapInteraction();
   state.view = "layout";
   stage.classList.add("layout-mode");
   layoutPanel.classList.add("active");
@@ -129,6 +147,8 @@ function showLayoutView() {
 }
 
 function hideLayoutView() {
+  resetMapInteraction();
+  resetLayoutInteraction();
   state.view = "map";
   stopLayoutTracking();
   stage.classList.remove("layout-mode");
@@ -1017,12 +1037,12 @@ function renderPlanEmpty(title, detail = "") {
   renderTraceOverlay();
 }
 
-function renderEmptyState(title, detail) {
+function renderEmptyState(title, detail, options = {}) {
   floorList.replaceChildren();
   sourceSummary.textContent = "資料來源：無可用結果";
   renderBuildingSelect([], "", title);
   renderPlanEmpty(title, detail);
-  hideLoading();
+  if (!options.keepLoading) hideLoading();
 }
 
 function applyBuildingResults(buildings, emptyTitle = "此位置沒有可用建築資料", options = {}) {
@@ -1279,7 +1299,7 @@ async function selectMapPoint(event) {
   renderTiles(state.center);
   state.places = [picked];
   renderPlaceSelect(state.places, picked.id);
-  renderEmptyState("正在查詢此位置的開放建築資料", "只會顯示 OSM / OpenBuildingMap 實際 footprint");
+  renderEmptyState("正在查詢此位置的開放建築資料", "只會顯示 OSM / OpenBuildingMap 實際 footprint", { keepLoading: true });
   sourceSummary.textContent = "資料來源：查詢中";
   addressInput.value = `${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}`;
   setStatus("已鎖定地圖選點，查詢地址與一公里內建築", 3, 62);
