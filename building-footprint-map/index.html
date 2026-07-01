@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spatial Trace | 建築配置探索</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
-    <link rel="stylesheet" href="./styles.css?v=single-locator-2" />
+    <link rel="stylesheet" href="./styles.css?v=layout-trace-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -26,6 +26,12 @@
           </div>
 
           <section id="layoutPanel" class="layout-panel" aria-label="樓層與配置檢視" aria-hidden="true">
+            <div class="layout-controls" aria-label="配置圖控制">
+              <button id="layoutZoomInButton" class="layout-control-button" type="button" title="放大配置圖">+</button>
+              <button id="layoutZoomOutButton" class="layout-control-button" type="button" title="縮小配置圖">−</button>
+              <button id="layoutTraceButton" class="layout-control-button" type="button" title="啟動手機方向與位置追蹤">◎</button>
+              <button id="layoutAlignButton" class="layout-control-button" type="button" title="將目前手機方向對準配置圖上方">⇧</button>
+            </div>
             <div class="floor-wrap">
               <svg id="floorPlan" viewBox="0 0 420 300" role="img" aria-label="建築內部配置圖"></svg>
             </div>
@@ -72,6 +78,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=single-locator-2" type="module"></script>
+    <script src="./app.js?v=layout-trace-1" type="module"></script>
   </body>
 </html>

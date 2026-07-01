@@ -10,6 +10,10 @@ const locateButton = document.querySelector("#locateButton");
 const zoomInButton = document.querySelector("#zoomInButton");
 const zoomOutButton = document.querySelector("#zoomOutButton");
 const zoomBadge = document.querySelector("#zoomBadge");
+const layoutZoomInButton = document.querySelector("#layoutZoomInButton");
+const layoutZoomOutButton = document.querySelector("#layoutZoomOutButton");
+const layoutTraceButton = document.querySelector("#layoutTraceButton");
+const layoutAlignButton = document.querySelector("#layoutAlignButton");
 const refreshPlaces = document.querySelector("#refreshPlaces");
 const exportButton = document.querySelector("#exportButton");
 const scanBurst = document.querySelector("#scanBurst");
@@ -24,6 +28,8 @@ const sourceSummary = document.querySelector("#sourceSummary");
 const tileCache = new Map();
 let renderToken = 0;
 const LONG_PRESS_MOVE_TOLERANCE = 12;
+const SVG_NS = "http://www.w3.org/2000/svg";
+const BASE_LAYOUT_VIEWBOX = { x: 0, y: 0, width: 420, height: 300 };
 
 const OPEN_BUILDING_MAP_ENDPOINTS = [
   "https://openbuildingmap.org/api/buildings",
@@ -50,6 +56,17 @@ const state = {
   requestId: 0,
   view: "map",
   pickerOptions: [],
+  layoutViewBox: { ...BASE_LAYOUT_VIEWBOX },
+  layoutZoom: 1,
+  layoutHold: null,
+  traceAnchor: null,
+  tracePoints: [],
+  traceWatchId: null,
+  tracking: false,
+  deviceHeading: null,
+  headingOffset: 0,
+  baseGps: null,
+  metersToSvg: 3,
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -108,6 +125,207 @@ function clearLongPress() {
     window.clearTimeout(state.longPress.timer);
   }
   state.longPress = null;
+}
+
+function clearLayoutHold() {
+  if (state.layoutHold?.timer) {
+    window.clearTimeout(state.layoutHold.timer);
+  }
+  state.layoutHold = null;
+}
+
+function setLayoutViewBox() {
+  const { x, y, width, height } = state.layoutViewBox;
+  floorPlan.setAttribute("viewBox", `${x} ${y} ${width} ${height}`);
+}
+
+function resetLayoutViewport() {
+  state.layoutZoom = 1;
+  state.layoutViewBox = { ...BASE_LAYOUT_VIEWBOX };
+  setLayoutViewBox();
+}
+
+function zoomLayout(delta) {
+  const nextZoom = Math.max(0.7, Math.min(5, state.layoutZoom + delta));
+  if (nextZoom === state.layoutZoom) return;
+  state.layoutZoom = nextZoom;
+  const width = BASE_LAYOUT_VIEWBOX.width / nextZoom;
+  const height = BASE_LAYOUT_VIEWBOX.height / nextZoom;
+  state.layoutViewBox = {
+    x: BASE_LAYOUT_VIEWBOX.x + (BASE_LAYOUT_VIEWBOX.width - width) / 2,
+    y: BASE_LAYOUT_VIEWBOX.y + (BASE_LAYOUT_VIEWBOX.height - height) / 2,
+    width,
+    height,
+  };
+  setLayoutViewBox();
+  setStatus(`配置圖縮放 ${Math.round(nextZoom * 100)}%`, 4, 100);
+}
+
+function pointFromLayoutEvent(event) {
+  const rect = floorPlan.getBoundingClientRect();
+  const viewBox = state.layoutViewBox;
+  return {
+    x: viewBox.x + ((event.clientX - rect.left) / rect.width) * viewBox.width,
+    y: viewBox.y + ((event.clientY - rect.top) / rect.height) * viewBox.height,
+  };
+}
+
+function normalizeAngle(angle) {
+  return ((angle % 360) + 360) % 360;
+}
+
+function estimateLayoutScale(building) {
+  const dimensions = building?.dimensions;
+  if (!dimensions?.width || !dimensions?.depth) return 3;
+  const xScale = 312 / Math.max(1, dimensions.width);
+  const yScale = 204 / Math.max(1, dimensions.depth);
+  return Math.max(0.25, Math.min(xScale, yScale));
+}
+
+function resetTraceForLayout(building = state.selectedLayout) {
+  state.traceAnchor = null;
+  state.tracePoints = [];
+  state.baseGps = null;
+  state.headingOffset = 0;
+  state.metersToSvg = estimateLayoutScale(building);
+}
+
+function currentSvgPosition() {
+  return state.tracePoints[state.tracePoints.length - 1] || state.traceAnchor;
+}
+
+function renderTraceOverlay() {
+  floorPlan.querySelector("#traceLayer")?.remove();
+  if (!state.traceAnchor && !state.tracePoints.length) return;
+
+  const layer = document.createElementNS(SVG_NS, "g");
+  layer.id = "traceLayer";
+
+  if (state.tracePoints.length > 1) {
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("class", "trace-path");
+    path.setAttribute("d", state.tracePoints.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" "));
+    layer.append(path);
+  }
+
+  if (state.traceAnchor) {
+    const anchor = document.createElementNS(SVG_NS, "circle");
+    anchor.setAttribute("class", "trace-anchor");
+    anchor.setAttribute("cx", state.traceAnchor.x);
+    anchor.setAttribute("cy", state.traceAnchor.y);
+    anchor.setAttribute("r", 6);
+    layer.append(anchor);
+  }
+
+  const position = currentSvgPosition();
+  if (position) {
+    const marker = document.createElementNS(SVG_NS, "circle");
+    marker.setAttribute("class", "trace-position");
+    marker.setAttribute("cx", position.x);
+    marker.setAttribute("cy", position.y);
+    marker.setAttribute("r", 7);
+    layer.append(marker);
+
+    if (state.deviceHeading !== null) {
+      const arrow = document.createElementNS(SVG_NS, "polygon");
+      arrow.setAttribute("class", "trace-heading");
+      arrow.setAttribute("points", "0,-14 7,10 0,6 -7,10");
+      arrow.setAttribute("transform", `translate(${position.x} ${position.y}) rotate(${normalizeAngle(state.deviceHeading + state.headingOffset)})`);
+      layer.append(arrow);
+    }
+  }
+
+  floorPlan.append(layer);
+}
+
+function setTraceAnchor(point) {
+  state.traceAnchor = point;
+  state.tracePoints = [point];
+  state.baseGps = null;
+  renderTraceOverlay();
+  setStatus("已設定 layout 起點，可啟動手機追蹤", 4, 100);
+}
+
+function calibrateLayoutHeading() {
+  if (state.deviceHeading === null) {
+    setStatus("尚未取得手機方向，請先啟動追蹤", 4, 92);
+    return;
+  }
+  state.headingOffset = normalizeAngle(-state.deviceHeading);
+  renderTraceOverlay();
+  setStatus("已將目前手機方向對準 layout 上方", 4, 100);
+}
+
+function handleDeviceOrientation(event) {
+  const rawHeading = Number.isFinite(event.webkitCompassHeading) ? event.webkitCompassHeading : 360 - (event.alpha || 0);
+  state.deviceHeading = normalizeAngle(rawHeading);
+  if (state.tracking) renderTraceOverlay();
+}
+
+function gpsToLayoutPoint(coords) {
+  if (!state.traceAnchor) {
+    state.traceAnchor = { x: 210, y: 150 };
+  }
+  if (!state.baseGps) {
+    state.baseGps = { lat: coords.latitude, lon: coords.longitude };
+    return state.traceAnchor;
+  }
+  const avgLat = ((coords.latitude + state.baseGps.lat) / 2) * (Math.PI / 180);
+  const northMeters = (coords.latitude - state.baseGps.lat) * 110540;
+  const eastMeters = (coords.longitude - state.baseGps.lon) * 111320 * Math.cos(avgLat);
+  const distance = Math.hypot(eastMeters, northMeters);
+  const worldAngle = (Math.atan2(eastMeters, northMeters) * 180) / Math.PI;
+  const layoutAngle = normalizeAngle(worldAngle + state.headingOffset);
+  const radians = (layoutAngle * Math.PI) / 180;
+  return {
+    x: state.traceAnchor.x + Math.sin(radians) * distance * state.metersToSvg,
+    y: state.traceAnchor.y - Math.cos(radians) * distance * state.metersToSvg,
+  };
+}
+
+function handleTracePosition(position) {
+  const nextPoint = gpsToLayoutPoint(position.coords);
+  const previous = state.tracePoints[state.tracePoints.length - 1];
+  if (!previous || Math.hypot(nextPoint.x - previous.x, nextPoint.y - previous.y) > 1.5) {
+    state.tracePoints.push(nextPoint);
+    state.tracePoints = state.tracePoints.slice(-240);
+  }
+  renderTraceOverlay();
+}
+
+async function startLayoutTracking() {
+  if (state.tracking) {
+    state.tracking = false;
+    layoutTraceButton.classList.remove("active");
+    if (state.traceWatchId !== null) navigator.geolocation?.clearWatch(state.traceWatchId);
+    state.traceWatchId = null;
+    setStatus("已停止 layout 軌跡追蹤", 4, 92);
+    return;
+  }
+
+  if (!state.traceAnchor) setTraceAnchor({ x: 210, y: 150 });
+
+  try {
+    if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+      const permission = await DeviceOrientationEvent.requestPermission();
+      if (permission !== "granted") throw new Error("orientation denied");
+    }
+    window.addEventListener("deviceorientation", handleDeviceOrientation, true);
+    state.tracking = true;
+    layoutTraceButton.classList.add("active");
+    if (navigator.geolocation?.watchPosition) {
+      state.traceWatchId = navigator.geolocation.watchPosition(handleTracePosition, () => {
+        setStatus("無法取得手機位置，仍可使用方向與手動起點", 4, 88);
+      }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 12000 });
+    } else {
+      setStatus("此瀏覽器沒有提供定位追蹤", 4, 88);
+    }
+    setStatus("已啟動手機方向與位置追蹤", 4, 100);
+  } catch {
+    state.tracking = false;
+    layoutTraceButton.classList.remove("active");
+    setStatus("手機方向或定位權限未開啟", 4, 82);
+  }
 }
 
 function selectedPickerOption() {
@@ -696,6 +914,7 @@ function renderPlanEmpty(title, detail = "") {
   meta.setAttribute("text-anchor", "middle");
   meta.textContent = detail;
   floorPlan.append(meta);
+  renderTraceOverlay();
 }
 
 function renderEmptyState(title, detail) {
@@ -721,6 +940,8 @@ function applyBuildingResults(buildings, emptyTitle = "此位置沒有可用建�
   }
 
   renderBuildingSelect(state.buildings, state.selectedLayout.id);
+  resetTraceForLayout(state.selectedLayout);
+  resetLayoutViewport();
   renderBuildingOutline(state.selectedLayout);
   renderFloorOptions(state.selectedLayout);
   setStatus(state.selectedLayout.floors ? "已取得建築物輪廓與尺寸，請確認樓層" : "已取得建築物輪廓與尺寸，公開資料未標註樓層", 3, 78);
@@ -800,6 +1021,7 @@ function renderBuildingOutline(building) {
   title.setAttribute("class", "outline-label");
   title.textContent = `${Math.round(building.area)} m² · ${building.source}`;
   floorPlan.append(title);
+  renderTraceOverlay();
 }
 
 function renderFloorOptions(building) {
@@ -1037,10 +1259,41 @@ function endMapDrag(event) {
   }
 }
 
+function startLayoutHold(event) {
+  if (event.target.closest("button")) return;
+  const startX = event.clientX;
+  const startY = event.clientY;
+  clearLayoutHold();
+  state.layoutHold = {
+    pointerId: event.pointerId,
+    startX,
+    startY,
+    triggered: false,
+    timer: window.setTimeout(() => {
+      if (!state.layoutHold || state.layoutHold.pointerId !== event.pointerId || state.layoutHold.triggered) return;
+      state.layoutHold.triggered = true;
+      setTraceAnchor(pointFromLayoutEvent(event));
+    }, 700),
+  };
+}
+
+function moveLayoutHold(event) {
+  if (!state.layoutHold || state.layoutHold.pointerId !== event.pointerId) return;
+  const moved = Math.hypot(event.clientX - state.layoutHold.startX, event.clientY - state.layoutHold.startY);
+  if (moved > LONG_PRESS_MOVE_TOLERANCE) clearLayoutHold();
+}
+
+function endLayoutHold(event) {
+  if (!state.layoutHold || state.layoutHold.pointerId !== event.pointerId) return;
+  clearLayoutHold();
+}
+
 function selectBuilding(layout) {
   if (!layout) return;
   state.selectedLayout = layout;
   state.selectedFloor = null;
+  resetTraceForLayout(layout);
+  resetLayoutViewport();
   burst(63, 42);
   renderFootprints();
   renderBuildingSelect(state.buildings, layout.id);
@@ -1159,6 +1412,22 @@ addressInput.addEventListener("change", usePickerSelection);
 addressInput.addEventListener("keydown", handleAddressKeydown);
 zoomInButton.addEventListener("click", () => zoomMap(1));
 zoomOutButton.addEventListener("click", () => zoomMap(-1));
+layoutZoomInButton.addEventListener("click", () => zoomLayout(0.25));
+layoutZoomOutButton.addEventListener("click", () => zoomLayout(-0.25));
+layoutTraceButton.addEventListener("click", startLayoutTracking);
+layoutAlignButton.addEventListener("click", calibrateLayoutHeading);
+floorPlan.addEventListener("pointerdown", startLayoutHold);
+floorPlan.addEventListener("pointermove", moveLayoutHold);
+floorPlan.addEventListener("pointerup", endLayoutHold);
+floorPlan.addEventListener("pointercancel", endLayoutHold);
+floorPlan.addEventListener("contextmenu", (event) => {
+  event.preventDefault();
+  setTraceAnchor(pointFromLayoutEvent(event));
+});
+floorPlan.addEventListener("wheel", (event) => {
+  event.preventDefault();
+  zoomLayout(event.deltaY < 0 ? 0.25 : -0.25);
+}, { passive: false });
 mapPanel.addEventListener("pointerdown", startMapDrag);
 mapPanel.addEventListener("pointermove", moveMapDrag);
 mapPanel.addEventListener("pointerup", endMapDrag);

@@ -627,6 +627,7 @@ h2 {
 }
 
 .floor-wrap {
+  position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -667,6 +668,37 @@ h2 {
 
 .layout-panel.active * {
   pointer-events: auto;
+}
+
+.layout-controls {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+}
+
+.layout-control-button {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(8, 12, 18, 0.76);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 180ms, border-color 180ms, background 180ms;
+}
+
+.layout-control-button:hover,
+.layout-control-button.active {
+  transform: translateY(-1px);
+  border-color: rgba(164, 255, 143, 0.7);
+  background: rgba(164, 255, 143, 0.14);
 }
 
 .back-button {
@@ -746,6 +778,36 @@ h2 {
   font-size: 11px;
   font-weight: 800;
   pointer-events: none;
+}
+
+.trace-path {
+  fill: none;
+  stroke: var(--coral);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.trace-anchor {
+  fill: rgba(164, 255, 143, 0.25);
+  stroke: var(--green);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.trace-position {
+  fill: rgba(85, 240, 255, 0.26);
+  stroke: var(--cyan);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.trace-heading {
+  fill: var(--cyan);
+  stroke: rgba(8, 12, 18, 0.9);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
 
 .empty-plan-title {
