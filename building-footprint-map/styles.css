@@ -18,6 +18,7 @@
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -26,6 +27,10 @@ body {
   background: linear-gradient(135deg, #06080d 0%, #0c1016 48%, #090b10 100%);
   color: var(--text);
   overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 button {
@@ -71,6 +76,8 @@ button {
   cursor: grab;
   touch-action: none;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1), filter 900ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -98,6 +105,8 @@ button {
   background-size: cover;
   background-position: center;
   opacity: 1;
+  -webkit-touch-callout: none;
+  user-select: none;
 }
 
 .map-panel::before,
@@ -727,6 +736,9 @@ h2 {
   display: block;
   width: 100%;
   height: 100%;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
 }
 
 .room {

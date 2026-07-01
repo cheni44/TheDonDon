@@ -67,6 +67,11 @@ const state = {
   headingOffset: 0,
   baseGps: null,
   metersToSvg: 3,
+  mapPointers: new Map(),
+  layoutPointers: new Map(),
+  mapPinch: null,
+  layoutPinch: null,
+  lastMotionAt: 0,
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -172,6 +177,20 @@ function pointFromLayoutEvent(event) {
 
 function normalizeAngle(angle) {
   return ((angle % 360) + 360) % 360;
+}
+
+function distanceBetweenPointers(pointers) {
+  const values = Array.from(pointers.values());
+  if (values.length < 2) return 0;
+  return Math.hypot(values[0].clientX - values[1].clientX, values[0].clientY - values[1].clientY);
+}
+
+function updatePointerStore(store, event) {
+  store.set(event.pointerId, {
+    clientX: event.clientX,
+    clientY: event.clientY,
+    pointerType: event.pointerType,
+  });
 }
 
 function estimateLayoutScale(building) {
@@ -293,11 +312,41 @@ function handleTracePosition(position) {
   renderTraceOverlay();
 }
 
+function addMotionTraceStep(distanceMeters = 0.55) {
+  if (!state.tracking || state.deviceHeading === null) return;
+  if (!state.traceAnchor) setTraceAnchor({ x: 210, y: 150 });
+  const previous = currentSvgPosition();
+  if (!previous) return;
+  const layoutAngle = normalizeAngle(state.deviceHeading + state.headingOffset);
+  const radians = (layoutAngle * Math.PI) / 180;
+  const nextPoint = {
+    x: previous.x + Math.sin(radians) * distanceMeters * state.metersToSvg,
+    y: previous.y - Math.cos(radians) * distanceMeters * state.metersToSvg,
+  };
+  state.tracePoints.push(nextPoint);
+  state.tracePoints = state.tracePoints.slice(-240);
+  renderTraceOverlay();
+}
+
+function handleDeviceMotion(event) {
+  if (!state.tracking) return;
+  const now = Date.now();
+  if (now - state.lastMotionAt < 650) return;
+  const acceleration = event.accelerationIncludingGravity || event.acceleration;
+  if (!acceleration) return;
+  const magnitude = Math.hypot(acceleration.x || 0, acceleration.y || 0, acceleration.z || 0);
+  if (magnitude < 11.8) return;
+  state.lastMotionAt = now;
+  addMotionTraceStep(0.45);
+}
+
 async function startLayoutTracking() {
   if (state.tracking) {
     state.tracking = false;
     layoutTraceButton.classList.remove("active");
     if (state.traceWatchId !== null) navigator.geolocation?.clearWatch(state.traceWatchId);
+    window.removeEventListener("deviceorientation", handleDeviceOrientation, true);
+    window.removeEventListener("devicemotion", handleDeviceMotion, true);
     state.traceWatchId = null;
     setStatus("已停止 layout 軌跡追蹤", 4, 92);
     return;
@@ -310,7 +359,11 @@ async function startLayoutTracking() {
       const permission = await DeviceOrientationEvent.requestPermission();
       if (permission !== "granted") throw new Error("orientation denied");
     }
+    if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+      await DeviceMotionEvent.requestPermission();
+    }
     window.addEventListener("deviceorientation", handleDeviceOrientation, true);
+    window.addEventListener("devicemotion", handleDeviceMotion, true);
     state.tracking = true;
     layoutTraceButton.classList.add("active");
     if (navigator.geolocation?.watchPosition) {
@@ -1200,6 +1253,16 @@ async function selectMapPoint(event) {
 
 function startMapDrag(event) {
   if (event.target.closest("button")) return;
+  event.preventDefault();
+  updatePointerStore(state.mapPointers, event);
+  if (state.mapPointers.size >= 2) {
+    clearLongPress();
+    state.drag = null;
+    mapPanel.classList.remove("dragging");
+    state.mapPinch = { distance: distanceBetweenPointers(state.mapPointers) };
+    setStatus("兩指縮放地圖", 2, 46);
+    return;
+  }
   try {
     mapPanel.setPointerCapture(event.pointerId);
   } catch {
@@ -1225,6 +1288,23 @@ function startMapDrag(event) {
 }
 
 function moveMapDrag(event) {
+  if (state.mapPointers.has(event.pointerId)) {
+    event.preventDefault();
+    updatePointerStore(state.mapPointers, event);
+  }
+  if (state.mapPinch && state.mapPointers.size >= 2) {
+    const distance = distanceBetweenPointers(state.mapPointers);
+    if (!distance) return;
+    const ratio = distance / state.mapPinch.distance;
+    if (ratio > 1.16) {
+      zoomMap(1, event);
+      state.mapPinch.distance = distance;
+    } else if (ratio < 0.86) {
+      zoomMap(-1, event);
+      state.mapPinch.distance = distance;
+    }
+    return;
+  }
   if (!state.drag || state.drag.pointerId !== event.pointerId) return;
   const totalDx = event.clientX - state.drag.startX;
   const totalDy = event.clientY - state.drag.startY;
@@ -1237,6 +1317,14 @@ function moveMapDrag(event) {
 }
 
 function endMapDrag(event) {
+  state.mapPointers.delete(event.pointerId);
+  if (state.mapPinch) {
+    if (state.mapPointers.size < 2) state.mapPinch = null;
+    clearLongPress();
+    state.drag = null;
+    mapPanel.classList.remove("dragging");
+    return;
+  }
   if (!state.drag || state.drag.pointerId !== event.pointerId) return;
   const totalDx = event.clientX - state.drag.startX;
   const totalDy = event.clientY - state.drag.startY;
@@ -1261,6 +1349,14 @@ function endMapDrag(event) {
 
 function startLayoutHold(event) {
   if (event.target.closest("button")) return;
+  event.preventDefault();
+  updatePointerStore(state.layoutPointers, event);
+  if (state.layoutPointers.size >= 2) {
+    clearLayoutHold();
+    state.layoutPinch = { distance: distanceBetweenPointers(state.layoutPointers) };
+    setStatus("兩指縮放 layout", 4, 100);
+    return;
+  }
   const startX = event.clientX;
   const startY = event.clientY;
   clearLayoutHold();
@@ -1278,12 +1374,35 @@ function startLayoutHold(event) {
 }
 
 function moveLayoutHold(event) {
+  if (state.layoutPointers.has(event.pointerId)) {
+    event.preventDefault();
+    updatePointerStore(state.layoutPointers, event);
+  }
+  if (state.layoutPinch && state.layoutPointers.size >= 2) {
+    const distance = distanceBetweenPointers(state.layoutPointers);
+    if (!distance) return;
+    const ratio = distance / state.layoutPinch.distance;
+    if (ratio > 1.08) {
+      zoomLayout(0.25);
+      state.layoutPinch.distance = distance;
+    } else if (ratio < 0.92) {
+      zoomLayout(-0.25);
+      state.layoutPinch.distance = distance;
+    }
+    return;
+  }
   if (!state.layoutHold || state.layoutHold.pointerId !== event.pointerId) return;
   const moved = Math.hypot(event.clientX - state.layoutHold.startX, event.clientY - state.layoutHold.startY);
   if (moved > LONG_PRESS_MOVE_TOLERANCE) clearLayoutHold();
 }
 
 function endLayoutHold(event) {
+  state.layoutPointers.delete(event.pointerId);
+  if (state.layoutPinch) {
+    if (state.layoutPointers.size < 2) state.layoutPinch = null;
+    clearLayoutHold();
+    return;
+  }
   if (!state.layoutHold || state.layoutHold.pointerId !== event.pointerId) return;
   clearLayoutHold();
 }
@@ -1440,6 +1559,9 @@ mapPanel.addEventListener("wheel", (event) => {
   event.preventDefault();
   zoomMap(event.deltaY < 0 ? 1 : -1, event);
 }, { passive: false });
+["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
+  document.addEventListener(eventName, (event) => event.preventDefault(), { passive: false });
+});
 refreshPlaces.addEventListener("click", async () => {
   state.places = await fetchNearbyPlaces(state.center);
   renderPlaceSelect(state.places, state.selectedPlace?.id);
