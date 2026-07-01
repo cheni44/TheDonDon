@@ -949,6 +949,22 @@ h2 {
 
   .layout-panel {
     inset: 10px;
+    padding: 8px;
+  }
+
+  .layout-controls {
+    top: 14px;
+    right: 14px;
+    left: 14px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .layout-control-button {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
   }
 
   .back-button {
@@ -961,5 +977,26 @@ h2 {
 
   .status-text {
     font-size: 13px;
+  }
+}
+
+@media (max-height: 520px) {
+  .layout-panel {
+    inset: 8px;
+    padding: 7px;
+  }
+
+  .layout-controls {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .layout-control-button {
+    width: 28px;
+    height: 28px;
+    font-size: 15px;
   }
 }
