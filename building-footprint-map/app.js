@@ -243,17 +243,17 @@ function setTraceAnchor(point) {
   state.tracePoints = [point];
   state.baseGps = null;
   renderTraceOverlay();
-  setStatus("已設定 layout 起點，可啟動手機追蹤", 4, 100);
+  setStatus("已設定 layout 起點，面向圖上方後按 ⇧ 校準", 4, 100);
 }
 
 function calibrateLayoutHeading() {
   if (state.deviceHeading === null) {
-    setStatus("尚未取得手機方向，請先啟動追蹤", 4, 92);
+    setStatus("請先按 ◎ 啟動手機方向，再面向圖上方按 ⇧", 4, 92);
     return;
   }
   state.headingOffset = normalizeAngle(-state.deviceHeading);
   renderTraceOverlay();
-  setStatus("已將目前手機方向對準 layout 上方", 4, 100);
+  setStatus("已校準：目前手機朝向就是 layout 上方", 4, 100);
 }
 
 function handleDeviceOrientation(event) {
@@ -320,7 +320,7 @@ async function startLayoutTracking() {
     } else {
       setStatus("此瀏覽器沒有提供定位追蹤", 4, 88);
     }
-    setStatus("已啟動手機方向與位置追蹤", 4, 100);
+    setStatus("已啟動追蹤，面向 layout 上方後按 ⇧ 校準", 4, 100);
   } catch {
     state.tracking = false;
     layoutTraceButton.classList.remove("active");

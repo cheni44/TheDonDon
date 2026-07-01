@@ -934,45 +934,139 @@ h2 {
 }
 
 @media (max-width: 520px) {
+  body {
+    width: 100vw;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
   .app-shell {
-    padding: 10px;
+    min-height: 100dvh;
+    padding: 6px;
+  }
+
+  .stage {
+    gap: 4px;
+    height: calc(100dvh - 12px);
+    min-height: 0;
+    border-radius: 7px;
+  }
+
+  .map-zone,
+  .map-panel {
+    border-radius: 7px;
   }
 
   .map-panel {
     min-height: 0;
   }
 
-  .control-panel {
-    grid-template-columns: 1fr;
-    padding: 8px;
-  }
-
-  .layout-panel {
-    inset: 10px;
-    padding: 8px;
-  }
-
-  .layout-controls {
-    top: 14px;
-    right: 14px;
-    left: 14px;
-    justify-content: flex-end;
-    flex-wrap: wrap;
+  .map-controls {
+    top: 10px;
+    right: 10px;
+    grid-template-columns: 34px;
     gap: 5px;
   }
 
-  .layout-control-button {
-    width: 30px;
-    height: 30px;
-    font-size: 16px;
+  .map-control-button,
+  .zoom-badge {
+    width: 34px;
+    height: 34px;
+    font-size: 19px;
   }
 
-  .back-button {
-    padding: 0 10px;
+  .map-attribution {
+    max-width: calc(100% - 18px);
+    font-size: 10px;
+  }
+
+  .control-panel {
+    grid-template-columns: 1fr;
+    gap: 5px;
+    max-height: 34dvh;
+    overflow-y: auto;
+    padding: 6px;
+  }
+
+  .brand-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px;
+  }
+
+  .brand-mark,
+  .eyebrow {
+    display: none;
   }
 
   h1 {
-    font-size: 22px;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .panel-section {
+    padding: 6px;
+  }
+
+  .address-input {
+    height: 34px;
+    font-size: 16px;
+  }
+
+  .location-section {
+    padding-right: 39px;
+  }
+
+  .refresh-inline {
+    right: 6px;
+    bottom: 6px;
+  }
+
+  .floor-section {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  h2 {
+    font-size: 13px;
+  }
+
+  .floor-grid {
+    gap: 5px;
+  }
+
+  .floor-button {
+    flex-basis: 38px;
+    min-height: 28px;
+    font-size: 12px;
+  }
+
+  .layout-panel {
+    inset: 6px;
+    padding: 6px;
+    border-radius: 7px;
+  }
+
+  .layout-controls {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 4px;
+    pointer-events: none;
+  }
+
+  .layout-control-button {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    pointer-events: auto;
+  }
+
+  .back-button {
+    height: 30px;
+    padding: 0 10px;
+    font-size: 13px;
   }
 
   .status-text {
