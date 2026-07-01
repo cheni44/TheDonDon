@@ -12,8 +12,6 @@ const zoomOutButton = document.querySelector("#zoomOutButton");
 const zoomBadge = document.querySelector("#zoomBadge");
 const layoutZoomInButton = document.querySelector("#layoutZoomInButton");
 const layoutZoomOutButton = document.querySelector("#layoutZoomOutButton");
-const layoutTraceButton = document.querySelector("#layoutTraceButton");
-const layoutAlignButton = document.querySelector("#layoutAlignButton");
 const refreshPlaces = document.querySelector("#refreshPlaces");
 const exportButton = document.querySelector("#exportButton");
 const scanBurst = document.querySelector("#scanBurst");
@@ -28,6 +26,8 @@ const sourceSummary = document.querySelector("#sourceSummary");
 const tileCache = new Map();
 let renderToken = 0;
 const LONG_PRESS_MOVE_TOLERANCE = 12;
+const MIN_MAP_ZOOM = 6;
+const MAX_MAP_ZOOM = 19;
 const SVG_NS = "http://www.w3.org/2000/svg";
 const BASE_LAYOUT_VIEWBOX = { x: 0, y: 0, width: 420, height: 300 };
 
@@ -73,6 +73,7 @@ const state = {
   layoutPinch: null,
   layoutHasDirection: false,
   lastMotionAt: 0,
+  autoHeadingCalibration: false,
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -113,6 +114,7 @@ function showLayoutView() {
 
 function hideLayoutView() {
   state.view = "map";
+  stopLayoutTracking();
   stage.classList.remove("layout-mode");
   controlPanel.classList.remove("map-locked");
   layoutPanel.classList.remove("active");
@@ -233,7 +235,7 @@ function resetTraceForLayout(building = state.selectedLayout) {
   state.headingOffset = 0;
   state.metersToSvg = estimateLayoutScale(building);
   state.layoutHasDirection = Boolean(building?.geometry?.length);
-  layoutAlignButton.hidden = state.layoutHasDirection;
+  state.autoHeadingCalibration = !state.layoutHasDirection;
 }
 
 function currentSvgPosition() {
@@ -284,27 +286,28 @@ function renderTraceOverlay() {
   floorPlan.append(layer);
 }
 
-function setTraceAnchor(point) {
+function setTraceAnchor(point, options = {}) {
   state.traceAnchor = point;
   state.tracePoints = [point];
   state.baseGps = null;
-  renderTraceOverlay();
-  setStatus(state.layoutHasDirection ? "已設定 layout 起點，可開始追蹤軌跡" : "已設定 layout 起點，面向圖上方後按 ⇧ 校準", 4, 100);
-}
-
-function calibrateLayoutHeading() {
-  if (state.deviceHeading === null) {
-    setStatus("請先按 ◎ 啟動手機方向，再面向圖上方按 ⇧", 4, 92);
-    return;
+  state.autoHeadingCalibration = !state.layoutHasDirection;
+  if (!state.layoutHasDirection && state.deviceHeading !== null) {
+    state.headingOffset = normalizeAngle(-state.deviceHeading);
+    state.autoHeadingCalibration = false;
   }
-  state.headingOffset = normalizeAngle(-state.deviceHeading);
   renderTraceOverlay();
-  setStatus("已校準：目前手機朝向就是 layout 上方", 4, 100);
+  setStatus(state.layoutHasDirection ? "已設定 layout 起點，正在依手機移動繪製軌跡" : "已設定 layout 起點，會以目前手機朝向自動對準 layout 上方", 4, 100);
+  if (options.startTracking) startLayoutTracking();
 }
 
 function handleDeviceOrientation(event) {
   const rawHeading = Number.isFinite(event.webkitCompassHeading) ? event.webkitCompassHeading : 360 - (event.alpha || 0);
   state.deviceHeading = normalizeAngle(rawHeading);
+  if (state.tracking && state.autoHeadingCalibration && !state.layoutHasDirection) {
+    state.headingOffset = normalizeAngle(-state.deviceHeading);
+    state.autoHeadingCalibration = false;
+    setStatus("已自動對準：目前手機朝向對應 layout 上方", 4, 100);
+  }
   if (state.tracking) renderTraceOverlay();
 }
 
@@ -368,17 +371,17 @@ function handleDeviceMotion(event) {
   addMotionTraceStep(0.28);
 }
 
+function stopLayoutTracking() {
+  if (!state.tracking && state.traceWatchId === null) return;
+  state.tracking = false;
+  if (state.traceWatchId !== null) navigator.geolocation?.clearWatch(state.traceWatchId);
+  window.removeEventListener("deviceorientation", handleDeviceOrientation, true);
+  window.removeEventListener("devicemotion", handleDeviceMotion, true);
+  state.traceWatchId = null;
+}
+
 async function startLayoutTracking() {
-  if (state.tracking) {
-    state.tracking = false;
-    layoutTraceButton.classList.remove("active");
-    if (state.traceWatchId !== null) navigator.geolocation?.clearWatch(state.traceWatchId);
-    window.removeEventListener("deviceorientation", handleDeviceOrientation, true);
-    window.removeEventListener("devicemotion", handleDeviceMotion, true);
-    state.traceWatchId = null;
-    setStatus("已停止 layout 軌跡追蹤", 4, 92);
-    return;
-  }
+  if (state.tracking) return;
 
   if (!state.traceAnchor) setTraceAnchor({ x: 210, y: 150 });
 
@@ -393,7 +396,6 @@ async function startLayoutTracking() {
     window.addEventListener("deviceorientation", handleDeviceOrientation, true);
     window.addEventListener("devicemotion", handleDeviceMotion, true);
     state.tracking = true;
-    layoutTraceButton.classList.add("active");
     if (navigator.geolocation?.watchPosition) {
       state.traceWatchId = navigator.geolocation.watchPosition(handleTracePosition, () => {
         setStatus("無法取得手機位置，仍可使用方向與手動起點", 4, 88);
@@ -401,11 +403,10 @@ async function startLayoutTracking() {
     } else {
       setStatus("此瀏覽器沒有提供定位追蹤", 4, 88);
     }
-    setStatus(state.layoutHasDirection ? "已啟動追蹤，會依手機方向與移動繪製軌跡" : "已啟動追蹤，面向 layout 上方後按 ⇧ 校準", 4, 100);
+    setStatus(state.layoutHasDirection ? "已自動啟動追蹤，會依手機方向與移動繪製軌跡" : "已自動啟動追蹤，會以目前手機朝向對準 layout 上方", 4, 100);
   } catch {
     state.tracking = false;
-    layoutTraceButton.classList.remove("active");
-    setStatus("手機方向或定位權限未開啟", 4, 82);
+    setStatus("手機方向或定位權限未開啟，允許權限後重新長按定位即可", 4, 82);
   }
 }
 
@@ -585,7 +586,7 @@ function moveMapByScreenDelta(dx, dy) {
 }
 
 function zoomMap(delta, anchorEvent = null) {
-  const nextZoom = Math.max(12, Math.min(19, state.zoom + delta));
+  const nextZoom = Math.max(MIN_MAP_ZOOM, Math.min(MAX_MAP_ZOOM, state.zoom + delta));
   if (nextZoom === state.zoom) return;
 
   const before = anchorEvent ? pointFromMapClick(anchorEvent) : null;
@@ -980,7 +981,6 @@ function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里
 
 function renderPlanEmpty(title, detail = "") {
   state.layoutHasDirection = false;
-  layoutAlignButton.hidden = false;
   floorPlan.replaceChildren();
   const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
   text.setAttribute("x", "210");
@@ -1028,7 +1028,10 @@ function applyBuildingResults(buildings, emptyTitle = "此位置沒有可用建�
   renderBuildingOutline(state.selectedLayout);
   renderFloorOptions(state.selectedLayout);
   setStatus(state.selectedLayout.floors ? "已取得建築物輪廓與尺寸，請確認樓層" : "已取得建築物輪廓與尺寸，公開資料未標註樓層", 3, 78);
-  if (options.openLayout) showLayoutView();
+  if (options.openLayout) {
+    showLayoutView();
+    startLayoutTracking();
+  }
 }
 
 function renderSourceSummary(buildings) {
@@ -1401,7 +1404,7 @@ function startLayoutHold(event) {
     timer: window.setTimeout(() => {
       if (!state.layoutHold || state.layoutHold.pointerId !== event.pointerId || state.layoutHold.triggered) return;
       state.layoutHold.triggered = true;
-      setTraceAnchor(pointFromLayoutEvent(event));
+      setTraceAnchor(pointFromLayoutEvent(event), { startTracking: true });
     }, 700),
   };
 }
@@ -1471,6 +1474,7 @@ function selectBuilding(layout) {
   renderBuildingOutline(layout);
   renderFloorOptions(layout);
   showLayoutView();
+  startLayoutTracking();
   setStatus(layout.floors ? "已選定建築物輪廓，請確認樓層" : "已選定建築物輪廓，公開資料未標註樓層", 3, 82);
 }
 
@@ -1585,15 +1589,13 @@ zoomInButton.addEventListener("click", () => zoomMap(1));
 zoomOutButton.addEventListener("click", () => zoomMap(-1));
 layoutZoomInButton.addEventListener("click", () => zoomLayout(0.25));
 layoutZoomOutButton.addEventListener("click", () => zoomLayout(-0.25));
-layoutTraceButton.addEventListener("click", startLayoutTracking);
-layoutAlignButton.addEventListener("click", calibrateLayoutHeading);
 floorPlan.addEventListener("pointerdown", startLayoutHold);
 floorPlan.addEventListener("pointermove", moveLayoutHold);
 floorPlan.addEventListener("pointerup", endLayoutHold);
 floorPlan.addEventListener("pointercancel", endLayoutHold);
 floorPlan.addEventListener("contextmenu", (event) => {
   event.preventDefault();
-  setTraceAnchor(pointFromLayoutEvent(event));
+  setTraceAnchor(pointFromLayoutEvent(event), { startTracking: true });
 });
 floorPlan.addEventListener("wheel", (event) => {
   event.preventDefault();
