@@ -17,6 +17,8 @@ const layoutZoomInButton = document.querySelector("#layoutZoomInButton");
 const layoutZoomOutButton = document.querySelector("#layoutZoomOutButton");
 const refreshPlaces = document.querySelector("#refreshPlaces");
 const exportButton = document.querySelector("#exportButton");
+const radiusSelect = document.querySelector("#radiusSelect");
+const dataTypeSelect = document.querySelector("#dataTypeSelect");
 const scanBurst = document.querySelector("#scanBurst");
 const statusText = document.querySelector("#statusText");
 const progressBar = document.querySelector("#progressBar");
@@ -45,6 +47,14 @@ const OVERPASS_ENDPOINTS = [
   "https://overpass.kumi.systems/api/interpreter",
 ];
 
+const DATASET_LABELS = {
+  building: "building 規劃",
+  species: "生物物種 GBIF",
+  trail: "步道",
+  sports: "體育賽事",
+  music: "音樂節慶",
+};
+
 const state = {
   center: { lat: 25.033, lon: 121.5654, label: "台北 101 周邊" },
   places: [],
@@ -60,6 +70,9 @@ const state = {
   requestId: 0,
   view: "map",
   pickerOptions: [],
+  dataType: "building",
+  radiusKm: 1,
+  dataItems: [],
   layoutBaseViewBox: { ...BASE_LAYOUT_VIEWBOX },
   layoutViewBox: { ...BASE_LAYOUT_VIEWBOX },
   layoutZoom: 1,
@@ -84,6 +97,14 @@ const state = {
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function currentRadiusMeters() {
+  return Math.max(1000, Number(state.radiusKm || 1) * 1000);
+}
+
+function cappedRadiusMeters(maxMeters) {
+  return Math.min(currentRadiusMeters(), maxMeters);
+}
 
 function setStatus(text, step, progress) {
   statusText.textContent = text;
@@ -530,6 +551,13 @@ function activatePickerOption(option) {
       return true;
     }
   }
+  if (option.kind === "data") {
+    const item = state.dataItems.find((entry) => entry.id === option.id);
+    if (item) {
+      focusDataItem(item);
+      return true;
+    }
+  }
   return false;
 }
 
@@ -716,7 +744,7 @@ function moveMapByScreenDelta(dx, dy) {
     label: "地圖瀏覽位置",
   };
   renderTiles(state.center);
-  renderFootprints();
+  renderActiveMapLayer();
   preloadTiles(state.center, state.zoom);
   setStatus("地圖已移動，長按可選定位置", 2, 42);
 }
@@ -743,7 +771,7 @@ function zoomMap(delta, anchorEvent = null) {
   }
 
   renderTiles(state.center);
-  renderFootprints();
+  renderActiveMapLayer();
   preloadTiles(state.center, state.zoom);
   setStatus(`地圖縮放至 Z${state.zoom}，長按可選定位置`, 2, 42);
 }
@@ -848,17 +876,19 @@ async function reverseGeocode(lat, lon) {
 }
 
 async function fetchBuildings(place, options = {}) {
+  const radiusMeters = options.radiusMeters || currentRadiusMeters();
+  const queryRadius = Math.min(radiusMeters, 50000);
   if (!options.silent) {
-    setStatus(`分析「${place.name}」周邊建築 footprint`, 3, 62);
+    setStatus(`分析「${place.name}」周邊 ${state.radiusKm} km 建築 footprint`, 3, 62);
   }
 
   const [osmBuildings, openBuildingMapBuildings] = await Promise.all([
-    fetchOsmBuildings(place),
-    fetchOpenBuildingMapBuildings(place),
+    fetchOsmBuildings(place, queryRadius),
+    fetchOpenBuildingMapBuildings(place, queryRadius),
   ]);
 
   return mergeBuildings([...osmBuildings, ...openBuildingMapBuildings])
-    .filter((building) => building.distance <= 1000)
+    .filter((building) => building.distance <= radiusMeters)
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 60);
 }
@@ -885,10 +915,10 @@ async function fetchOverpass(query) {
   throw new Error("No Overpass endpoint available");
 }
 
-async function fetchOsmBuildings(place) {
+async function fetchOsmBuildings(place, radiusMeters = 1000) {
   const query = `
     [out:json][timeout:12];
-    way(around:1000,${place.lat},${place.lon})[building];
+    way(around:${Math.round(radiusMeters)},${place.lat},${place.lon})[building];
     out tags center geom 40;
   `;
 
@@ -924,8 +954,8 @@ async function fetchOsmBuildings(place) {
   }
 }
 
-async function fetchOpenBuildingMapBuildings(place) {
-  const bbox = bboxAround(place.lat, place.lon, 1000);
+async function fetchOpenBuildingMapBuildings(place, radiusMeters = 1000) {
+  const bbox = bboxAround(place.lat, place.lon, radiusMeters);
   for (const endpoint of OPEN_BUILDING_MAP_ENDPOINTS) {
     try {
       const url = new URL(endpoint);
@@ -965,6 +995,86 @@ function bboxAround(lat, lon, radiusMeters) {
     minLon: lon - lonDelta,
     maxLon: lon + lonDelta,
   };
+}
+
+function bboxPolygonWkt(place, radiusMeters) {
+  const box = bboxAround(place.lat, place.lon, radiusMeters);
+  return `POLYGON((${box.minLon} ${box.minLat},${box.maxLon} ${box.minLat},${box.maxLon} ${box.maxLat},${box.minLon} ${box.maxLat},${box.minLon} ${box.minLat}))`;
+}
+
+async function fetchGbifSpecies(place) {
+  const url = new URL("https://api.gbif.org/v1/occurrence/search");
+  url.searchParams.set("hasCoordinate", "true");
+  url.searchParams.set("limit", "60");
+  url.searchParams.set("geometry", bboxPolygonWkt(place, Math.min(currentRadiusMeters(), 1000000)));
+  const data = await fetchJsonWithTimeout(url.toString(), 12000);
+  return (data.results || [])
+    .filter((item) => Number.isFinite(item.decimalLatitude) && Number.isFinite(item.decimalLongitude))
+    .map((item, index) => ({
+      id: `gbif-${item.key || index}`,
+      type: "species",
+      name: item.species || item.acceptedScientificName || item.scientificName || "未命名物種",
+      meta: [item.kingdom, item.country, item.eventDate?.slice(0, 10)].filter(Boolean).join(" · "),
+      source: "GBIF",
+      center: { lat: item.decimalLatitude, lon: item.decimalLongitude },
+      distance: distanceMeters(place, { lat: item.decimalLatitude, lon: item.decimalLongitude }),
+    }))
+    .filter((item) => item.distance <= currentRadiusMeters())
+    .slice(0, 60);
+}
+
+async function fetchOsmCollection(place, dataset) {
+  const radius = Math.round(cappedRadiusMeters(50000));
+  const filters = {
+    trail: `
+      way(around:${radius},${place.lat},${place.lon})[highway~"path|footway|track"][name];
+      relation(around:${radius},${place.lat},${place.lon})[route~"hiking|foot"][name];
+    `,
+    sports: `
+      node(around:${radius},${place.lat},${place.lon})[sport][name];
+      way(around:${radius},${place.lat},${place.lon})[sport][name];
+      node(around:${radius},${place.lat},${place.lon})[leisure~"stadium|sports_centre|pitch"][name];
+      way(around:${radius},${place.lat},${place.lon})[leisure~"stadium|sports_centre|pitch"][name];
+    `,
+    music: `
+      node(around:${radius},${place.lat},${place.lon})[amenity~"music_venue|theatre|arts_centre"][name];
+      way(around:${radius},${place.lat},${place.lon})[amenity~"music_venue|theatre|arts_centre"][name];
+      node(around:${radius},${place.lat},${place.lon})[tourism~"festival|attraction"][name];
+      way(around:${radius},${place.lat},${place.lon})[tourism~"festival|attraction"][name];
+    `,
+  };
+  const query = `
+    [out:json][timeout:12];
+    (
+      ${filters[dataset] || filters.trail}
+    );
+    out tags center 80;
+  `;
+  const data = await fetchOverpass(query);
+  return (data.elements || [])
+    .map((item, index) => {
+      const tags = item.tags || {};
+      const center = item.center || { lat: item.lat, lon: item.lon };
+      if (!Number.isFinite(center.lat) || !Number.isFinite(center.lon)) return null;
+      return {
+        id: `${dataset}-${item.type}-${item.id}`,
+        type: dataset,
+        name: tags.name || `${DATASET_LABELS[dataset]} ${index + 1}`,
+        meta: [tags.highway, tags.route, tags.sport, tags.leisure, tags.amenity, tags.tourism].filter(Boolean).join(" · "),
+        source: "OpenStreetMap",
+        center,
+        distance: distanceMeters(place, center),
+      };
+    })
+    .filter(Boolean)
+    .filter((item) => item.distance <= currentRadiusMeters())
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 80);
+}
+
+async function fetchCollectionItems(place) {
+  if (state.dataType === "species") return fetchGbifSpecies(place);
+  return fetchOsmCollection(place, state.dataType);
 }
 
 function distanceMeters(a, b) {
@@ -1129,6 +1239,70 @@ function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里
   });
 }
 
+function renderCollectionSelect(items, selectedId = "") {
+  placeOptions.replaceChildren();
+  state.pickerOptions = [];
+  resetPickerMenu();
+  const places = state.places || [];
+  places.forEach((place, index) => {
+    const option = document.createElement("option");
+    const label = place.meta ? `位置 #${index + 1} · ${place.name} · ${place.meta}` : `位置 #${index + 1} · ${place.name}`;
+    option.value = label;
+    placeOptions.append(option);
+    const pickerIndex = state.pickerOptions.push({ kind: "place", id: place.id, label, value: label }) - 1;
+    addPickerMenuOption(label, pickerIndex, place.id === state.selectedPlace?.id && !selectedId);
+  });
+  items.forEach((item, index) => {
+    const option = document.createElement("option");
+    const label = [`${DATASET_LABELS[item.type]} #${index + 1}`, item.name, `${Math.round(item.distance)}m`, item.meta, item.source].filter(Boolean).join(" · ");
+    option.value = label;
+    placeOptions.append(option);
+    const pickerIndex = state.pickerOptions.push({ kind: "data", id: item.id, label, value: label }) - 1;
+    addPickerMenuOption(label, pickerIndex, item.id === selectedId);
+  });
+}
+
+async function loadSelectedDataset(place, options = {}) {
+  const requestId = ++state.requestId;
+  const label = DATASET_LABELS[state.dataType];
+  hideLayoutView();
+  showLoading(`正在下載${label}`, `範圍 ${state.radiusKm} km · 整理地圖集錦資料`);
+  floorList.replaceChildren();
+  sourceSummary.textContent = "資料來源：查詢中";
+
+  if (state.dataType === "building") {
+    const buildings = await fetchBuildings(place, { silent: true, radiusMeters: currentRadiusMeters() });
+    if (requestId !== state.requestId) return;
+    state.dataItems = [];
+    applyBuildingResults(buildings, "此範圍沒有可用建築資料", { openLayout: options.openLayout });
+    return;
+  }
+
+  try {
+    const items = await fetchCollectionItems(place);
+    if (requestId !== state.requestId) return;
+    hideLoading();
+    state.buildings = [];
+    state.selectedLayout = null;
+    state.selectedFloor = null;
+    state.dataItems = items;
+    renderCollectionMarkers(items);
+    renderCollectionSelect(items);
+    renderPlanEmpty(`${label} 不需要 layout`, `${state.radiusKm} km 內找到 ${items.length} 筆公開資料`);
+    sourceSummary.textContent = `資料來源：${items[0]?.source || "無可用結果"}`;
+    setStatus(items.length ? `${label}：找到 ${items.length} 筆資料` : `${label}：此範圍沒有可用資料`, 3, items.length ? 82 : 62);
+  } catch {
+    if (requestId !== state.requestId) return;
+    hideLoading();
+    state.dataItems = [];
+    renderCollectionMarkers([]);
+    renderCollectionSelect([]);
+    renderPlanEmpty(`${label} 查詢失敗`, "公共資料來源暫時無法回應");
+    sourceSummary.textContent = "資料來源：查詢失敗";
+    setStatus(`${label} 查詢失敗`, 3, 62);
+  }
+}
+
 function renderPlanEmpty(title, detail = "") {
   state.layoutHasDirection = false;
   floorPlan.replaceChildren();
@@ -1219,6 +1393,50 @@ function renderFootprints(buildings = state.buildings) {
     footprint.style.animationDelay = `${index * 80}ms`;
     buildingLayer.append(footprint);
   });
+}
+
+function renderActiveMapLayer() {
+  if (state.dataType === "building") {
+    renderFootprints();
+  } else {
+    renderCollectionMarkers();
+  }
+}
+
+function latLonToScreenRatio(point) {
+  const centerX = lonToPixel(state.center.lon, state.zoom);
+  const centerY = latToPixel(state.center.lat, state.zoom);
+  const itemX = lonToPixel(point.lon, state.zoom);
+  const itemY = latToPixel(point.lat, state.zoom);
+  const rect = mapPanel.getBoundingClientRect();
+  return {
+    xRatio: 0.5 + (itemX - centerX) / rect.width,
+    yRatio: 0.5 + (itemY - centerY) / rect.height,
+  };
+}
+
+function renderCollectionMarkers(items = state.dataItems) {
+  buildingLayer.replaceChildren();
+  items.forEach((item, index) => {
+    const ratio = latLonToScreenRatio(item.center);
+    if (ratio.xRatio < -0.1 || ratio.xRatio > 1.1 || ratio.yRatio < -0.1 || ratio.yRatio > 1.1) return;
+    const marker = document.createElement("button");
+    marker.className = "data-marker";
+    marker.type = "button";
+    marker.title = `${item.name} · ${Math.round(item.distance)}m`;
+    marker.textContent = String(index + 1);
+    marker.style.left = `${ratio.xRatio * 100}%`;
+    marker.style.top = `${ratio.yRatio * 100}%`;
+    marker.addEventListener("click", () => focusDataItem(item));
+    buildingLayer.append(marker);
+  });
+}
+
+function focusDataItem(item) {
+  const ratio = latLonToScreenRatio(item.center);
+  markSelection(Math.max(0, Math.min(1, ratio.xRatio)), Math.max(0, Math.min(1, ratio.yRatio)));
+  addressInput.value = `${item.name} · ${Math.round(item.distance)}m · ${item.source}`;
+  setStatus(`${DATASET_LABELS[item.type]}：${item.name}`, 3, 82);
 }
 
 function projectGeometry(points) {
@@ -1371,9 +1589,8 @@ async function selectPlace(place) {
   sourceSummary.textContent = "資料來源：查詢中";
   setStatus("正在下載附近建築 footprint", 3, 64);
   await sleep(320);
-  const buildings = await fetchBuildings(place);
   if (requestId !== state.requestId) return;
-  applyBuildingResults(buildings, "此位置沒有可用建築資料", { openLayout: true });
+  await loadSelectedDataset(place, { openLayout: state.dataType === "building" });
 }
 
 async function selectMapPoint(event, presetPoint = null) {
@@ -1400,7 +1617,7 @@ async function selectMapPoint(event, presetPoint = null) {
   state.selectedPlace = picked;
   state.selectedLayout = null;
   state.buildings = [];
-  state.center = { lat: picked.lat, lon: picked.lon, label: picked.name };
+  state.center = { ...state.center, label: picked.name };
   renderBuildingSelect([], "", "正在查詢一公里內的建築資料");
   showLoading("正在下載此位置附近資料", "反查地址，並讀取方圓一公里內的公開建築 footprint");
   floorList.replaceChildren();
@@ -1410,7 +1627,6 @@ async function selectMapPoint(event, presetPoint = null) {
 
   markSelection(point.xRatio, point.yRatio);
   burst(point.xRatio * 100, point.yRatio * 100);
-  renderTiles(state.center);
   state.places = [picked];
   renderPlaceSelect(state.places, picked.id);
   renderEmptyState("正在查詢此位置的開放建築資料", "只會顯示 OSM / OpenBuildingMap 實際 footprint", { keepLoading: true });
@@ -1419,7 +1635,6 @@ async function selectMapPoint(event, presetPoint = null) {
   setStatus("已鎖定地圖選點，查詢地址與一公里內建築", 3, 62);
 
   const addressPromise = reverseGeocode(point.lat, point.lon);
-  const buildingsPromise = fetchBuildings(picked, { silent: true });
   const address = await addressPromise;
   if (requestId !== state.requestId) return;
 
@@ -1433,11 +1648,8 @@ async function selectMapPoint(event, presetPoint = null) {
   state.places = [picked];
   renderPlaceSelect(state.places, picked.id);
 
-  const buildings = await buildingsPromise;
-  if (requestId !== state.requestId) return;
-
-  markSelection();
-  applyBuildingResults(buildings, "此位置沒有可用建築資料", { openLayout: true });
+  markSelection(point.xRatio, point.yRatio);
+  await loadSelectedDataset(picked, { openLayout: state.dataType === "building" });
 }
 
 function startMapDrag(event) {
@@ -1679,6 +1891,16 @@ function handleAddressKeydown(event) {
   searchAddress(event);
 }
 
+function handleCollectionSettingsChange() {
+  state.radiusKm = Number(radiusSelect.value);
+  state.dataType = dataTypeSelect.value;
+  if (state.selectedPlace) {
+    loadSelectedDataset(state.selectedPlace, { openLayout: state.dataType === "building" });
+  } else {
+    setStatus(`已切換為 ${DATASET_LABELS[state.dataType]} · ${state.radiusKm} km`, 2, 42);
+  }
+}
+
 async function searchAddress(event) {
   event?.preventDefault();
   prepareLayoutTracking();
@@ -1721,15 +1943,12 @@ async function searchAddress(event) {
     setStatus("地址已定位，查詢附近資料", 2, 46);
     showLoading("正在下載附近建築資料", "讀取 OSM / OpenBuildingMap footprint，完成後會顯示 layout");
 
-    const [nearbyPlaces, buildings] = await Promise.all([
-      fetchNearbyPlaces(state.center, { silent: true }),
-      fetchBuildings(place, { silent: true }),
-    ]);
+    const nearbyPlaces = await fetchNearbyPlaces(state.center, { silent: true });
     if (requestId !== state.requestId) return;
 
     state.places = [place, ...nearbyPlaces.filter((nearby) => nearby.id !== place.id)].slice(0, 7);
     renderPlaceSelect(state.places, place.id);
-    applyBuildingResults(buildings, "此位置沒有可用建築資料", { openLayout: true });
+    await loadSelectedDataset(place, { openLayout: state.dataType === "building" });
   } catch {
     if (requestId !== state.requestId) return;
     renderEmptyState("地址定位失敗", "目前無法取得地址座標");
@@ -1760,6 +1979,8 @@ addressInput.addEventListener("click", showPickerMenu);
 addressInput.addEventListener("input", usePickerSelection);
 addressInput.addEventListener("change", usePickerSelection);
 addressInput.addEventListener("keydown", handleAddressKeydown);
+radiusSelect.addEventListener("change", handleCollectionSettingsChange);
+dataTypeSelect.addEventListener("change", handleCollectionSettingsChange);
 document.addEventListener("pointerdown", (event) => {
   if (addressForm.contains(event.target)) return;
   hidePickerMenu();
@@ -1804,7 +2025,7 @@ exportButton.addEventListener("click", exportSvg);
 window.addEventListener("resize", () => {
   drawFlow();
   renderTiles(state.center);
-  renderFootprints();
+  renderActiveMapLayer();
 });
 
 boot();

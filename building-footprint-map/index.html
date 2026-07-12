@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spatial Trace | 建築配置探索</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
-    <link rel="stylesheet" href="./styles.css?v=auto-track-permission-1" />
+    <link rel="stylesheet" href="./styles.css?v=map-collection-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -64,6 +64,31 @@
             <p id="sourceSummary" class="source-summary" hidden>資料來源：尚未查詢</p>
           </div>
 
+          <div class="panel-section collection-section">
+            <label class="compact-field">
+              <span>範圍</span>
+              <select id="radiusSelect">
+                <option value="1">1 km</option>
+                <option value="5">5 km</option>
+                <option value="10">10 km</option>
+                <option value="50">50 km</option>
+                <option value="100">100 km</option>
+                <option value="500">500 km</option>
+                <option value="1000">1000 km</option>
+              </select>
+            </label>
+            <label class="compact-field">
+              <span>資料</span>
+              <select id="dataTypeSelect">
+                <option value="building">building 規劃</option>
+                <option value="species">生物物種 GBIF</option>
+                <option value="trail">步道</option>
+                <option value="sports">體育賽事</option>
+                <option value="music">音樂節慶</option>
+              </select>
+            </label>
+          </div>
+
           <div class="panel-section floor-section">
             <div class="section-heading">
               <h2>樓層</h2>
@@ -85,6 +110,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=auto-track-permission-1" type="module"></script>
+    <script src="./app.js?v=map-collection-1" type="module"></script>
   </body>
 </html>

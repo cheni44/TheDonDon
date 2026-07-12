@@ -219,6 +219,23 @@ button {
   box-shadow: 0 0 42px rgba(164, 255, 143, 0.42);
 }
 
+.data-marker {
+  position: absolute;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border: 1px solid rgba(255, 209, 102, 0.65);
+  border-radius: 999px;
+  background: rgba(255, 209, 102, 0.18);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 820;
+  line-height: 16px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 22px rgba(255, 209, 102, 0.22);
+}
+
 .locate-button,
 .icon-button {
   display: inline-grid;
@@ -376,9 +393,9 @@ button {
 
 .control-panel {
   position: relative;
-  z-index: 7;
+  z-index: 18;
   display: grid;
-  grid-template-columns: minmax(220px, 0.8fr) minmax(420px, 2fr) minmax(220px, 1fr);
+  grid-template-columns: minmax(190px, 0.7fr) minmax(300px, 1.35fr) minmax(250px, 1fr) minmax(170px, 0.7fr);
   gap: 8px;
   align-items: stretch;
   overflow: visible;
@@ -545,7 +562,7 @@ h2 {
   left: 0;
   right: 0;
   bottom: calc(100% + 5px);
-  z-index: 12;
+  z-index: 30;
   max-height: min(260px, 45vh);
   overflow-y: auto;
   border: 1px solid rgba(164, 255, 143, 0.24);
@@ -592,6 +609,33 @@ h2 {
 .location-section {
   position: relative;
   padding-right: 43px;
+}
+
+.collection-section {
+  display: grid;
+  grid-template-columns: minmax(96px, 0.8fr) minmax(150px, 1.2fr);
+  gap: 7px;
+}
+
+.compact-field {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 760;
+}
+
+.compact-field select {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(8, 12, 18, 0.78);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
 }
 
 .refresh-inline {
@@ -1048,7 +1092,7 @@ h2 {
 
   .control-panel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    overflow: hidden;
+    overflow: visible;
   }
 }
 
@@ -1103,7 +1147,7 @@ h2 {
     grid-template-columns: 1fr;
     gap: 5px;
     max-height: 34dvh;
-    overflow-y: auto;
+    overflow: visible;
     padding: 6px;
   }
 
