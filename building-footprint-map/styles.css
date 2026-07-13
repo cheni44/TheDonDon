@@ -45,8 +45,8 @@ button {
 .stage {
   position: relative;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 0;
   height: calc(100vh - clamp(20px, 3vw, 36px));
   min-height: 620px;
   overflow: hidden;
@@ -61,7 +61,7 @@ button {
   position: relative;
   min-height: 0;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 8px 0 0 8px;
 }
 
 .map-panel {
@@ -71,7 +71,7 @@ button {
   height: 100%;
   min-height: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 8px 0 0 8px;
   background: #111820;
   cursor: grab;
   touch-action: none;
@@ -395,12 +395,15 @@ button {
   position: relative;
   z-index: 18;
   display: grid;
-  grid-template-columns: minmax(190px, 0.7fr) minmax(300px, 1.35fr) minmax(250px, 1fr) minmax(170px, 0.7fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: max-content;
   gap: 8px;
-  align-items: stretch;
+  align-items: start;
   overflow: visible;
-  padding: 8px;
-  border-top: 1px solid var(--line);
+  min-width: 0;
+  min-height: 0;
+  padding: 10px;
+  border-left: 1px solid var(--line);
   background: rgba(7, 10, 15, 0.88);
   backdrop-filter: blur(18px);
   transition: opacity 360ms, transform 360ms;
@@ -561,7 +564,7 @@ h2 {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(100% + 5px);
+  top: calc(100% + 5px);
   z-index: 30;
   max-height: min(260px, 45vh);
   overflow-y: auto;
@@ -674,6 +677,64 @@ h2 {
 .choice-list {
   display: grid;
   gap: 8px;
+}
+
+.result-section {
+  display: grid;
+  gap: 8px;
+  min-height: 0;
+}
+
+.result-picker select {
+  height: 34px;
+}
+
+.result-list {
+  display: grid;
+  gap: 7px;
+  max-height: min(38vh, 360px);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.result-item {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: 54px;
+  padding: 8px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: transform 180ms, border-color 180ms, background 180ms;
+}
+
+.result-item:hover,
+.result-item.selected {
+  transform: translateY(-1px);
+  border-color: rgba(164, 255, 143, 0.62);
+  background: rgba(164, 255, 143, 0.08);
+}
+
+.result-title,
+.result-meta {
+  overflow-wrap: anywhere;
+}
+
+.result-title {
+  font-size: 12px;
+  font-weight: 780;
+  line-height: 1.25;
+}
+
+.result-meta {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.32;
 }
 
 .source-summary {
@@ -1081,18 +1142,35 @@ h2 {
   }
 
   .stage {
+    grid-template-columns: 1fr;
     grid-template-rows: minmax(0, 1fr) auto;
     height: calc(100vh - 20px);
     min-height: 0;
   }
 
   .map-panel {
+    border-radius: 8px;
     min-height: 0;
+  }
+
+  .map-zone {
+    border-radius: 8px;
   }
 
   .control-panel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     overflow: visible;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .result-section {
+    grid-column: 1 / -1;
+  }
+
+  .result-list {
+    max-height: 130px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1146,7 +1224,7 @@ h2 {
   .control-panel {
     grid-template-columns: 1fr;
     gap: 5px;
-    max-height: 34dvh;
+    max-height: 42dvh;
     overflow: visible;
     padding: 6px;
   }
@@ -1234,6 +1312,11 @@ h2 {
 
   .status-text {
     font-size: 13px;
+  }
+
+  .result-list {
+    max-height: 92px;
+    grid-template-columns: 1fr;
   }
 }
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spatial Trace | 建築配置探索</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
-    <link rel="stylesheet" href="./styles.css?v=map-collection-1" />
+    <link rel="stylesheet" href="./styles.css?v=right-panel-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -89,6 +89,16 @@
             </label>
           </div>
 
+          <div class="panel-section result-section">
+            <label class="compact-field result-picker">
+              <span>集錦項目</span>
+              <select id="resultSelect">
+                <option value="">尚未選定位置</option>
+              </select>
+            </label>
+            <div id="resultList" class="result-list" aria-live="polite"></div>
+          </div>
+
           <div class="panel-section floor-section">
             <div class="section-heading">
               <h2>樓層</h2>
@@ -110,6 +120,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=map-collection-1" type="module"></script>
+    <script src="./app.js?v=right-panel-1" type="module"></script>
   </body>
 </html>

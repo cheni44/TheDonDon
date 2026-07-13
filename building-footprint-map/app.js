@@ -19,6 +19,8 @@ const refreshPlaces = document.querySelector("#refreshPlaces");
 const exportButton = document.querySelector("#exportButton");
 const radiusSelect = document.querySelector("#radiusSelect");
 const dataTypeSelect = document.querySelector("#dataTypeSelect");
+const resultSelect = document.querySelector("#resultSelect");
+const resultList = document.querySelector("#resultList");
 const scanBurst = document.querySelector("#scanBurst");
 const statusText = document.querySelector("#statusText");
 const progressBar = document.querySelector("#progressBar");
@@ -70,6 +72,7 @@ const state = {
   requestId: 0,
   view: "map",
   pickerOptions: [],
+  resultOptions: [],
   dataType: "building",
   radiusKm: 1,
   dataItems: [],
@@ -593,6 +596,94 @@ function addPickerMenuOption(label, index, selected = false) {
     activatePickerOption(option);
   });
   pickerMenu.append(button);
+}
+
+function resetResultPanel(message = "定位後會顯示符合範圍的項目") {
+  state.resultOptions = [];
+  resultSelect.replaceChildren();
+  const option = document.createElement("option");
+  option.value = "";
+  option.textContent = message;
+  resultSelect.append(option);
+  resultList.replaceChildren();
+  renderListEmpty(resultList, message);
+}
+
+function itemLabel(item, index) {
+  if (item.type === "building" || item.geometry) {
+    const dimensions = item.dimensions ? `${item.dimensions.width}m x ${item.dimensions.depth}m` : "";
+    const floors = item.floors ? `${item.floors} 層` : "";
+    return [`建築 #${index + 1}`, item.name, `${item.distance}m`, item.kind, `${Math.round(item.area)}m²`, dimensions, floors, item.source].filter(Boolean).join(" · ");
+  }
+  return [`${DATASET_LABELS[item.type]} #${index + 1}`, item.name, `${Math.round(item.distance)}m`, item.meta, item.source].filter(Boolean).join(" · ");
+}
+
+function itemMeta(item) {
+  if (item.type === "building" || item.geometry) {
+    const dimensions = item.dimensions ? `${item.dimensions.width}m x ${item.dimensions.depth}m` : "尺寸未知";
+    const floors = item.floors ? `${item.floors} 層` : "未標註樓層";
+    return `${Math.round(item.area)}m² · ${dimensions} · ${floors} · ${item.source}`;
+  }
+  return [item.meta, `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
+}
+
+function activateResultOption(value) {
+  if (!value) return false;
+  const option = state.resultOptions.find((entry) => entry.value === value);
+  if (!option) return false;
+  if (option.kind === "building") {
+    selectBuilding(option.item);
+    return true;
+  }
+  focusDataItem(option.item);
+  return true;
+}
+
+function renderResultPanel(items, selectedId = "", emptyText = "此範圍沒有可用資料") {
+  state.resultOptions = [];
+  resultSelect.replaceChildren();
+  resultList.replaceChildren();
+
+  if (!items.length) {
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = emptyText;
+    resultSelect.append(empty);
+    renderListEmpty(resultList, emptyText);
+    return;
+  }
+
+  items.forEach((item, index) => {
+    const kind = item.type === "building" || item.geometry ? "building" : "data";
+    const value = `${kind}:${item.id}`;
+    const label = itemLabel(item, index);
+    state.resultOptions.push({ kind, id: item.id, value, item });
+
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    resultSelect.append(option);
+
+    const button = document.createElement("button");
+    button.className = "result-item";
+    button.classList.toggle("selected", item.id === selectedId);
+    button.type = "button";
+    button.dataset.value = value;
+    button.innerHTML = `<span class="result-title"></span><span class="result-meta"></span>`;
+    button.querySelector(".result-title").textContent = label;
+    button.querySelector(".result-meta").textContent = itemMeta(item);
+    button.addEventListener("click", () => {
+      resultSelect.value = value;
+      activateResultOption(value);
+    });
+    resultList.append(button);
+  });
+
+  const selectedValue = state.resultOptions.find((option) => option.id === selectedId)?.value || state.resultOptions[0]?.value || "";
+  resultSelect.value = selectedValue;
+  resultList.querySelectorAll(".result-item").forEach((node) => {
+    node.classList.toggle("selected", node.dataset.value === selectedValue);
+  });
 }
 
 function lon2tile(lon, zoom) {
@@ -1221,22 +1312,12 @@ function renderBuildingSelect(buildings, selectedId = "", emptyText = "一公里
   });
   if (!buildings.length) {
     addressInput.placeholder = emptyText;
+    resetResultPanel(emptyText);
     return;
   }
 
-  addressInput.placeholder = "選附近建築物或輸入住址";
-  buildings.forEach((building, index) => {
-    const option = document.createElement("option");
-    const dimensions = building.dimensions ? `${building.dimensions.width}m x ${building.dimensions.depth}m` : "";
-    const floors = building.floors ? `${building.floors} 層` : "";
-    const coordinate = `${building.center.lat.toFixed(5)}, ${building.center.lon.toFixed(5)}`;
-    const label = [`建築 #${index + 1}`, building.name, `${building.distance}m`, building.kind, `${Math.round(building.area)}m²`, dimensions, floors, building.source, coordinate].filter(Boolean).join(" · ");
-    option.value = label;
-    placeOptions.append(option);
-    const pickerIndex = state.pickerOptions.push({ kind: "building", id: building.id, label, value: label }) - 1;
-    addPickerMenuOption(label, pickerIndex, building.id === selectedId);
-    if (building.id === selectedId) addressInput.value = label;
-  });
+  addressInput.placeholder = "輸入住址、選附近位置，或在地圖長按";
+  renderResultPanel(buildings, selectedId, emptyText);
 }
 
 function renderCollectionSelect(items, selectedId = "") {
@@ -1252,14 +1333,7 @@ function renderCollectionSelect(items, selectedId = "") {
     const pickerIndex = state.pickerOptions.push({ kind: "place", id: place.id, label, value: label }) - 1;
     addPickerMenuOption(label, pickerIndex, place.id === state.selectedPlace?.id && !selectedId);
   });
-  items.forEach((item, index) => {
-    const option = document.createElement("option");
-    const label = [`${DATASET_LABELS[item.type]} #${index + 1}`, item.name, `${Math.round(item.distance)}m`, item.meta, item.source].filter(Boolean).join(" · ");
-    option.value = label;
-    placeOptions.append(option);
-    const pickerIndex = state.pickerOptions.push({ kind: "data", id: item.id, label, value: label }) - 1;
-    addPickerMenuOption(label, pickerIndex, item.id === selectedId);
-  });
+  renderResultPanel(items, selectedId, "此範圍沒有可用資料");
 }
 
 async function loadSelectedDataset(place, options = {}) {
@@ -1268,6 +1342,7 @@ async function loadSelectedDataset(place, options = {}) {
   hideLayoutView();
   showLoading(`正在下載${label}`, `範圍 ${state.radiusKm} km · 整理地圖集錦資料`);
   floorList.replaceChildren();
+  resetResultPanel(`正在查詢 ${label}`);
   sourceSummary.textContent = "資料來源：查詢中";
 
   if (state.dataType === "building") {
@@ -1435,7 +1510,13 @@ function renderCollectionMarkers(items = state.dataItems) {
 function focusDataItem(item) {
   const ratio = latLonToScreenRatio(item.center);
   markSelection(Math.max(0, Math.min(1, ratio.xRatio)), Math.max(0, Math.min(1, ratio.yRatio)));
-  addressInput.value = `${item.name} · ${Math.round(item.distance)}m · ${item.source}`;
+  const value = state.resultOptions.find((option) => option.id === item.id)?.value || "";
+  if (value) {
+    resultSelect.value = value;
+    resultList.querySelectorAll(".result-item").forEach((node) => {
+      node.classList.toggle("selected", node.dataset.value === value);
+    });
+  }
   setStatus(`${DATASET_LABELS[item.type]}：${item.name}`, 3, 82);
 }
 
@@ -1618,8 +1699,8 @@ async function selectMapPoint(event, presetPoint = null) {
   state.selectedLayout = null;
   state.buildings = [];
   state.center = { ...state.center, label: picked.name };
-  renderBuildingSelect([], "", "正在查詢一公里內的建築資料");
-  showLoading("正在下載此位置附近資料", "反查地址，並讀取方圓一公里內的公開建築 footprint");
+  renderBuildingSelect([], "", `正在查詢 ${state.radiusKm} km 內的建築資料`);
+  showLoading("正在下載此位置附近資料", `反查地址，並讀取方圓 ${state.radiusKm} km 內的公開資料`);
   floorList.replaceChildren();
   floorPlan.replaceChildren();
   buildingLayer.replaceChildren();
@@ -1632,7 +1713,7 @@ async function selectMapPoint(event, presetPoint = null) {
   renderEmptyState("正在查詢此位置的開放建築資料", "只會顯示 OSM / OpenBuildingMap 實際 footprint", { keepLoading: true });
   sourceSummary.textContent = "資料來源：查詢中";
   addressInput.value = `${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}`;
-  setStatus("已鎖定地圖選點，查詢地址與一公里內建築", 3, 62);
+  setStatus(`已鎖定地圖選點，查詢地址與 ${state.radiusKm} km 內資料`, 3, 62);
 
   const addressPromise = reverseGeocode(point.lat, point.lon);
   const address = await addressPromise;
@@ -1853,6 +1934,7 @@ function selectBuilding(layout) {
 async function boot() {
   const requestId = ++state.requestId;
   hideLoading();
+  resetResultPanel();
   setStatus("透過 IP 讀取大略位置", 1, 10);
   renderTiles();
   drawFlow();
@@ -1918,7 +2000,8 @@ async function searchAddress(event) {
   setStatus("搜尋地址座標", 1, 22);
   showLoading("正在定位地址", "使用 OpenStreetMap Nominatim 找座標");
   floorList.replaceChildren();
-  renderBuildingSelect([], "", "正在查詢一公里內的建築資料");
+  renderBuildingSelect([], "", `正在查詢 ${state.radiusKm} km 內的建築資料`);
+  resetResultPanel("正在查詢定位結果");
   renderPlanEmpty("正在搜尋地址", "使用 OpenStreetMap Nominatim");
   sourceSummary.textContent = "資料來源：查詢中";
 
@@ -1981,6 +2064,9 @@ addressInput.addEventListener("change", usePickerSelection);
 addressInput.addEventListener("keydown", handleAddressKeydown);
 radiusSelect.addEventListener("change", handleCollectionSettingsChange);
 dataTypeSelect.addEventListener("change", handleCollectionSettingsChange);
+resultSelect.addEventListener("change", () => {
+  activateResultOption(resultSelect.value);
+});
 document.addEventListener("pointerdown", (event) => {
   if (addressForm.contains(event.target)) return;
   hidePickerMenu();
