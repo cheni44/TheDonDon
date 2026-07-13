@@ -69,6 +69,7 @@ const state = {
   buildings: [],
   selectedPlace: null,
   selectedLayout: null,
+  selectedDataItem: null,
   selectedFloor: null,
   zoom: 16,
   drag: null,
@@ -707,57 +708,101 @@ function representativeImage(item) {
 function renderResultDetail(item) {
   resultDetail.replaceChildren();
   if (!item) {
-    renderListEmpty(resultDetail, "請先從下拉選單選擇集錦項目");
+    renderListEmpty(resultDetail, "選擇項目後，這裡會顯示實際地圖位置");
     return;
   }
   const card = document.createElement("article");
   card.className = "detail-card";
 
-  const imageWrap = document.createElement("div");
-  imageWrap.className = "detail-image";
-  const image = document.createElement("img");
-  image.alt = item.name;
-  image.loading = "lazy";
-  image.decoding = "async";
-  image.src = representativeImage(item);
-  imageWrap.append(image);
-
   const title = document.createElement("h2");
   title.className = "detail-title";
-  title.textContent = item.name;
+  title.textContent = "實際地圖位置";
 
   const meta = document.createElement("p");
   meta.className = "detail-meta";
-  meta.textContent = itemMeta(item);
+  meta.textContent = item.name;
 
   const coordinate = document.createElement("p");
   coordinate.className = "detail-line";
   coordinate.textContent = `${item.center.lat.toFixed(5)}, ${item.center.lon.toFixed(5)}`;
 
-  card.append(imageWrap, title, meta, coordinate);
+  const distance = document.createElement("p");
+  distance.className = "detail-line";
+  distance.textContent = `距離定位點 ${Math.round(item.distance)} m`;
 
-  const detailLines = [
-    item.kind ? `類型：${item.kind}` : "",
-    item.elevation ? `海拔：${item.elevation} m` : "",
-    item.timeRange ? `時間範圍：${item.timeRange}` : "",
-    item.source ? `資料來源：${item.source}` : "",
-  ].filter(Boolean);
-  detailLines.forEach((line) => {
-    const node = document.createElement("p");
-    node.className = "detail-line";
-    node.textContent = line;
-    card.append(node);
-  });
+  const source = document.createElement("p");
+  source.className = "detail-line";
+  source.textContent = `資料來源：${item.source}`;
 
-  if (item.audioUrl?.startsWith("http")) {
-    const audio = document.createElement("audio");
-    audio.className = "detail-audio";
-    audio.controls = true;
-    audio.src = item.audioUrl;
-    card.append(audio);
-  }
-
+  card.append(title, meta, coordinate, distance, source);
   resultDetail.append(card);
+}
+
+function svgText(parent, text, x, y, className, options = {}) {
+  const node = document.createElementNS(SVG_NS, "text");
+  node.setAttribute("x", x);
+  node.setAttribute("y", y);
+  node.setAttribute("class", className);
+  if (options.anchor) node.setAttribute("text-anchor", options.anchor);
+  node.textContent = text;
+  parent.append(node);
+  return node;
+}
+
+function renderCollectionItemView(item) {
+  state.layoutHasDirection = false;
+  state.selectedDataItem = item;
+  floorPlan.replaceChildren();
+  resetLayoutBaseViewBox();
+
+  const image = document.createElementNS(SVG_NS, "image");
+  image.setAttribute("x", "0");
+  image.setAttribute("y", "0");
+  image.setAttribute("width", "420");
+  image.setAttribute("height", "172");
+  image.setAttribute("preserveAspectRatio", "xMidYMid slice");
+  image.setAttribute("href", representativeImage(item));
+  floorPlan.append(image);
+
+  const overlay = document.createElementNS(SVG_NS, "rect");
+  overlay.setAttribute("x", "0");
+  overlay.setAttribute("y", "0");
+  overlay.setAttribute("width", "420");
+  overlay.setAttribute("height", "172");
+  overlay.setAttribute("class", "item-image-shade");
+  floorPlan.append(overlay);
+
+  const panel = document.createElementNS(SVG_NS, "rect");
+  panel.setAttribute("x", "24");
+  panel.setAttribute("y", "144");
+  panel.setAttribute("width", "372");
+  panel.setAttribute("height", "132");
+  panel.setAttribute("rx", "8");
+  panel.setAttribute("class", "item-panel-bg");
+  floorPlan.append(panel);
+
+  svgText(floorPlan, item.name, 42, 172, "item-view-title");
+  svgText(floorPlan, itemMeta(item), 42, 197, "item-view-meta");
+  svgText(floorPlan, `${item.center.lat.toFixed(5)}, ${item.center.lon.toFixed(5)}`, 42, 220, "item-view-line");
+  svgText(floorPlan, `距離 ${Math.round(item.distance)} m · ${item.source}`, 42, 243, "item-view-line");
+  let lineY = 264;
+  if (item.timeRange) {
+    svgText(floorPlan, `時間範圍 ${item.timeRange}`, 42, lineY, "item-view-line");
+    lineY += 18;
+  }
+  if (item.audioUrl?.startsWith("http")) svgText(floorPlan, "此項目包含聲音資料，請於資料來源頁面播放", 42, lineY, "item-view-line");
+
+  showLayoutView();
+  setStatus(`${DATASET_LABELS[item.type]}：已顯示項目資訊`, 4, 100);
+}
+
+function selectCollectionItem(item) {
+  if (!item) return;
+  const ratio = latLonToScreenRatio(item.center);
+  state.selectedDataItem = item;
+  markSelection(Math.max(0, Math.min(1, ratio.xRatio)), Math.max(0, Math.min(1, ratio.yRatio)));
+  renderResultDetail(item);
+  renderCollectionItemView(item);
 }
 
 function activateResultOption(value) {
@@ -773,7 +818,7 @@ function activateResultOption(value) {
     selectBuilding(option.item);
     return true;
   }
-  focusDataItem(option.item);
+  selectCollectionItem(option.item);
   return true;
 }
 
@@ -1507,6 +1552,7 @@ async function loadSelectedDataset(place, options = {}) {
     hideLoading();
     state.buildings = [];
     state.selectedLayout = null;
+    state.selectedDataItem = null;
     state.selectedFloor = null;
     state.dataItems = items;
     renderCollectionMarkers(items);
@@ -1656,15 +1702,12 @@ function renderCollectionMarkers(items = state.dataItems) {
 }
 
 function focusDataItem(item) {
-  const ratio = latLonToScreenRatio(item.center);
-  markSelection(Math.max(0, Math.min(1, ratio.xRatio)), Math.max(0, Math.min(1, ratio.yRatio)));
   const value = state.resultOptions.find((option) => option.id === item.id)?.value || "";
   if (value) {
     state.resultDetailUnlocked = true;
     resultSelect.value = value;
-    renderResultDetail(item);
   }
-  setStatus(`${DATASET_LABELS[item.type]}：${item.name}`, 3, 82);
+  selectCollectionItem(item);
 }
 
 function projectGeometry(points) {
@@ -1815,7 +1858,7 @@ async function selectPlace(place) {
   floorList.replaceChildren();
   renderPlanEmpty("正在查詢建築物輪廓", "只顯示公開資料中存在的 footprint");
   sourceSummary.textContent = "資料來源：查詢中";
-  setStatus("正在下載附近建築 footprint", 3, 64);
+  setStatus(`正在下載附近${DATASET_LABELS[state.dataType]}`, 3, 64);
   await sleep(320);
   if (requestId !== state.requestId) return;
   await loadSelectedDataset(place, { openLayout: state.dataType === "building" });
@@ -2066,6 +2109,7 @@ function endLayoutHold(event) {
 function selectBuilding(layout) {
   if (!layout) return;
   state.selectedLayout = layout;
+  state.selectedDataItem = null;
   state.selectedFloor = null;
   resetTraceForLayout(layout);
   burst(63, 42);

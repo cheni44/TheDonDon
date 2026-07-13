@@ -1113,6 +1113,35 @@ h2 {
   font-weight: 650;
 }
 
+.item-image-shade {
+  fill: rgba(3, 7, 10, 0.36);
+}
+
+.item-panel-bg {
+  fill: rgba(7, 10, 15, 0.86);
+  stroke: rgba(85, 240, 255, 0.24);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.item-view-title {
+  fill: #eef4f8;
+  font-size: 18px;
+  font-weight: 820;
+}
+
+.item-view-meta {
+  fill: var(--green);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.item-view-line {
+  fill: var(--muted);
+  font-size: 12px;
+  font-weight: 680;
+}
+
 .wall-draw {
   stroke-dasharray: 900;
   stroke-dashoffset: 900;
