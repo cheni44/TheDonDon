@@ -630,6 +630,15 @@ h2 {
   display: none;
 }
 
+.species-section {
+  display: grid;
+  gap: 7px;
+}
+
+.species-section[hidden] {
+  display: none;
+}
+
 .compact-field {
   display: grid;
   gap: 3px;
@@ -1126,20 +1135,27 @@ h2 {
 
 .item-view-title {
   fill: #eef4f8;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 820;
 }
 
 .item-view-meta {
   fill: var(--green);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 760;
 }
 
 .item-view-line {
   fill: var(--muted);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 680;
+}
+
+.item-view-link {
+  fill: var(--cyan);
+  font-size: 10px;
+  font-weight: 740;
+  text-decoration: underline;
 }
 
 .wall-draw {

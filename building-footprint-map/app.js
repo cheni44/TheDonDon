@@ -24,6 +24,8 @@ const resultDetail = document.querySelector("#resultDetail");
 const timeSection = document.querySelector("#timeSection");
 const timeStartInput = document.querySelector("#timeStartInput");
 const timeEndInput = document.querySelector("#timeEndInput");
+const speciesSection = document.querySelector("#speciesSection");
+const speciesGroupSelect = document.querySelector("#speciesGroupSelect");
 const scanBurst = document.querySelector("#scanBurst");
 const statusText = document.querySelector("#statusText");
 const progressBar = document.querySelector("#progressBar");
@@ -63,6 +65,16 @@ const DATASET_LABELS = {
 
 const TIME_DATASETS = new Set(["sports", "music"]);
 
+const SPECIES_GROUPS = {
+  all: { label: "全部" },
+  animal: { label: "動物", param: "kingdomKey", key: "1" },
+  plant: { label: "植物", param: "kingdomKey", key: "6" },
+  mammal: { label: "哺乳類", param: "classKey", key: "359" },
+  bird: { label: "鳥類", param: "classKey", key: "212" },
+  reptile: { label: "爬蟲類", param: "classKey", key: "358" },
+  insect: { label: "昆蟲", param: "classKey", key: "216" },
+};
+
 const state = {
   center: { lat: 25.033, lon: 121.5654, label: "台北 101 周邊" },
   places: [],
@@ -83,6 +95,7 @@ const state = {
   resultDetailUnlocked: false,
   dataType: "building",
   radiusKm: 10,
+  speciesGroup: "all",
   timeStart: "",
   timeEnd: "",
   dataItems: [],
@@ -141,6 +154,7 @@ function initializeTimeRange() {
   state.timeEnd = dateInputValue(addMonths(now, 1));
   radiusSelect.value = String(state.radiusKm);
   dataTypeSelect.value = state.dataType;
+  speciesGroupSelect.value = state.speciesGroup;
   timeStartInput.value = state.timeStart;
   timeEndInput.value = state.timeEnd;
   timeStartInput.min = state.timeStart;
@@ -161,6 +175,14 @@ function syncTimeControls() {
   if (timeEndInput.value > maxEnd) timeEndInput.value = maxEnd;
   state.timeStart = start;
   state.timeEnd = timeEndInput.value;
+}
+
+function syncDatasetControls() {
+  syncTimeControls();
+  speciesSection.hidden = state.dataType !== "species";
+  if (state.dataType === "species") {
+    state.speciesGroup = speciesGroupSelect.value || "all";
+  }
 }
 
 function timeRangeLabel() {
@@ -699,10 +721,47 @@ function mediaFromTags(tags = {}) {
   return { image, audio };
 }
 
+function iconLabelForItem(item) {
+  if (item.type === "species") return SPECIES_GROUPS[item.speciesGroup || state.speciesGroup]?.label || "生物";
+  if (item.type === "trail") return "步道";
+  if (item.type === "peak") return "山峰";
+  if (item.type === "sports") return "賽事";
+  if (item.type === "music") return "節慶";
+  return DATASET_LABELS[item.type] || "地圖集錦";
+}
+
+function fallbackArtDataUrl(item) {
+  const label = iconLabelForItem(item);
+  const title = (item.name || label).replace(/[<>&"]/g, "");
+  const palettes = {
+    species: ["#14351f", "#a4ff8f", "#55f0ff"],
+    trail: ["#183327", "#ffd166", "#a4ff8f"],
+    peak: ["#1d2532", "#eef4f8", "#55f0ff"],
+    sports: ["#251b36", "#ff6f91", "#ffd166"],
+    music: ["#221b34", "#55f0ff", "#ff6f91"],
+  };
+  const [bg, primary, accent] = palettes[item.type] || ["#111820", "#55f0ff", "#a4ff8f"];
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 344">
+      <rect width="840" height="344" fill="${bg}"/>
+      <circle cx="690" cy="82" r="72" fill="${accent}" opacity=".18"/>
+      <circle cx="142" cy="268" r="92" fill="${primary}" opacity=".14"/>
+      <path d="M92 260 C180 138 260 180 340 86 C420 176 522 128 650 254" fill="none" stroke="${primary}" stroke-width="20" stroke-linecap="round" opacity=".9"/>
+      <path d="M188 248 L282 140 L366 248 Z M352 248 L476 92 L642 248 Z" fill="${accent}" opacity=".28"/>
+      <text x="52" y="72" fill="#eef4f8" font-family="system-ui, sans-serif" font-size="28" font-weight="800">${label}</text>
+      <text x="52" y="308" fill="#eef4f8" font-family="system-ui, sans-serif" font-size="24" font-weight="750">${title.slice(0, 32)}</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function googleImageSearchLabel(item) {
+  return `Google 圖片搜尋：${[item.name, iconLabelForItem(item)].filter(Boolean).join(" ")}`;
+}
+
 function representativeImage(item) {
   if (item.imageUrl?.startsWith("http")) return item.imageUrl;
-  const zoom = item.type === "peak" ? 13 : 15;
-  return tileUrl(zoom, lon2tile(item.center.lon, zoom), lat2tile(item.center.lat, zoom));
+  return fallbackArtDataUrl(item);
 }
 
 function renderResultDetail(item) {
@@ -749,6 +808,15 @@ function svgText(parent, text, x, y, className, options = {}) {
   return node;
 }
 
+function svgLinkText(parent, text, href, x, y, className) {
+  const link = document.createElementNS(SVG_NS, "a");
+  link.setAttribute("href", href);
+  link.setAttribute("target", "_blank");
+  const node = svgText(link, text, x, y, className);
+  parent.append(link);
+  return node;
+}
+
 function renderCollectionItemView(item) {
   state.layoutHasDirection = false;
   state.selectedDataItem = item;
@@ -759,7 +827,7 @@ function renderCollectionItemView(item) {
   image.setAttribute("x", "0");
   image.setAttribute("y", "0");
   image.setAttribute("width", "420");
-  image.setAttribute("height", "172");
+  image.setAttribute("height", "190");
   image.setAttribute("preserveAspectRatio", "xMidYMid slice");
   image.setAttribute("href", representativeImage(item));
   floorPlan.append(image);
@@ -768,27 +836,32 @@ function renderCollectionItemView(item) {
   overlay.setAttribute("x", "0");
   overlay.setAttribute("y", "0");
   overlay.setAttribute("width", "420");
-  overlay.setAttribute("height", "172");
+  overlay.setAttribute("height", "190");
   overlay.setAttribute("class", "item-image-shade");
   floorPlan.append(overlay);
 
   const panel = document.createElementNS(SVG_NS, "rect");
   panel.setAttribute("x", "24");
-  panel.setAttribute("y", "144");
+  panel.setAttribute("y", "178");
   panel.setAttribute("width", "372");
-  panel.setAttribute("height", "132");
+  panel.setAttribute("height", "106");
   panel.setAttribute("rx", "8");
   panel.setAttribute("class", "item-panel-bg");
   floorPlan.append(panel);
 
-  svgText(floorPlan, item.name, 42, 172, "item-view-title");
-  svgText(floorPlan, itemMeta(item), 42, 197, "item-view-meta");
-  svgText(floorPlan, `${item.center.lat.toFixed(5)}, ${item.center.lon.toFixed(5)}`, 42, 220, "item-view-line");
-  svgText(floorPlan, `距離 ${Math.round(item.distance)} m · ${item.source}`, 42, 243, "item-view-line");
-  let lineY = 264;
+  svgText(floorPlan, item.name, 42, 202, "item-view-title");
+  svgText(floorPlan, itemMeta(item), 42, 222, "item-view-meta");
+  svgText(floorPlan, `${item.center.lat.toFixed(5)}, ${item.center.lon.toFixed(5)}`, 42, 240, "item-view-line");
+  svgText(floorPlan, `距離 ${Math.round(item.distance)} m · ${item.source}`, 42, 258, "item-view-line");
+  let lineY = 276;
   if (item.timeRange) {
     svgText(floorPlan, `時間範圍 ${item.timeRange}`, 42, lineY, "item-view-line");
-    lineY += 18;
+    lineY += 14;
+  }
+  if (!item.imageUrl?.startsWith("http")) {
+    const q = encodeURIComponent([item.name, iconLabelForItem(item)].filter(Boolean).join(" "));
+    svgLinkText(floorPlan, googleImageSearchLabel(item), `https://www.google.com/search?tbm=isch&q=${q}`, 42, lineY, "item-view-link");
+    lineY += 14;
   }
   if (item.audioUrl?.startsWith("http")) svgText(floorPlan, "此項目包含聲音資料，請於資料來源頁面播放", 42, lineY, "item-view-line");
 
@@ -1271,6 +1344,10 @@ async function fetchGbifSpecies(place) {
   url.searchParams.set("hasCoordinate", "true");
   url.searchParams.set("limit", "60");
   url.searchParams.set("geometry", bboxPolygonWkt(place, Math.min(currentRadiusMeters(), 1000000)));
+  const group = SPECIES_GROUPS[state.speciesGroup] || SPECIES_GROUPS.all;
+  if (group.param && group.key) {
+    url.searchParams.set(group.param, group.key);
+  }
   const data = await fetchJsonWithTimeout(url.toString(), 12000);
   return (data.results || [])
     .filter((item) => Number.isFinite(item.decimalLatitude) && Number.isFinite(item.decimalLongitude))
@@ -1288,6 +1365,8 @@ async function fetchGbifSpecies(place) {
         distance: distanceMeters(place, { lat: item.decimalLatitude, lon: item.decimalLongitude }),
         imageUrl: image || "",
         audioUrl: audio || "",
+        speciesGroup: state.speciesGroup,
+        speciesGroupLabel: group.label,
       };
     })
     .filter((item) => item.distance <= currentRadiusMeters())
@@ -1530,10 +1609,11 @@ function renderCollectionSelect(items, selectedId = "") {
 async function loadSelectedDataset(place, options = {}) {
   const requestId = ++state.requestId;
   const label = DATASET_LABELS[state.dataType];
-  syncTimeControls();
+  syncDatasetControls();
   const timeText = timeRangeLabel();
+  const speciesText = state.dataType === "species" ? SPECIES_GROUPS[state.speciesGroup]?.label : "";
   hideLayoutView();
-  showLoading(`正在下載${label}`, [`範圍 ${state.radiusKm} km`, timeText, "整理地圖集錦資料"].filter(Boolean).join(" · "));
+  showLoading(`正在下載${label}`, [`範圍 ${state.radiusKm} km`, speciesText, timeText, "整理地圖集錦資料"].filter(Boolean).join(" · "));
   floorList.replaceChildren();
   resetResultPanel(`正在查詢 ${label}`);
   sourceSummary.textContent = "資料來源：查詢中";
@@ -2167,11 +2247,13 @@ function handleAddressKeydown(event) {
 function handleCollectionSettingsChange() {
   state.radiusKm = Number(radiusSelect.value);
   state.dataType = dataTypeSelect.value;
-  syncTimeControls();
+  state.speciesGroup = speciesGroupSelect.value || "all";
+  syncDatasetControls();
   if (state.selectedPlace) {
     loadSelectedDataset(state.selectedPlace, { openLayout: state.dataType === "building" });
   } else {
-    setStatus([`已切換為 ${DATASET_LABELS[state.dataType]}`, `${state.radiusKm} km`, timeRangeLabel()].filter(Boolean).join(" · "), 2, 42);
+    const speciesText = state.dataType === "species" ? SPECIES_GROUPS[state.speciesGroup]?.label : "";
+    setStatus([`已切換為 ${DATASET_LABELS[state.dataType]}`, speciesText, `${state.radiusKm} km`, timeRangeLabel()].filter(Boolean).join(" · "), 2, 42);
   }
 }
 
@@ -2256,6 +2338,7 @@ addressInput.addEventListener("change", usePickerSelection);
 addressInput.addEventListener("keydown", handleAddressKeydown);
 radiusSelect.addEventListener("change", handleCollectionSettingsChange);
 dataTypeSelect.addEventListener("change", handleCollectionSettingsChange);
+speciesGroupSelect.addEventListener("change", handleCollectionSettingsChange);
 timeStartInput.addEventListener("change", handleCollectionSettingsChange);
 timeEndInput.addEventListener("change", handleCollectionSettingsChange);
 resultSelect.addEventListener("change", () => {
@@ -2309,5 +2392,5 @@ window.addEventListener("resize", () => {
 });
 
 initializeTimeRange();
-syncTimeControls();
+syncDatasetControls();
 boot();
