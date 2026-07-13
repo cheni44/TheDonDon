@@ -1521,6 +1521,66 @@ async function fetchWikidataChineseName(scientificName) {
   }
 }
 
+function preferredLabel(existing = "", incoming = "", lang = "", existingLang = "") {
+  if (!incoming || !/[\u3400-\u9fff]/.test(incoming)) return existing;
+  if (!existing) return incoming;
+  const score = (value, language) => {
+    let total = 0;
+    if (/zh-tw|zh-hant/i.test(language)) total += 4;
+    if (/鴴|鶺|鷺|鴨|鳥|鳩|鵐|鵯|鶇|鶯|鷗|鷹|鷲|鵰/.test(value)) total += 2;
+    if (/鸻|鹡|鹭|鸭|鸟|鸠|鹀|鹎|鸫|莺|鸥|鹰|雕/.test(value)) total -= 1;
+    return total;
+  };
+  return score(incoming, lang) > score(existing, existingLang) ? incoming : existing;
+}
+
+async function fetchWikidataChineseNames(scientificNames) {
+  const names = [...new Set(scientificNames.map((name) => (name || "").trim()).filter(Boolean))]
+    .filter((name) => !wikidataNameCache.has(name));
+  if (!names.length) return;
+  const values = names.map((name) => `"${name.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`).join(" ");
+  const sparql = `
+    SELECT ?name ?label WHERE {
+      VALUES ?name { ${values} }
+      ?taxon wdt:P225 ?name.
+      ?taxon rdfs:label ?label.
+      FILTER(LANG(?label) IN ("zh", "zh-tw", "zh-hant"))
+    }
+  `;
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch("https://query.wikidata.org/sparql", {
+      method: "POST",
+      headers: {
+        Accept: "application/sparql-results+json",
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+      },
+      body: new URLSearchParams({ query: sparql, format: "json" }),
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error("Wikidata request failed");
+    const data = await response.json();
+    const found = new Map();
+    (data.results?.bindings || []).forEach((binding) => {
+      const name = binding.name?.value || "";
+      const label = binding.label?.value || "";
+      const lang = binding.label?.["xml:lang"] || "";
+      const existing = found.get(name) || { label: "", lang: "" };
+      const nextLabel = preferredLabel(existing.label, label, lang, existing.lang);
+      found.set(name, {
+        label: nextLabel,
+        lang: nextLabel === label ? lang : existing.lang,
+      });
+    });
+    names.forEach((name) => wikidataNameCache.set(name, found.get(name)?.label || ""));
+  } catch {
+    names.forEach((name) => wikidataNameCache.set(name, ""));
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 async function translateSpeciesName(scientificName) {
   const name = (scientificName || "").trim();
   if (!name) return "";
@@ -1544,9 +1604,11 @@ async function translateSpeciesName(scientificName) {
 }
 
 async function enrichSpeciesNames(items) {
-  const targets = items.filter((item) => item.taxonKey).slice(0, 24);
+  const targets = items.slice(0, 60);
+  await fetchWikidataChineseNames(targets.map((item) => item.scientificName));
   await Promise.all(targets.map(async (item) => {
     const commonName = await fetchChineseVernacularName(item.taxonKey)
+      || wikidataNameCache.get(item.scientificName)
       || await fetchWikidataChineseName(item.scientificName)
       || await translateSpeciesName(item.scientificName);
     if (!commonName) return;
