@@ -52,6 +52,7 @@ const OPEN_BUILDING_MAP_ENDPOINTS = [
 const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.osm.ch/api/interpreter",
 ];
 
 const DATASET_LABELS = {
@@ -124,12 +125,26 @@ const state = {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function isBuildingItem(item) {
+  return item?.type === "building" || (!item?.type && Number.isFinite(item?.area) && Array.isArray(item?.geometry));
+}
+
 function currentRadiusMeters() {
   return Math.max(1000, Number(state.radiusKm || 1) * 1000);
 }
 
 function cappedRadiusMeters(maxMeters) {
   return Math.min(currentRadiusMeters(), maxMeters);
+}
+
+function collectionQueryRadius(dataset) {
+  const caps = {
+    trail: 5000,
+    sports: 50000,
+    music: 50000,
+    peak: 50000,
+  };
+  return Math.round(cappedRadiusMeters(caps[dataset] || 50000));
 }
 
 function dateInputValue(date) {
@@ -692,7 +707,7 @@ function resetResultPanel(message = "定位後會顯示符合範圍的項目") {
 }
 
 function itemLabel(item, index) {
-  if (item.type === "building" || item.geometry) {
+  if (isBuildingItem(item)) {
     const dimensions = item.dimensions ? `${item.dimensions.width}m x ${item.dimensions.depth}m` : "";
     const floors = item.floors ? `${item.floors} 層` : "";
     return [`建築 #${index + 1}`, item.name, `${item.distance}m`, item.kind, `${Math.round(item.area)}m²`, dimensions, floors, item.source].filter(Boolean).join(" · ");
@@ -704,7 +719,7 @@ function itemLabel(item, index) {
 }
 
 function itemMeta(item) {
-  if (item.type === "building" || item.geometry) {
+  if (isBuildingItem(item)) {
     const dimensions = item.dimensions ? `${item.dimensions.width}m x ${item.dimensions.depth}m` : "尺寸未知";
     const floors = item.floors ? `${item.floors} 層` : "未標註樓層";
     return `${Math.round(item.area)}m² · ${dimensions} · ${floors} · ${item.source}`;
@@ -779,7 +794,7 @@ function locationMapImage(item) {
 
 function shouldShowSideLocation(item) {
   if (!item) return false;
-  return item.type === "species" || item.type === "building" || item.geometry;
+  return item.type === "species" || isBuildingItem(item);
 }
 
 function renderResultDetail(item) {
@@ -981,7 +996,7 @@ function renderResultPanel(items, selectedId = "", emptyText = "此範圍沒有�
   resultSelect.append(prompt);
 
   items.forEach((item, index) => {
-    const kind = item.type === "building" || item.geometry ? "building" : "data";
+    const kind = isBuildingItem(item) ? "building" : "data";
     const value = `${kind}:${item.id}`;
     const label = itemLabel(item, index);
     state.resultOptions.push({ kind, id: item.id, value, item });
@@ -1305,10 +1320,13 @@ async function fetchOverpass(query) {
     const controller = new AbortController();
     const timer = window.setTimeout(() => controller.abort(), 15000);
     try {
-      const url = new URL(endpoint);
-      url.searchParams.set("data", query);
-      const response = await fetch(url.toString(), {
-        headers: { Accept: "application/json" },
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        },
+        body: new URLSearchParams({ data: query }),
         signal: controller.signal,
       });
       if (!response.ok) throw new Error("Overpass request failed");
@@ -1342,6 +1360,7 @@ async function fetchOsmBuildings(place, radiusMeters = 1000) {
         const center = item.center || centroid(geometry) || { lat: place.lat, lon: place.lon };
         return {
           id: `osm-${item.id}`,
+          type: "building",
           name: tags.name || `${place.name} 建築 ${index + 1}`,
           source: "OpenStreetMap",
           center,
@@ -1444,11 +1463,15 @@ async function fetchGbifSpecies(place) {
 }
 
 async function fetchOsmCollection(place, dataset) {
-  const radius = Math.round(cappedRadiusMeters(50000));
+  if (dataset === "trail") return fetchOsmTrailCollection(place);
+
+  const radius = collectionQueryRadius(dataset);
   const filters = {
     trail: `
       way(around:${radius},${place.lat},${place.lon})[highway~"path|footway|track"][name];
-      relation(around:${radius},${place.lat},${place.lon})[route~"hiking|foot"][name];
+      way(around:${radius},${place.lat},${place.lon})[route~"hiking|foot"][name];
+      way(around:${radius},${place.lat},${place.lon})[sac_scale][name];
+      way(around:${radius},${place.lat},${place.lon})[trail_visibility][name];
     `,
     peak: `
       node(around:${radius},${place.lat},${place.lon})[natural=peak][name];
@@ -1510,6 +1533,45 @@ async function fetchOsmCollection(place, dataset) {
     .slice(0, 80);
 }
 
+async function fetchOsmTrailCollection(place) {
+  const radius = collectionQueryRadius("trail");
+  const query = `
+    [out:json][timeout:12];
+    (
+      way(around:${radius},${place.lat},${place.lon})[highway~"path|footway|track|steps|pedestrian|bridleway"];
+      way(around:${radius},${place.lat},${place.lon})[sac_scale][name];
+      way(around:${radius},${place.lat},${place.lon})[trail_visibility][name];
+    );
+    out tags center 40;
+  `;
+  const data = await fetchOverpass(query);
+  return (data.elements || [])
+    .map((item, index) => {
+      const tags = item.tags || {};
+      const center = item.center || { lat: item.lat, lon: item.lon };
+      if (!Number.isFinite(center.lat) || !Number.isFinite(center.lon)) return null;
+      const media = mediaFromTags(tags);
+      const website = tags.website || tags["contact:website"] || tags.url || "";
+      return {
+        id: `trail-${item.type}-${item.id}`,
+        type: "trail",
+        name: tags.name || `${DATASET_LABELS.trail} ${index + 1}`,
+        meta: [tags.highway, tags.route, tags.sac_scale, tags.trail_visibility, website].filter(Boolean).join(" · "),
+        source: "OpenStreetMap",
+        center,
+        distance: distanceMeters(place, center),
+        imageUrl: media.image,
+        audioUrl: media.audio,
+        website,
+        tags,
+      };
+    })
+    .filter(Boolean)
+    .filter((item) => item.distance <= currentRadiusMeters())
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 80);
+}
+
 async function fetchCollectionItems(place) {
   if (state.dataType === "species") return fetchGbifSpecies(place);
   return fetchOsmCollection(place, state.dataType);
@@ -1536,6 +1598,7 @@ function normalizeOpenBuildingMap(data, place) {
       const center = centroid(geometry) || { lat: place.lat, lon: place.lon };
       return {
         id: `obm-${tags.id || tags.osm_id || index}`,
+        type: "building",
         name: tags.name || `${place.name} 建築 ${index + 1}`,
         source: "OpenBuildingMap",
         center,
