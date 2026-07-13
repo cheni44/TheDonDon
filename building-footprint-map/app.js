@@ -1258,6 +1258,7 @@ async function geocodeAddress(query) {
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("format", "jsonv2");
   url.searchParams.set("limit", "1");
+  url.searchParams.set("addressdetails", "1");
   url.searchParams.set("q", query);
 
   const response = await fetch(url.toString(), {
@@ -1274,6 +1275,7 @@ async function geocodeAddress(query) {
     lat: Number(result.lat),
     lon: Number(result.lon),
     meta: result.display_name,
+    address: result.address || {},
   };
 }
 
@@ -1291,7 +1293,7 @@ async function reverseGeocode(lat, lon) {
     });
     if (!response.ok) return null;
     const result = await response.json();
-    return result.display_name || null;
+    return result.display_name ? { displayName: result.display_name, address: result.address || {} } : null;
   } catch {
     return null;
   }
@@ -1428,6 +1430,39 @@ function bboxPolygonWkt(place, radiusMeters) {
   return `POLYGON((${box.minLon} ${box.minLat},${box.maxLon} ${box.minLat},${box.maxLon} ${box.maxLat},${box.minLon} ${box.maxLat},${box.minLon} ${box.minLat}))`;
 }
 
+function escapeOverpassRegex(value = "") {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function cityFromAddress(address = {}) {
+  return address.city || address.town || address.municipality || address.county || address.state_district || address.state || "";
+}
+
+function cityFromDisplayName(displayName = "") {
+  const parts = displayName.split(",").map((part) => part.trim()).filter(Boolean);
+  return parts.find((part) => /[縣市]$/.test(part)) || parts.find((part) => /city|county|municipality/i.test(part)) || "";
+}
+
+async function cityForPlace(place) {
+  let city = cityFromAddress(place.address) || cityFromDisplayName(place.meta) || cityFromDisplayName(place.name);
+  if (city) return city;
+  const reverse = await reverseGeocode(place.lat, place.lon);
+  if (reverse?.address) {
+    place.address = reverse.address;
+    place.meta = place.meta || reverse.displayName;
+    city = cityFromAddress(reverse.address) || cityFromDisplayName(reverse.displayName);
+  }
+  return city || place.name || state.center.label || "";
+}
+
+function cityNameRegex(city) {
+  const trimmed = city.replace(/\s+/g, " ").trim();
+  const variants = new Set([trimmed]);
+  if (trimmed.includes("台")) variants.add(trimmed.replaceAll("台", "臺"));
+  if (trimmed.includes("臺")) variants.add(trimmed.replaceAll("臺", "台"));
+  return [...variants].filter(Boolean).map(escapeOverpassRegex).join("|");
+}
+
 async function fetchGbifSpecies(place) {
   const url = new URL("https://api.gbif.org/v1/occurrence/search");
   url.searchParams.set("hasCoordinate", "true");
@@ -1464,6 +1499,7 @@ async function fetchGbifSpecies(place) {
 
 async function fetchOsmCollection(place, dataset) {
   if (dataset === "trail") return fetchOsmTrailCollection(place);
+  if (dataset === "sports") return fetchSportsCityCollection(place);
 
   const radius = collectionQueryRadius(dataset);
   const filters = {
@@ -1531,6 +1567,97 @@ async function fetchOsmCollection(place, dataset) {
     .filter((item) => item.distance <= currentRadiusMeters())
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 80);
+}
+
+async function fetchSportsCityCollection(place) {
+  const city = await cityForPlace(place);
+  const cityRegex = cityNameRegex(city);
+  const keywords = "marathon|triathlon|cycling|bicycle|bike|swim|swimming|run|running|road race|馬拉松|三鐵|鐵人|單車|自行車|游泳|路跑";
+  const cityArea = cityRegex ? `area["boundary"="administrative"]["name"~"${cityRegex}",i]->.cityArea;` : "";
+  const areaFilter = cityRegex ? "(area.cityArea)" : `(around:${collectionQueryRadius("sports")},${place.lat},${place.lon})`;
+  const query = `
+    [out:json][timeout:18];
+    ${cityArea}
+    (
+      node${areaFilter}[sport~"running|cycling|triathlon|swimming|athletics"][name];
+      way${areaFilter}[sport~"running|cycling|triathlon|swimming|athletics"][name];
+      relation${areaFilter}[sport~"running|cycling|triathlon|swimming|athletics"][name];
+      node${areaFilter}[name~"${keywords}",i];
+      way${areaFilter}[name~"${keywords}",i];
+      relation${areaFilter}[name~"${keywords}",i];
+      node${areaFilter}[event~"${keywords}",i];
+      way${areaFilter}[event~"${keywords}",i];
+      relation${areaFilter}[event~"${keywords}",i];
+      node${areaFilter}[website~"${keywords}",i];
+      way${areaFilter}[website~"${keywords}",i];
+      relation${areaFilter}[website~"${keywords}",i];
+    );
+    out tags center geom 100;
+  `;
+  try {
+    const data = await fetchOverpass(query);
+    const items = normalizeSportsItems(data.elements || [], place, city);
+    return items.length ? items : sportsSearchFallbackItems(place, city);
+  } catch {
+    return sportsSearchFallbackItems(place, city);
+  }
+}
+
+function sportsSearchFallbackItems(place, city) {
+  const cityLabel = city || place.name || state.center.label || "目前城市";
+  const searches = [
+    ["馬拉松", "marathon road race"],
+    ["單車", "cycling bicycle race"],
+    ["三鐵", "triathlon"],
+    ["游泳", "swimming open water race"],
+  ];
+  return searches.map(([label, keywords], index) => {
+    const query = `${cityLabel} ${label} 賽事 ${keywords}`;
+    return {
+      id: `sports-city-search-${index}`,
+      type: "sports",
+      name: `${cityLabel} ${label}賽事搜尋`,
+      meta: `城市賽事網站搜尋 · ${label}`,
+      source: "Google Search",
+      center: { lat: place.lat, lon: place.lon },
+      distance: 0,
+      dateLabel: "",
+      timeRange: timeRangeLabel(),
+      website: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+      tags: {},
+    };
+  });
+}
+
+function normalizeSportsItems(elements, place, city) {
+  return elements
+    .map((item, index) => {
+      const tags = item.tags || {};
+      const center = item.center || { lat: item.lat, lon: item.lon };
+      if (!Number.isFinite(center.lat) || !Number.isFinite(center.lon)) return null;
+      const media = mediaFromTags(tags);
+      const website = tags.website || tags["contact:website"] || tags.url || "";
+      const dateLabel = [tags.start_date, tags.end_date, tags.opening_date].filter(Boolean).join(" - ");
+      return {
+        id: `sports-${item.type}-${item.id}`,
+        type: "sports",
+        name: tags.name || `${city || "城市"} 運動賽事 ${index + 1}`,
+        meta: [city, tags.sport, tags.event, tags.leisure, tags.tourism, dateLabel, website].filter(Boolean).join(" · "),
+        source: "OpenStreetMap city search",
+        center,
+        distance: distanceMeters(place, center),
+        imageUrl: media.image,
+        audioUrl: media.audio,
+        dateLabel,
+        timeRange: timeRangeLabel(),
+        website,
+        geometry: (item.geometry || []).map((point) => ({ lat: point.lat, lon: point.lon })).filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lon)),
+        tags,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 100);
 }
 
 async function fetchOsmTrailCollection(place) {
@@ -2127,12 +2254,14 @@ async function selectMapPoint(event, presetPoint = null) {
   setStatus(`已鎖定地圖選點，查詢地址與 ${state.radiusKm} km 內資料`, 3, 62);
 
   const addressPromise = reverseGeocode(point.lat, point.lon);
-  const address = await addressPromise;
+  const reverse = await addressPromise;
   if (requestId !== state.requestId) return;
 
-  if (address) {
+  if (reverse?.displayName) {
+    const address = reverse.displayName;
     picked.name = address.split(",").slice(0, 2).join(",");
     picked.meta = address;
+    picked.address = reverse.address || {};
     state.center.label = picked.name;
     addressInput.value = address;
   }
