@@ -1158,6 +1158,22 @@ h2 {
   text-decoration: underline;
 }
 
+.item-map-marker {
+  fill: rgba(255, 111, 145, 0.86);
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.item-trail-path {
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
 .wall-draw {
   stroke-dasharray: 900;
   stroke-dashoffset: 900;

@@ -759,9 +759,27 @@ function googleImageSearchLabel(item) {
   return `Google 圖片搜尋：${[item.name, iconLabelForItem(item)].filter(Boolean).join(" ")}`;
 }
 
+function sportsWebsiteSearch(item) {
+  const query = [item.name, "marathon cycling triathlon swimming event"].filter(Boolean).join(" ");
+  return {
+    label: "尋找馬拉松 / 單車 / 三鐵 / 游泳相關網站",
+    href: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+  };
+}
+
 function representativeImage(item) {
   if (item.imageUrl?.startsWith("http")) return item.imageUrl;
   return fallbackArtDataUrl(item);
+}
+
+function locationMapImage(item) {
+  const zoom = item.type === "trail" ? 13 : 14;
+  return tileUrl(zoom, lon2tile(item.center.lon, zoom), lat2tile(item.center.lat, zoom));
+}
+
+function shouldShowSideLocation(item) {
+  if (!item) return false;
+  return item.type === "species" || item.type === "building" || item.geometry;
 }
 
 function renderResultDetail(item) {
@@ -770,6 +788,7 @@ function renderResultDetail(item) {
     renderListEmpty(resultDetail, "選擇項目後，這裡會顯示實際地圖位置");
     return;
   }
+  if (!shouldShowSideLocation(item)) return;
   const card = document.createElement("article");
   card.className = "detail-card";
 
@@ -817,6 +836,44 @@ function svgLinkText(parent, text, href, x, y, className) {
   return node;
 }
 
+function renderItemMapOverlay(item) {
+  if (item.type === "trail" && item.geometry?.length) {
+    const projected = projectMiniGeometry(item.geometry);
+    if (projected) {
+      const path = document.createElementNS(SVG_NS, "polyline");
+      path.setAttribute("points", projected);
+      path.setAttribute("class", "item-trail-path");
+      floorPlan.append(path);
+    }
+  }
+
+  const marker = document.createElementNS(SVG_NS, "circle");
+  marker.setAttribute("cx", "210");
+  marker.setAttribute("cy", "95");
+  marker.setAttribute("r", "8");
+  marker.setAttribute("class", "item-map-marker");
+  floorPlan.append(marker);
+}
+
+function projectMiniGeometry(points) {
+  if (!points?.length) return "";
+  const avgLat = points.reduce((sum, point) => sum + point.lat, 0) / points.length;
+  const metersPerLon = 111320 * Math.cos((avgLat * Math.PI) / 180);
+  const projected = points.map((point) => ({ x: point.lon * metersPerLon, y: point.lat * -110540 }));
+  const xs = projected.map((point) => point.x);
+  const ys = projected.map((point) => point.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const boxWidth = Math.max(1, maxX - minX);
+  const boxHeight = Math.max(1, maxY - minY);
+  const scale = Math.min(300 / boxWidth, 118 / boxHeight);
+  const offsetX = 60 + (300 - boxWidth * scale) / 2;
+  const offsetY = 28 + (118 - boxHeight * scale) / 2;
+  return projected.map((point) => `${offsetX + (point.x - minX) * scale},${offsetY + (point.y - minY) * scale}`).join(" ");
+}
+
 function renderCollectionItemView(item) {
   state.layoutHasDirection = false;
   state.selectedDataItem = item;
@@ -829,7 +886,7 @@ function renderCollectionItemView(item) {
   image.setAttribute("width", "420");
   image.setAttribute("height", "190");
   image.setAttribute("preserveAspectRatio", "xMidYMid slice");
-  image.setAttribute("href", representativeImage(item));
+  image.setAttribute("href", item.type === "species" ? representativeImage(item) : locationMapImage(item));
   floorPlan.append(image);
 
   const overlay = document.createElementNS(SVG_NS, "rect");
@@ -839,6 +896,7 @@ function renderCollectionItemView(item) {
   overlay.setAttribute("height", "190");
   overlay.setAttribute("class", "item-image-shade");
   floorPlan.append(overlay);
+  if (item.type !== "species") renderItemMapOverlay(item);
 
   const panel = document.createElementNS(SVG_NS, "rect");
   panel.setAttribute("x", "24");
@@ -858,7 +916,15 @@ function renderCollectionItemView(item) {
     svgText(floorPlan, `時間範圍 ${item.timeRange}`, 42, lineY, "item-view-line");
     lineY += 14;
   }
-  if (!item.imageUrl?.startsWith("http")) {
+  if (item.website?.startsWith("http")) {
+    svgLinkText(floorPlan, "相關網站", item.website, 42, lineY, "item-view-link");
+    lineY += 14;
+  } else if (item.type === "sports") {
+    const search = sportsWebsiteSearch(item);
+    svgLinkText(floorPlan, search.label, search.href, 42, lineY, "item-view-link");
+    lineY += 14;
+  }
+  if (item.type === "species" && !item.imageUrl?.startsWith("http")) {
     const q = encodeURIComponent([item.name, iconLabelForItem(item)].filter(Boolean).join(" "));
     svgLinkText(floorPlan, googleImageSearchLabel(item), `https://www.google.com/search?tbm=isch&q=${q}`, 42, lineY, "item-view-link");
     lineY += 14;
@@ -929,7 +995,11 @@ function renderResultPanel(items, selectedId = "", emptyText = "此範圍沒有�
   const selectedValue = state.resultDetailUnlocked ? state.resultOptions.find((option) => option.id === selectedId)?.value || "" : "";
   resultSelect.value = selectedValue;
   const selectedItem = state.resultOptions.find((option) => option.value === selectedValue)?.item || null;
-  renderResultDetail(selectedItem);
+  if (selectedItem || state.dataType === "building" || state.dataType === "species") {
+    renderResultDetail(selectedItem);
+  } else {
+    resultDetail.replaceChildren();
+  }
 }
 
 function lon2tile(lon, zoom) {
@@ -1384,10 +1454,14 @@ async function fetchOsmCollection(place, dataset) {
       node(around:${radius},${place.lat},${place.lon})[natural=peak][name];
     `,
     sports: `
-      node(around:${radius},${place.lat},${place.lon})[sport][name];
-      way(around:${radius},${place.lat},${place.lon})[sport][name];
+      node(around:${radius},${place.lat},${place.lon})[sport~"running|cycling|triathlon|swimming|athletics"][name];
+      way(around:${radius},${place.lat},${place.lon})[sport~"running|cycling|triathlon|swimming|athletics"][name];
       node(around:${radius},${place.lat},${place.lon})[leisure~"stadium|sports_centre|pitch"][name];
       way(around:${radius},${place.lat},${place.lon})[leisure~"stadium|sports_centre|pitch"][name];
+      node(around:${radius},${place.lat},${place.lon})[name~"marathon|triathlon|cycling|bicycle|swim|run|馬拉松|三鐵|鐵人|單車|自行車|游泳|路跑",i];
+      way(around:${radius},${place.lat},${place.lon})[name~"marathon|triathlon|cycling|bicycle|swim|run|馬拉松|三鐵|鐵人|單車|自行車|游泳|路跑",i];
+      node(around:${radius},${place.lat},${place.lon})[event~"marathon|triathlon|cycling|swimming|running",i];
+      way(around:${radius},${place.lat},${place.lon})[event~"marathon|triathlon|cycling|swimming|running",i];
     `,
     music: `
       node(around:${radius},${place.lat},${place.lon})[amenity~"music_venue|theatre|arts_centre"][name];
@@ -1401,7 +1475,7 @@ async function fetchOsmCollection(place, dataset) {
     (
       ${filters[dataset] || filters.trail}
     );
-    out tags center 80;
+    out tags center geom 80;
   `;
   const data = await fetchOverpass(query);
   return (data.elements || [])
@@ -1411,11 +1485,12 @@ async function fetchOsmCollection(place, dataset) {
       if (!Number.isFinite(center.lat) || !Number.isFinite(center.lon)) return null;
       const media = mediaFromTags(tags);
       const dateLabel = [tags.start_date, tags.end_date].filter(Boolean).join(" - ");
+      const website = tags.website || tags["contact:website"] || tags.url || "";
       return {
         id: `${dataset}-${item.type}-${item.id}`,
         type: dataset,
         name: tags.name || `${DATASET_LABELS[dataset]} ${index + 1}`,
-        meta: [tags.highway, tags.route, tags.natural, tags.sport, tags.leisure, tags.amenity, tags.tourism].filter(Boolean).join(" · "),
+        meta: [tags.highway, tags.route, tags.natural, tags.sport, tags.event, tags.leisure, tags.amenity, tags.tourism, website].filter(Boolean).join(" · "),
         source: "OpenStreetMap",
         center,
         distance: distanceMeters(place, center),
@@ -1424,6 +1499,8 @@ async function fetchOsmCollection(place, dataset) {
         audioUrl: media.audio,
         dateLabel,
         timeRange: TIME_DATASETS.has(dataset) ? timeRangeLabel() : "",
+        website,
+        geometry: (item.geometry || []).map((point) => ({ lat: point.lat, lon: point.lon })).filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lon)),
         tags,
       };
     })
@@ -1699,6 +1776,7 @@ function applyBuildingResults(buildings, emptyTitle = "此位置沒有可用建�
   }
 
   renderBuildingSelect(state.buildings, state.selectedLayout.id);
+  renderResultDetail(state.selectedLayout);
   resetTraceForLayout(state.selectedLayout);
   renderBuildingOutline(state.selectedLayout);
   renderFloorOptions(state.selectedLayout);
@@ -2195,6 +2273,7 @@ function selectBuilding(layout) {
   burst(63, 42);
   renderFootprints();
   renderBuildingSelect(state.buildings, layout.id);
+  renderResultDetail(layout);
   renderBuildingOutline(layout);
   renderFloorOptions(layout);
   showLayoutView();
