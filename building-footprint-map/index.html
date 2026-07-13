@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spatial Trace | 建築配置探索</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
-    <link rel="stylesheet" href="./styles.css?v=right-panel-1" />
+    <link rel="stylesheet" href="./styles.css?v=peak-detail-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -70,7 +70,7 @@
               <select id="radiusSelect">
                 <option value="1">1 km</option>
                 <option value="5">5 km</option>
-                <option value="10">10 km</option>
+                <option value="10" selected>10 km</option>
                 <option value="50">50 km</option>
                 <option value="100">100 km</option>
                 <option value="500">500 km</option>
@@ -83,9 +83,21 @@
                 <option value="building">building 規劃</option>
                 <option value="species">生物物種 GBIF</option>
                 <option value="trail">步道</option>
+                <option value="peak">山峰高度與名稱</option>
                 <option value="sports">體育賽事</option>
                 <option value="music">音樂節慶</option>
               </select>
+            </label>
+          </div>
+
+          <div id="timeSection" class="panel-section time-section" hidden>
+            <label class="compact-field">
+              <span>開始</span>
+              <input id="timeStartInput" type="date" />
+            </label>
+            <label class="compact-field">
+              <span>結束</span>
+              <input id="timeEndInput" type="date" />
             </label>
           </div>
 
@@ -96,7 +108,7 @@
                 <option value="">尚未選定位置</option>
               </select>
             </label>
-            <div id="resultList" class="result-list" aria-live="polite"></div>
+            <div id="resultDetail" class="result-detail" aria-live="polite"></div>
           </div>
 
           <div class="panel-section floor-section">
@@ -120,6 +132,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=right-panel-1" type="module"></script>
+    <script src="./app.js?v=peak-detail-1" type="module"></script>
   </body>
 </html>

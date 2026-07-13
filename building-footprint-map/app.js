@@ -20,7 +20,10 @@ const exportButton = document.querySelector("#exportButton");
 const radiusSelect = document.querySelector("#radiusSelect");
 const dataTypeSelect = document.querySelector("#dataTypeSelect");
 const resultSelect = document.querySelector("#resultSelect");
-const resultList = document.querySelector("#resultList");
+const resultDetail = document.querySelector("#resultDetail");
+const timeSection = document.querySelector("#timeSection");
+const timeStartInput = document.querySelector("#timeStartInput");
+const timeEndInput = document.querySelector("#timeEndInput");
 const scanBurst = document.querySelector("#scanBurst");
 const statusText = document.querySelector("#statusText");
 const progressBar = document.querySelector("#progressBar");
@@ -53,9 +56,12 @@ const DATASET_LABELS = {
   building: "building 規劃",
   species: "生物物種 GBIF",
   trail: "步道",
+  peak: "山峰高度與名稱",
   sports: "體育賽事",
   music: "音樂節慶",
 };
+
+const TIME_DATASETS = new Set(["sports", "music"]);
 
 const state = {
   center: { lat: 25.033, lon: 121.5654, label: "台北 101 周邊" },
@@ -73,8 +79,11 @@ const state = {
   view: "map",
   pickerOptions: [],
   resultOptions: [],
+  resultDetailUnlocked: false,
   dataType: "building",
-  radiusKm: 1,
+  radiusKm: 10,
+  timeStart: "",
+  timeEnd: "",
   dataItems: [],
   layoutBaseViewBox: { ...BASE_LAYOUT_VIEWBOX },
   layoutViewBox: { ...BASE_LAYOUT_VIEWBOX },
@@ -107,6 +116,55 @@ function currentRadiusMeters() {
 
 function cappedRadiusMeters(maxMeters) {
   return Math.min(currentRadiusMeters(), maxMeters);
+}
+
+function dateInputValue(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function addMonths(date, months) {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+}
+
+function addYears(date, years) {
+  const next = new Date(date);
+  next.setFullYear(next.getFullYear() + years);
+  return next;
+}
+
+function initializeTimeRange() {
+  const now = new Date();
+  state.timeStart = dateInputValue(now);
+  state.timeEnd = dateInputValue(addMonths(now, 1));
+  radiusSelect.value = String(state.radiusKm);
+  dataTypeSelect.value = state.dataType;
+  timeStartInput.value = state.timeStart;
+  timeEndInput.value = state.timeEnd;
+  timeStartInput.min = state.timeStart;
+  timeStartInput.max = dateInputValue(addYears(now, 1));
+  timeEndInput.min = state.timeStart;
+  timeEndInput.max = dateInputValue(addYears(now, 1));
+}
+
+function syncTimeControls() {
+  const usesTime = TIME_DATASETS.has(state.dataType);
+  timeSection.hidden = !usesTime;
+  if (!usesTime) return;
+  const start = timeStartInput.value || state.timeStart;
+  const maxEnd = dateInputValue(addYears(new Date(start), 1));
+  timeEndInput.min = start;
+  timeEndInput.max = maxEnd;
+  if (!timeEndInput.value || timeEndInput.value < start) timeEndInput.value = dateInputValue(addMonths(new Date(start), 1));
+  if (timeEndInput.value > maxEnd) timeEndInput.value = maxEnd;
+  state.timeStart = start;
+  state.timeEnd = timeEndInput.value;
+}
+
+function timeRangeLabel() {
+  if (!TIME_DATASETS.has(state.dataType)) return "";
+  return `${state.timeStart} 至 ${state.timeEnd}`;
 }
 
 function setStatus(text, step, progress) {
@@ -600,13 +658,14 @@ function addPickerMenuOption(label, index, selected = false) {
 
 function resetResultPanel(message = "定位後會顯示符合範圍的項目") {
   state.resultOptions = [];
+  state.resultDetailUnlocked = false;
   resultSelect.replaceChildren();
   const option = document.createElement("option");
   option.value = "";
   option.textContent = message;
   resultSelect.append(option);
-  resultList.replaceChildren();
-  renderListEmpty(resultList, message);
+  resultDetail.replaceChildren();
+  renderListEmpty(resultDetail, message);
 }
 
 function itemLabel(item, index) {
@@ -614,6 +673,9 @@ function itemLabel(item, index) {
     const dimensions = item.dimensions ? `${item.dimensions.width}m x ${item.dimensions.depth}m` : "";
     const floors = item.floors ? `${item.floors} 層` : "";
     return [`建築 #${index + 1}`, item.name, `${item.distance}m`, item.kind, `${Math.round(item.area)}m²`, dimensions, floors, item.source].filter(Boolean).join(" · ");
+  }
+  if (item.type === "peak") {
+    return [`山峰 #${index + 1}`, item.name, item.elevation ? `${item.elevation}m` : "", `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
   }
   return [`${DATASET_LABELS[item.type]} #${index + 1}`, item.name, `${Math.round(item.distance)}m`, item.meta, item.source].filter(Boolean).join(" · ");
 }
@@ -624,13 +686,89 @@ function itemMeta(item) {
     const floors = item.floors ? `${item.floors} 層` : "未標註樓層";
     return `${Math.round(item.area)}m² · ${dimensions} · ${floors} · ${item.source}`;
   }
-  return [item.meta, `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
+  if (item.type === "peak") {
+    return [item.elevation ? `高度 ${item.elevation}m` : "高度未知", `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
+  }
+  return [item.meta, item.dateLabel, `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
+}
+
+function mediaFromTags(tags = {}) {
+  const image = tags.image || tags.wikimedia_commons || tags["contact:website"] || "";
+  const audio = tags.audio || tags.sound || tags["media:audio"] || "";
+  return { image, audio };
+}
+
+function representativeImage(item) {
+  if (item.imageUrl?.startsWith("http")) return item.imageUrl;
+  const zoom = item.type === "peak" ? 13 : 15;
+  return tileUrl(zoom, lon2tile(item.center.lon, zoom), lat2tile(item.center.lat, zoom));
+}
+
+function renderResultDetail(item) {
+  resultDetail.replaceChildren();
+  if (!item) {
+    renderListEmpty(resultDetail, "請先從下拉選單選擇集錦項目");
+    return;
+  }
+  const card = document.createElement("article");
+  card.className = "detail-card";
+
+  const imageWrap = document.createElement("div");
+  imageWrap.className = "detail-image";
+  const image = document.createElement("img");
+  image.alt = item.name;
+  image.loading = "lazy";
+  image.decoding = "async";
+  image.src = representativeImage(item);
+  imageWrap.append(image);
+
+  const title = document.createElement("h2");
+  title.className = "detail-title";
+  title.textContent = item.name;
+
+  const meta = document.createElement("p");
+  meta.className = "detail-meta";
+  meta.textContent = itemMeta(item);
+
+  const coordinate = document.createElement("p");
+  coordinate.className = "detail-line";
+  coordinate.textContent = `${item.center.lat.toFixed(5)}, ${item.center.lon.toFixed(5)}`;
+
+  card.append(imageWrap, title, meta, coordinate);
+
+  const detailLines = [
+    item.kind ? `類型：${item.kind}` : "",
+    item.elevation ? `海拔：${item.elevation} m` : "",
+    item.timeRange ? `時間範圍：${item.timeRange}` : "",
+    item.source ? `資料來源：${item.source}` : "",
+  ].filter(Boolean);
+  detailLines.forEach((line) => {
+    const node = document.createElement("p");
+    node.className = "detail-line";
+    node.textContent = line;
+    card.append(node);
+  });
+
+  if (item.audioUrl?.startsWith("http")) {
+    const audio = document.createElement("audio");
+    audio.className = "detail-audio";
+    audio.controls = true;
+    audio.src = item.audioUrl;
+    card.append(audio);
+  }
+
+  resultDetail.append(card);
 }
 
 function activateResultOption(value) {
-  if (!value) return false;
+  if (!value) {
+    state.resultDetailUnlocked = false;
+    renderResultDetail(null);
+    return false;
+  }
   const option = state.resultOptions.find((entry) => entry.value === value);
   if (!option) return false;
+  state.resultDetailUnlocked = true;
   if (option.kind === "building") {
     selectBuilding(option.item);
     return true;
@@ -642,16 +780,21 @@ function activateResultOption(value) {
 function renderResultPanel(items, selectedId = "", emptyText = "此範圍沒有可用資料") {
   state.resultOptions = [];
   resultSelect.replaceChildren();
-  resultList.replaceChildren();
+  resultDetail.replaceChildren();
 
   if (!items.length) {
     const empty = document.createElement("option");
     empty.value = "";
     empty.textContent = emptyText;
     resultSelect.append(empty);
-    renderListEmpty(resultList, emptyText);
+    renderListEmpty(resultDetail, emptyText);
     return;
   }
+
+  const prompt = document.createElement("option");
+  prompt.value = "";
+  prompt.textContent = `選擇 ${DATASET_LABELS[state.dataType]} 項目`;
+  resultSelect.append(prompt);
 
   items.forEach((item, index) => {
     const kind = item.type === "building" || item.geometry ? "building" : "data";
@@ -663,27 +806,12 @@ function renderResultPanel(items, selectedId = "", emptyText = "此範圍沒有�
     option.value = value;
     option.textContent = label;
     resultSelect.append(option);
-
-    const button = document.createElement("button");
-    button.className = "result-item";
-    button.classList.toggle("selected", item.id === selectedId);
-    button.type = "button";
-    button.dataset.value = value;
-    button.innerHTML = `<span class="result-title"></span><span class="result-meta"></span>`;
-    button.querySelector(".result-title").textContent = label;
-    button.querySelector(".result-meta").textContent = itemMeta(item);
-    button.addEventListener("click", () => {
-      resultSelect.value = value;
-      activateResultOption(value);
-    });
-    resultList.append(button);
   });
 
-  const selectedValue = state.resultOptions.find((option) => option.id === selectedId)?.value || state.resultOptions[0]?.value || "";
+  const selectedValue = state.resultDetailUnlocked ? state.resultOptions.find((option) => option.id === selectedId)?.value || "" : "";
   resultSelect.value = selectedValue;
-  resultList.querySelectorAll(".result-item").forEach((node) => {
-    node.classList.toggle("selected", node.dataset.value === selectedValue);
-  });
+  const selectedItem = state.resultOptions.find((option) => option.value === selectedValue)?.item || null;
+  renderResultDetail(selectedItem);
 }
 
 function lon2tile(lon, zoom) {
@@ -1101,15 +1229,22 @@ async function fetchGbifSpecies(place) {
   const data = await fetchJsonWithTimeout(url.toString(), 12000);
   return (data.results || [])
     .filter((item) => Number.isFinite(item.decimalLatitude) && Number.isFinite(item.decimalLongitude))
-    .map((item, index) => ({
-      id: `gbif-${item.key || index}`,
-      type: "species",
-      name: item.species || item.acceptedScientificName || item.scientificName || "未命名物種",
-      meta: [item.kingdom, item.country, item.eventDate?.slice(0, 10)].filter(Boolean).join(" · "),
-      source: "GBIF",
-      center: { lat: item.decimalLatitude, lon: item.decimalLongitude },
-      distance: distanceMeters(place, { lat: item.decimalLatitude, lon: item.decimalLongitude }),
-    }))
+    .map((item, index) => {
+      const media = Array.isArray(item.media) ? item.media : [];
+      const image = media.find((entry) => entry.type === "StillImage" || entry.format?.startsWith("image"))?.identifier;
+      const audio = media.find((entry) => entry.type === "Sound" || entry.format?.startsWith("audio"))?.identifier;
+      return {
+        id: `gbif-${item.key || index}`,
+        type: "species",
+        name: item.species || item.acceptedScientificName || item.scientificName || "未命名物種",
+        meta: [item.kingdom, item.country, item.eventDate?.slice(0, 10)].filter(Boolean).join(" · "),
+        source: "GBIF",
+        center: { lat: item.decimalLatitude, lon: item.decimalLongitude },
+        distance: distanceMeters(place, { lat: item.decimalLatitude, lon: item.decimalLongitude }),
+        imageUrl: image || "",
+        audioUrl: audio || "",
+      };
+    })
     .filter((item) => item.distance <= currentRadiusMeters())
     .slice(0, 60);
 }
@@ -1120,6 +1255,9 @@ async function fetchOsmCollection(place, dataset) {
     trail: `
       way(around:${radius},${place.lat},${place.lon})[highway~"path|footway|track"][name];
       relation(around:${radius},${place.lat},${place.lon})[route~"hiking|foot"][name];
+    `,
+    peak: `
+      node(around:${radius},${place.lat},${place.lon})[natural=peak][name];
     `,
     sports: `
       node(around:${radius},${place.lat},${place.lon})[sport][name];
@@ -1147,14 +1285,22 @@ async function fetchOsmCollection(place, dataset) {
       const tags = item.tags || {};
       const center = item.center || { lat: item.lat, lon: item.lon };
       if (!Number.isFinite(center.lat) || !Number.isFinite(center.lon)) return null;
+      const media = mediaFromTags(tags);
+      const dateLabel = [tags.start_date, tags.end_date].filter(Boolean).join(" - ");
       return {
         id: `${dataset}-${item.type}-${item.id}`,
         type: dataset,
         name: tags.name || `${DATASET_LABELS[dataset]} ${index + 1}`,
-        meta: [tags.highway, tags.route, tags.sport, tags.leisure, tags.amenity, tags.tourism].filter(Boolean).join(" · "),
+        meta: [tags.highway, tags.route, tags.natural, tags.sport, tags.leisure, tags.amenity, tags.tourism].filter(Boolean).join(" · "),
         source: "OpenStreetMap",
         center,
         distance: distanceMeters(place, center),
+        elevation: Number.parseInt(String(tags.ele || "").replace(/[^0-9.-]/g, ""), 10) || null,
+        imageUrl: media.image,
+        audioUrl: media.audio,
+        dateLabel,
+        timeRange: TIME_DATASETS.has(dataset) ? timeRangeLabel() : "",
+        tags,
       };
     })
     .filter(Boolean)
@@ -1339,8 +1485,10 @@ function renderCollectionSelect(items, selectedId = "") {
 async function loadSelectedDataset(place, options = {}) {
   const requestId = ++state.requestId;
   const label = DATASET_LABELS[state.dataType];
+  syncTimeControls();
+  const timeText = timeRangeLabel();
   hideLayoutView();
-  showLoading(`正在下載${label}`, `範圍 ${state.radiusKm} km · 整理地圖集錦資料`);
+  showLoading(`正在下載${label}`, [`範圍 ${state.radiusKm} km`, timeText, "整理地圖集錦資料"].filter(Boolean).join(" · "));
   floorList.replaceChildren();
   resetResultPanel(`正在查詢 ${label}`);
   sourceSummary.textContent = "資料來源：查詢中";
@@ -1512,10 +1660,9 @@ function focusDataItem(item) {
   markSelection(Math.max(0, Math.min(1, ratio.xRatio)), Math.max(0, Math.min(1, ratio.yRatio)));
   const value = state.resultOptions.find((option) => option.id === item.id)?.value || "";
   if (value) {
+    state.resultDetailUnlocked = true;
     resultSelect.value = value;
-    resultList.querySelectorAll(".result-item").forEach((node) => {
-      node.classList.toggle("selected", node.dataset.value === value);
-    });
+    renderResultDetail(item);
   }
   setStatus(`${DATASET_LABELS[item.type]}：${item.name}`, 3, 82);
 }
@@ -1976,10 +2123,11 @@ function handleAddressKeydown(event) {
 function handleCollectionSettingsChange() {
   state.radiusKm = Number(radiusSelect.value);
   state.dataType = dataTypeSelect.value;
+  syncTimeControls();
   if (state.selectedPlace) {
     loadSelectedDataset(state.selectedPlace, { openLayout: state.dataType === "building" });
   } else {
-    setStatus(`已切換為 ${DATASET_LABELS[state.dataType]} · ${state.radiusKm} km`, 2, 42);
+    setStatus([`已切換為 ${DATASET_LABELS[state.dataType]}`, `${state.radiusKm} km`, timeRangeLabel()].filter(Boolean).join(" · "), 2, 42);
   }
 }
 
@@ -2024,7 +2172,7 @@ async function searchAddress(event) {
     renderTiles(state.center);
     renderPlaceSelect([place], place.id);
     setStatus("地址已定位，查詢附近資料", 2, 46);
-    showLoading("正在下載附近建築資料", "讀取 OSM / OpenBuildingMap footprint，完成後會顯示 layout");
+    showLoading("正在下載附近資料", `準備查詢 ${DATASET_LABELS[state.dataType]} 資料集`);
 
     const nearbyPlaces = await fetchNearbyPlaces(state.center, { silent: true });
     if (requestId !== state.requestId) return;
@@ -2064,6 +2212,8 @@ addressInput.addEventListener("change", usePickerSelection);
 addressInput.addEventListener("keydown", handleAddressKeydown);
 radiusSelect.addEventListener("change", handleCollectionSettingsChange);
 dataTypeSelect.addEventListener("change", handleCollectionSettingsChange);
+timeStartInput.addEventListener("change", handleCollectionSettingsChange);
+timeEndInput.addEventListener("change", handleCollectionSettingsChange);
 resultSelect.addEventListener("change", () => {
   activateResultOption(resultSelect.value);
 });
@@ -2114,4 +2264,6 @@ window.addEventListener("resize", () => {
   renderActiveMapLayer();
 });
 
+initializeTimeRange();
+syncTimeControls();
 boot();
