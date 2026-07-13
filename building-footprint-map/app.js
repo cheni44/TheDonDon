@@ -37,6 +37,7 @@ const floorList = document.querySelector("#floorList");
 const floorPlan = document.querySelector("#floorPlan");
 const sourceSummary = document.querySelector("#sourceSummary");
 const tileCache = new Map();
+const vernacularNameCache = new Map();
 let renderToken = 0;
 const LONG_PRESS_MOVE_TOLERANCE = 12;
 const MIN_MAP_ZOOM = 6;
@@ -715,6 +716,9 @@ function itemLabel(item, index) {
   if (item.type === "peak") {
     return [`山峰 #${index + 1}`, item.name, item.elevation ? `${item.elevation}m` : "", `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
   }
+  if (item.type === "species") {
+    return [item.displayName || item.commonName || item.name, item.scientificName && item.scientificName !== (item.displayName || item.commonName) ? item.scientificName : "", `${Math.round(item.distance)}m`].filter(Boolean).join(" · ");
+  }
   return [`${DATASET_LABELS[item.type]} #${index + 1}`, item.name, `${Math.round(item.distance)}m`, item.meta, item.source].filter(Boolean).join(" · ");
 }
 
@@ -726,6 +730,9 @@ function itemMeta(item) {
   }
   if (item.type === "peak") {
     return [item.elevation ? `高度 ${item.elevation}m` : "高度未知", `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
+  }
+  if (item.type === "species") {
+    return [item.scientificName, item.meta, `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
   }
   return [item.meta, item.dateLabel, `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
 }
@@ -992,7 +999,7 @@ function renderResultPanel(items, selectedId = "", emptyText = "此範圍沒有�
 
   const prompt = document.createElement("option");
   prompt.value = "";
-  prompt.textContent = `選擇 ${DATASET_LABELS[state.dataType]} 項目`;
+  prompt.textContent = state.dataType === "species" ? "選擇物種" : `選擇 ${DATASET_LABELS[state.dataType]} 項目`;
   resultSelect.append(prompt);
 
   items.forEach((item, index) => {
@@ -1463,6 +1470,41 @@ function cityNameRegex(city) {
   return [...variants].filter(Boolean).map(escapeOverpassRegex).join("|");
 }
 
+function preferredChineseVernacular(names = []) {
+  const preferred = names.find((entry) => /^(zh|zho|chi|cmn)/i.test(entry.language || "") && entry.vernacularName);
+  if (preferred) return preferred.vernacularName;
+  const chineseCountry = names.find((entry) => /taiwan|china|hong kong/i.test(entry.country || "") && entry.vernacularName);
+  if (chineseCountry) return chineseCountry.vernacularName;
+  const cjk = names.find((entry) => /[\u3400-\u9fff]/.test(entry.vernacularName || ""));
+  return cjk?.vernacularName || "";
+}
+
+async function fetchChineseVernacularName(taxonKey) {
+  if (!taxonKey) return "";
+  if (vernacularNameCache.has(taxonKey)) return vernacularNameCache.get(taxonKey);
+  try {
+    const data = await fetchJsonWithTimeout(`https://api.gbif.org/v1/species/${taxonKey}/vernacularNames`, 6000);
+    const name = preferredChineseVernacular(data.results || []);
+    vernacularNameCache.set(taxonKey, name);
+    return name;
+  } catch {
+    vernacularNameCache.set(taxonKey, "");
+    return "";
+  }
+}
+
+async function enrichSpeciesNames(items) {
+  const targets = items.filter((item) => item.taxonKey).slice(0, 24);
+  await Promise.all(targets.map(async (item) => {
+    const commonName = await fetchChineseVernacularName(item.taxonKey);
+    if (commonName) {
+      item.commonName = commonName;
+      item.displayName = commonName;
+    }
+  }));
+  return items;
+}
+
 async function fetchGbifSpecies(place) {
   const url = new URL("https://api.gbif.org/v1/occurrence/search");
   url.searchParams.set("hasCoordinate", "true");
@@ -1473,28 +1515,33 @@ async function fetchGbifSpecies(place) {
     url.searchParams.set(group.param, group.key);
   }
   const data = await fetchJsonWithTimeout(url.toString(), 12000);
-  return (data.results || [])
+  const items = (data.results || [])
     .filter((item) => Number.isFinite(item.decimalLatitude) && Number.isFinite(item.decimalLongitude))
     .map((item, index) => {
       const media = Array.isArray(item.media) ? item.media : [];
       const image = media.find((entry) => entry.type === "StillImage" || entry.format?.startsWith("image"))?.identifier;
       const audio = media.find((entry) => entry.type === "Sound" || entry.format?.startsWith("audio"))?.identifier;
+      const scientificName = item.species || item.acceptedScientificName || item.scientificName || "未命名物種";
       return {
         id: `gbif-${item.key || index}`,
         type: "species",
-        name: item.species || item.acceptedScientificName || item.scientificName || "未命名物種",
+        name: scientificName,
+        displayName: scientificName,
+        scientificName,
         meta: [item.kingdom, item.country, item.eventDate?.slice(0, 10)].filter(Boolean).join(" · "),
         source: "GBIF",
         center: { lat: item.decimalLatitude, lon: item.decimalLongitude },
         distance: distanceMeters(place, { lat: item.decimalLatitude, lon: item.decimalLongitude }),
         imageUrl: image || "",
         audioUrl: audio || "",
+        taxonKey: item.speciesKey || item.acceptedTaxonKey || item.taxonKey,
         speciesGroup: state.speciesGroup,
         speciesGroupLabel: group.label,
       };
     })
     .filter((item) => item.distance <= currentRadiusMeters())
     .slice(0, 60);
+  return enrichSpeciesNames(items);
 }
 
 async function fetchOsmCollection(place, dataset) {
