@@ -38,6 +38,8 @@ const floorPlan = document.querySelector("#floorPlan");
 const sourceSummary = document.querySelector("#sourceSummary");
 const tileCache = new Map();
 const vernacularNameCache = new Map();
+const wikidataNameCache = new Map();
+const translatedNameCache = new Map();
 let renderToken = 0;
 const LONG_PRESS_MOVE_TOLERANCE = 12;
 const MIN_MAP_ZOOM = 6;
@@ -1493,14 +1495,63 @@ async function fetchChineseVernacularName(taxonKey) {
   }
 }
 
+async function fetchWikidataChineseName(scientificName) {
+  const name = (scientificName || "").trim();
+  if (!name) return "";
+  if (wikidataNameCache.has(name)) return wikidataNameCache.get(name);
+  const sparql = `
+    SELECT ?item ?itemLabel WHERE {
+      ?item wdt:P225 "${name.replaceAll('"', '\\"')}".
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "zh-tw,zh-hant,zh,en". }
+    }
+    LIMIT 1
+  `;
+  try {
+    const url = new URL("https://query.wikidata.org/sparql");
+    url.searchParams.set("query", sparql);
+    url.searchParams.set("format", "json");
+    const data = await fetchJsonWithTimeout(url.toString(), 8000);
+    const label = data.results?.bindings?.[0]?.itemLabel?.value || "";
+    const isUseful = label && label !== name && /[\u3400-\u9fff]/.test(label);
+    wikidataNameCache.set(name, isUseful ? label : "");
+    return wikidataNameCache.get(name);
+  } catch {
+    wikidataNameCache.set(name, "");
+    return "";
+  }
+}
+
+async function translateSpeciesName(scientificName) {
+  const name = (scientificName || "").trim();
+  if (!name) return "";
+  if (translatedNameCache.has(name)) return translatedNameCache.get(name);
+  try {
+    const url = new URL("https://translate.googleapis.com/translate_a/single");
+    url.searchParams.set("client", "gtx");
+    url.searchParams.set("sl", "auto");
+    url.searchParams.set("tl", "zh-TW");
+    url.searchParams.set("dt", "t");
+    url.searchParams.set("q", name);
+    const data = await fetchJsonWithTimeout(url.toString(), 6000);
+    const translated = Array.isArray(data?.[0]) ? data[0].map((part) => part?.[0] || "").join("").trim() : "";
+    const isUseful = translated && translated !== name && /[\u3400-\u9fff]/.test(translated);
+    translatedNameCache.set(name, isUseful ? translated : "");
+    return translatedNameCache.get(name);
+  } catch {
+    translatedNameCache.set(name, "");
+    return "";
+  }
+}
+
 async function enrichSpeciesNames(items) {
   const targets = items.filter((item) => item.taxonKey).slice(0, 24);
   await Promise.all(targets.map(async (item) => {
-    const commonName = await fetchChineseVernacularName(item.taxonKey);
-    if (commonName) {
-      item.commonName = commonName;
-      item.displayName = commonName;
-    }
+    const commonName = await fetchChineseVernacularName(item.taxonKey)
+      || await fetchWikidataChineseName(item.scientificName)
+      || await translateSpeciesName(item.scientificName);
+    if (!commonName) return;
+    item.commonName = commonName;
+    item.displayName = commonName;
   }));
   return items;
 }
