@@ -30,6 +30,7 @@ jobs:
       #   mosquito-detector-web/ → _site/mosquito-detector-web/
       #   rainy-drive/     → _site/rainy-drive/
       #   building-footprint-map/ → _site/building-footprint-map/
+      #   economic-simulation-map/ → _site/economic-simulation-map/
       - name: Build unified site
         run: |
           mkdir -p _site
@@ -37,6 +38,7 @@ jobs:
           cp -r mosquito-detector-web _site/mosquito-detector-web
           cp -r rainy-drive _site/rainy-drive
           cp -r building-footprint-map _site/building-footprint-map
+          cp -r economic-simulation-map _site/economic-simulation-map
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
