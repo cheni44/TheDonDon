@@ -427,6 +427,14 @@ button {
   min-width: 0;
 }
 
+.brand-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
 .brand-mark {
   width: 34px;
   height: 34px;
@@ -998,7 +1006,8 @@ h2 {
   background: rgba(164, 255, 143, 0.14);
 }
 
-.back-button {
+.back-button,
+.mode-toggle {
   height: 32px;
   padding: 0 10px;
   border: 1px solid rgba(85, 240, 255, 0.34);
@@ -1009,9 +1018,27 @@ h2 {
   font-weight: 760;
 }
 
-.back-button:hover {
+.back-button:hover,
+.mode-toggle:hover {
   border-color: rgba(85, 240, 255, 0.78);
   background: rgba(85, 240, 255, 0.16);
+}
+
+.mode-toggle {
+  border-color: rgba(164, 255, 143, 0.36);
+  background: rgba(164, 255, 143, 0.08);
+  color: var(--text);
+}
+
+.mode-toggle.active {
+  border-color: rgba(164, 255, 143, 0.82);
+  background: rgba(164, 255, 143, 0.18);
+  box-shadow: 0 0 22px rgba(164, 255, 143, 0.16);
+}
+
+.stage.trace-mode .map-panel {
+  outline: 1px solid rgba(164, 255, 143, 0.34);
+  outline-offset: -1px;
 }
 
 .inline-actions {
@@ -1441,6 +1468,16 @@ h2 {
   .back-button {
     height: 30px;
     padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .brand-actions {
+    gap: 4px;
+  }
+
+  .mode-toggle {
+    height: 30px;
+    padding: 0 8px;
     font-size: 13px;
   }
 

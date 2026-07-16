@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spatial Trace | 建築配置探索</title>
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
-    <link rel="stylesheet" href="./styles.css?v=gbif-audio-picker-1" />
+    <link rel="stylesheet" href="./styles.css?v=trace-mode-toggle-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -51,7 +51,10 @@
               <p class="eyebrow">Open Data Spatial System</p>
               <h1>Spatial Trace</h1>
             </div>
-            <button id="locateButton" class="back-button" type="button" title="使用 IP 取得大略位置">IP 定位</button>
+            <div class="brand-actions">
+              <button id="modeToggleButton" class="mode-toggle" type="button" aria-pressed="false" title="切換 Trace 模式">Trace</button>
+              <button id="locateButton" class="back-button" type="button" title="使用 IP 取得大略位置">IP 定位</button>
+            </div>
           </div>
 
           <div class="panel-section location-section">
@@ -147,6 +150,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=gbif-audio-picker-1" type="module"></script>
+    <script src="./app.js?v=trace-mode-toggle-1" type="module"></script>
   </body>
 </html>

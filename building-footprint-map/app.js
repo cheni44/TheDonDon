@@ -10,6 +10,7 @@ const loadingText = document.querySelector("#loadingText");
 const loadingDetail = document.querySelector("#loadingDetail");
 const selectionMarker = document.querySelector("#selectionMarker");
 const locateButton = document.querySelector("#locateButton");
+const modeToggleButton = document.querySelector("#modeToggleButton");
 const zoomInButton = document.querySelector("#zoomInButton");
 const zoomOutButton = document.querySelector("#zoomOutButton");
 const zoomBadge = document.querySelector("#zoomBadge");
@@ -94,6 +95,7 @@ const state = {
   animationFrame: 0,
   requestId: 0,
   view: "map",
+  mode: "explore",
   pickerOptions: [],
   resultOptions: [],
   resultDetailUnlocked: false,
@@ -288,6 +290,27 @@ function hideLayoutView() {
 function showMapView() {
   hideLayoutView();
   setStatus("已返回地圖，可拖拉縮放並重新選點", 2, 42);
+}
+
+function syncModeUi() {
+  const traceMode = state.mode === "trace";
+  stage.classList.toggle("trace-mode", traceMode);
+  modeToggleButton.classList.toggle("active", traceMode);
+  modeToggleButton.setAttribute("aria-pressed", String(traceMode));
+  modeToggleButton.textContent = traceMode ? "Explore" : "Trace";
+  modeToggleButton.title = traceMode ? "返回資料探索模式" : "切換 Trace 模式";
+}
+
+function toggleTraceMode() {
+  state.mode = state.mode === "trace" ? "explore" : "trace";
+  syncModeUi();
+  if (state.mode === "trace") {
+    prepareLayoutTracking();
+    setStatus("Trace 模式：長按地圖或 layout 設定目前位置，會用手機方向與定位畫出路徑", 2, 54);
+    return;
+  }
+  stopLayoutTracking();
+  setStatus("Explore 模式：可查詢地圖集錦、選擇資料與查看 layout", 2, 42);
 }
 
 function clearLongPress() {
@@ -2785,6 +2808,7 @@ locateButton.addEventListener("click", () => {
   }
   boot();
 });
+modeToggleButton.addEventListener("click", toggleTraceMode);
 addressForm.addEventListener("submit", searchAddress);
 addressInput.addEventListener("focus", showPickerMenu);
 addressInput.addEventListener("click", showPickerMenu);
@@ -2848,4 +2872,5 @@ window.addEventListener("resize", () => {
 
 initializeTimeRange();
 syncDatasetControls();
+syncModeUi();
 boot();
