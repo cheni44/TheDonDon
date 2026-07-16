@@ -719,7 +719,8 @@ function itemLabel(item, index) {
     return [`山峰 #${index + 1}`, item.name, item.elevation ? `${item.elevation}m` : "", `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
   }
   if (item.type === "species") {
-    return [item.displayName || item.commonName || item.name, item.scientificName && item.scientificName !== (item.displayName || item.commonName) ? item.scientificName : "", `${Math.round(item.distance)}m`].filter(Boolean).join(" · ");
+    const audioLabel = item.audioUrl?.startsWith("http") ? "有聲音" : "";
+    return [audioLabel, item.displayName || item.commonName || item.name, item.scientificName && item.scientificName !== (item.displayName || item.commonName) ? item.scientificName : "", `${Math.round(item.distance)}m`].filter(Boolean).join(" · ");
   }
   return [`${DATASET_LABELS[item.type]} #${index + 1}`, item.name, `${Math.round(item.distance)}m`, item.meta, item.source].filter(Boolean).join(" · ");
 }
@@ -837,6 +838,19 @@ function renderResultDetail(item) {
   source.textContent = `資料來源：${item.source}`;
 
   card.append(title, meta, coordinate, distance, source);
+  if (item.audioUrl?.startsWith("http")) {
+    const audioMeta = document.createElement("p");
+    audioMeta.className = "detail-line";
+    audioMeta.textContent = ["GBIF 聲音資料", item.audioFormat, item.audioTitle].filter(Boolean).join(" · ");
+
+    const audio = document.createElement("audio");
+    audio.className = "detail-audio";
+    audio.controls = true;
+    audio.preload = "none";
+    audio.src = item.audioUrl;
+
+    card.append(audioMeta, audio);
+  }
   resultDetail.append(card);
 }
 
@@ -1633,7 +1647,8 @@ async function fetchGbifSpecies(place) {
     .map((item, index) => {
       const media = Array.isArray(item.media) ? item.media : [];
       const image = media.find((entry) => entry.type === "StillImage" || entry.format?.startsWith("image"))?.identifier;
-      const audio = media.find((entry) => entry.type === "Sound" || entry.format?.startsWith("audio"))?.identifier;
+      const audioEntry = media.find((entry) => entry.type === "Sound" || entry.format?.startsWith("audio"));
+      const audio = audioEntry?.identifier;
       const scientificName = item.species || item.acceptedScientificName || item.scientificName || "未命名物種";
       return {
         id: `gbif-${item.key || index}`,
@@ -1647,6 +1662,8 @@ async function fetchGbifSpecies(place) {
         distance: distanceMeters(place, { lat: item.decimalLatitude, lon: item.decimalLongitude }),
         imageUrl: image || "",
         audioUrl: audio || "",
+        audioTitle: audioEntry?.title || audioEntry?.description || "",
+        audioFormat: audioEntry?.format || "",
         taxonKey: item.speciesKey || item.acceptedTaxonKey || item.taxonKey,
         speciesGroup: state.speciesGroup,
         speciesGroupLabel: group.label,
