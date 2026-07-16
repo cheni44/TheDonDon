@@ -59,12 +59,12 @@ const OVERPASS_ENDPOINTS = [
 ];
 
 const DATASET_LABELS = {
-  building: "building 規劃",
   species: "生物物種 GBIF",
   trail: "步道",
   peak: "山峰高度與名稱",
   sports: "體育賽事",
   music: "音樂節慶",
+  building: "building 規劃",
 };
 
 const TIME_DATASETS = new Set(["sports", "music"]);
@@ -97,7 +97,7 @@ const state = {
   pickerOptions: [],
   resultOptions: [],
   resultDetailUnlocked: false,
-  dataType: "building",
+  dataType: "species",
   radiusKm: 10,
   speciesGroup: "all",
   timeStart: "",
@@ -2648,13 +2648,20 @@ async function boot() {
   await sleep(420);
   const places = await fetchNearbyPlaces(center);
   if (requestId !== state.requestId) return;
-  state.places = places;
-  renderPlaceSelect(state.places);
-  if (!state.places.length) {
-    setStatus("可手動輸入住址，或在地圖長按選定位置", 2, 36);
-    return;
-  }
-  setStatus("可手動輸入住址、選擇附近位置，或在地圖長按選點", 2, 42);
+  const ipPlace = {
+    id: "ip-location",
+    name: center.label || "IP 定位位置",
+    type: "ip-location",
+    lat: center.lat,
+    lon: center.lon,
+    meta: "IP 定位大略位置",
+  };
+  state.selectedPlace = ipPlace;
+  state.places = [ipPlace, ...places.filter((place) => distanceMeters(ipPlace, place) > 5)].slice(0, 7);
+  renderPlaceSelect(state.places, ipPlace.id);
+  markSelection();
+  setStatus(`已使用 IP 定位載入 ${DATASET_LABELS[state.dataType]}`, 2, 42);
+  await loadSelectedDataset(ipPlace, { openLayout: state.dataType === "building" });
 }
 
 function usePickerSelection() {
