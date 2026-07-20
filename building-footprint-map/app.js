@@ -130,6 +130,7 @@ const state = {
   pickerTimer: null,
   trackingPrepared: false,
   cameraStream: null,
+  orientationActive: false,
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -353,23 +354,40 @@ function stopTraceCamera() {
   cameraFeed.srcObject = null;
 }
 
+async function startTraceOrientation() {
+  if (state.orientationActive) return true;
+  const prepared = await prepareLayoutTracking();
+  if (!prepared) return false;
+  window.addEventListener("deviceorientation", handleDeviceOrientation, true);
+  state.orientationActive = true;
+  updateTraceMapOrientation();
+  return true;
+}
+
+function stopTraceOrientation() {
+  if (!state.orientationActive) return;
+  window.removeEventListener("deviceorientation", handleDeviceOrientation, true);
+  state.orientationActive = false;
+}
+
 async function toggleTraceMode() {
   state.mode = state.mode === "trace" ? "explore" : "trace";
   syncModeUi();
   if (state.mode === "trace") {
-    prepareLayoutTracking();
     setStatus("Trace 模式：正在啟動後鏡頭，地圖會依手機方向半透明疊在影像上", 2, 54);
-    const cameraReady = await startTraceCamera();
+    const [cameraReady, orientationReady] = await Promise.all([startTraceCamera(), startTraceOrientation()]);
     if (state.mode !== "trace") {
       stopTraceCamera();
+      stopTraceOrientation();
       return;
     }
     updateTraceMapOrientation();
-    setStatus(cameraReady ? "Trace 模式：長按地圖或 layout 設定目前位置，地圖角度會跟著手機方向校正" : "Trace 模式：相機權限未開啟，仍可用方向校正的半透明地圖追蹤", 2, 54);
+    setStatus(cameraReady && orientationReady ? "Trace 模式：地圖角度會跟著手機擺放與方向校正" : "Trace 模式：相機或方向權限未完整開啟，仍可用半透明地圖追蹤", 2, 54);
     return;
   }
-  stopTraceCamera();
   stopLayoutTracking();
+  stopTraceOrientation();
+  stopTraceCamera();
   setStatus("Explore 模式：可查詢地圖集錦、選擇資料與查看 layout", 2, 42);
 }
 
@@ -666,9 +684,9 @@ function stopLayoutTracking() {
   if (!state.tracking && state.traceWatchId === null) return;
   state.tracking = false;
   if (state.traceWatchId !== null) navigator.geolocation?.clearWatch(state.traceWatchId);
-  window.removeEventListener("deviceorientation", handleDeviceOrientation, true);
   window.removeEventListener("devicemotion", handleDeviceMotion, true);
   state.traceWatchId = null;
+  if (state.mode !== "trace") stopTraceOrientation();
 }
 
 async function prepareLayoutTracking() {
@@ -697,9 +715,8 @@ async function startLayoutTracking() {
   if (!state.traceAnchor) setTraceAnchor({ x: 210, y: 150 });
 
   try {
-    const prepared = await prepareLayoutTracking();
-    if (!prepared) return;
-    window.addEventListener("deviceorientation", handleDeviceOrientation, true);
+    const orientationReady = await startTraceOrientation();
+    if (!orientationReady) return;
     window.addEventListener("devicemotion", handleDeviceMotion, true);
     state.tracking = true;
     renderTraceOverlay();
