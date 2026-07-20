@@ -62,10 +62,26 @@ button {
   min-height: 0;
   overflow: hidden;
   border-radius: 8px 0 0 8px;
+  background: #05070a;
+}
+
+.camera-feed {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scaleX(-1);
+  transition: opacity 280ms ease;
+  pointer-events: none;
+  background: #05070a;
 }
 
 .map-panel {
   position: relative;
+  z-index: 1;
   overflow: hidden;
   width: 100%;
   height: 100%;
@@ -1039,6 +1055,29 @@ h2 {
 .stage.trace-mode .map-panel {
   outline: 1px solid rgba(164, 255, 143, 0.34);
   outline-offset: -1px;
+  background: rgba(4, 7, 10, 0.18);
+}
+
+.stage.trace-mode .camera-feed {
+  opacity: 1;
+}
+
+.stage.trace-mode .tile-grid {
+  opacity: 0.42;
+  filter: saturate(0.92) contrast(1.12) brightness(1.12);
+  mix-blend-mode: screen;
+}
+
+.stage.trace-mode .flow-canvas {
+  opacity: 0.36;
+  mix-blend-mode: screen;
+}
+
+.stage.trace-mode .building-layer,
+.stage.trace-mode .selection-marker,
+.stage.trace-mode .map-controls,
+.stage.trace-mode .map-attribution {
+  opacity: 0.72;
 }
 
 .inline-actions {

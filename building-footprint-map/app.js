@@ -1,6 +1,7 @@
 const tileGrid = document.querySelector("#tileGrid");
 const flowCanvas = document.querySelector("#flowCanvas");
 const buildingLayer = document.querySelector("#buildingLayer");
+const cameraFeed = document.querySelector("#cameraFeed");
 const mapPanel = document.querySelector("#mapPanel");
 const stage = document.querySelector(".stage");
 const controlPanel = document.querySelector("#controlPanel");
@@ -126,6 +127,7 @@ const state = {
   autoHeadingCalibration: false,
   pickerTimer: null,
   trackingPrepared: false,
+  cameraStream: null,
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -301,14 +303,50 @@ function syncModeUi() {
   modeToggleButton.title = traceMode ? "返回資料探索模式" : "切換 Trace 模式";
 }
 
-function toggleTraceMode() {
+async function startTraceCamera() {
+  if (state.cameraStream || !navigator.mediaDevices?.getUserMedia) return Boolean(state.cameraStream);
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "user",
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+      audio: false,
+    });
+    state.cameraStream = stream;
+    cameraFeed.srcObject = stream;
+    await cameraFeed.play();
+    return true;
+  } catch {
+    state.cameraStream = null;
+    cameraFeed.srcObject = null;
+    return false;
+  }
+}
+
+function stopTraceCamera() {
+  if (!state.cameraStream) return;
+  state.cameraStream.getTracks().forEach((track) => track.stop());
+  state.cameraStream = null;
+  cameraFeed.srcObject = null;
+}
+
+async function toggleTraceMode() {
   state.mode = state.mode === "trace" ? "explore" : "trace";
   syncModeUi();
   if (state.mode === "trace") {
     prepareLayoutTracking();
-    setStatus("Trace 模式：長按地圖或 layout 設定目前位置，會用手機方向與定位畫出路徑", 2, 54);
+    setStatus("Trace 模式：正在啟動前鏡頭，地圖會以半透明疊在影像上", 2, 54);
+    const cameraReady = await startTraceCamera();
+    if (state.mode !== "trace") {
+      stopTraceCamera();
+      return;
+    }
+    setStatus(cameraReady ? "Trace 模式：長按地圖或 layout 設定目前位置，影像上會疊加半透明地圖" : "Trace 模式：相機權限未開啟，仍可用半透明地圖進行軌跡追蹤", 2, 54);
     return;
   }
+  stopTraceCamera();
   stopLayoutTracking();
   setStatus("Explore 模式：可查詢地圖集錦、選擇資料與查看 layout", 2, 42);
 }
