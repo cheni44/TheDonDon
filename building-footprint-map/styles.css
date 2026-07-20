@@ -1056,7 +1056,7 @@ h2 {
   outline: 1px solid rgba(164, 255, 143, 0.34);
   outline-offset: -1px;
   background: rgba(4, 7, 10, 0.18);
-  transform: perspective(980px) rotateX(var(--trace-tilt, 58deg)) rotateZ(var(--trace-heading, 0deg)) scale(1.18);
+  transform: perspective(980px) rotateZ(var(--trace-heading, 0deg)) rotateX(var(--trace-tilt, 0deg)) rotateY(var(--trace-roll, 0deg)) scale(var(--trace-scale, 1));
   filter: drop-shadow(0 30px 55px rgba(0, 0, 0, 0.38));
 }
 

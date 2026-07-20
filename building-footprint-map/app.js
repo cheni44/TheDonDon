@@ -125,6 +125,7 @@ const state = {
   layoutHasDirection: false,
   lastMotionAt: 0,
   devicePitch: 0,
+  deviceRoll: 0,
   autoHeadingCalibration: false,
   pickerTimer: null,
   trackingPrepared: false,
@@ -305,15 +306,22 @@ function syncModeUi() {
   if (!traceMode) {
     mapPanel.style.removeProperty("--trace-heading");
     mapPanel.style.removeProperty("--trace-tilt");
+    mapPanel.style.removeProperty("--trace-roll");
+    mapPanel.style.removeProperty("--trace-scale");
   }
 }
 
 function updateTraceMapOrientation() {
-  if (state.mode !== "trace" || state.deviceHeading === null) return;
-  const heading = normalizeAngle(-state.deviceHeading);
-  const tilt = Math.max(48, Math.min(68, 58 + Math.abs(state.devicePitch || 0) * 0.18));
+  if (state.mode !== "trace") return;
+  const heading = state.deviceHeading === null ? 0 : normalizeAngle(-state.deviceHeading);
+  const pitch = Math.min(86, Math.abs(state.devicePitch || 0));
+  const roll = Math.max(-24, Math.min(24, (state.deviceRoll || 0) * 0.45));
+  const tilt = Math.max(0, Math.min(64, pitch * 0.74));
+  const scale = 1 + (tilt / 64) * 0.62 + (Math.abs(roll) / 24) * 0.08;
   mapPanel.style.setProperty("--trace-heading", `${heading}deg`);
   mapPanel.style.setProperty("--trace-tilt", `${tilt}deg`);
+  mapPanel.style.setProperty("--trace-roll", `${roll}deg`);
+  mapPanel.style.setProperty("--trace-scale", scale.toFixed(3));
 }
 
 async function startTraceCamera() {
@@ -584,6 +592,7 @@ function handleDeviceOrientation(event) {
   const rawHeading = Number.isFinite(event.webkitCompassHeading) ? event.webkitCompassHeading : 360 - (event.alpha || 0);
   state.deviceHeading = normalizeAngle(rawHeading);
   state.devicePitch = Number.isFinite(event.beta) ? event.beta : state.devicePitch;
+  state.deviceRoll = Number.isFinite(event.gamma) ? event.gamma : state.deviceRoll;
   updateTraceMapOrientation();
   if (state.tracking && state.autoHeadingCalibration && !state.layoutHasDirection) {
     state.headingOffset = normalizeAngle(-state.deviceHeading);
