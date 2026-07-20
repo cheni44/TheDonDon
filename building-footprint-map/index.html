@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://tiles.openfreemap.org" />
     <link href="https://unpkg.com/maplibre-gl@5.12.0/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://unpkg.com/maplibre-gl@5.12.0/dist/maplibre-gl.js"></script>
-    <link rel="stylesheet" href="./styles.css?v=maplibre-unified-cartoon-1" />
+    <link rel="stylesheet" href="./styles.css?v=strava-route-oauth-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -93,6 +93,7 @@
                 <option value="peak">山峰高度與名稱</option>
                 <option value="sports">體育賽事</option>
                 <option value="music">音樂節慶</option>
+                <option value="strava">My Strava Route</option>
                 <option value="building">building 規劃</option>
               </select>
             </label>
@@ -122,6 +123,22 @@
                 <option value="insect">昆蟲</option>
               </select>
             </label>
+          </div>
+
+          <div id="stravaSection" class="panel-section strava-section" hidden>
+            <label class="compact-field">
+              <span>Client ID</span>
+              <input id="stravaClientIdInput" type="text" inputmode="numeric" placeholder="Strava Client ID" />
+            </label>
+            <label class="compact-field">
+              <span>Token API</span>
+              <input id="stravaTokenEndpointInput" type="url" placeholder="https://.../strava-token" />
+            </label>
+            <div class="strava-actions">
+              <button id="stravaConnectButton" class="oauth-button" type="button">連接 Strava</button>
+              <button id="stravaDisconnectButton" class="oauth-button secondary" type="button">解除</button>
+            </div>
+            <p id="stravaStatus" class="source-summary">尚未連接 Strava</p>
           </div>
 
           <div class="panel-section result-section">
@@ -155,6 +172,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=maplibre-unified-cartoon-1" type="module"></script>
+    <script src="./app.js?v=strava-route-oauth-1" type="module"></script>
   </body>
 </html>

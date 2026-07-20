@@ -29,6 +29,12 @@ const timeStartInput = document.querySelector("#timeStartInput");
 const timeEndInput = document.querySelector("#timeEndInput");
 const speciesSection = document.querySelector("#speciesSection");
 const speciesGroupSelect = document.querySelector("#speciesGroupSelect");
+const stravaSection = document.querySelector("#stravaSection");
+const stravaClientIdInput = document.querySelector("#stravaClientIdInput");
+const stravaTokenEndpointInput = document.querySelector("#stravaTokenEndpointInput");
+const stravaConnectButton = document.querySelector("#stravaConnectButton");
+const stravaDisconnectButton = document.querySelector("#stravaDisconnectButton");
+const stravaStatus = document.querySelector("#stravaStatus");
 const scanBurst = document.querySelector("#scanBurst");
 const statusText = document.querySelector("#statusText");
 const progressBar = document.querySelector("#progressBar");
@@ -69,10 +75,15 @@ const DATASET_LABELS = {
   peak: "山峰高度與名稱",
   sports: "體育賽事",
   music: "音樂節慶",
+  strava: "My Strava Route",
   building: "building 規劃",
 };
 
-const TIME_DATASETS = new Set(["sports", "music"]);
+const TIME_DATASETS = new Set(["sports", "music", "strava"]);
+const STRAVA_SCOPE = "read,activity:read_all";
+const STRAVA_CLIENT_ID_KEY = "spatialTrace.stravaClientId";
+const STRAVA_TOKEN_ENDPOINT_KEY = "spatialTrace.stravaTokenEndpoint";
+const STRAVA_TOKEN_KEY = "spatialTrace.stravaToken";
 
 const SPECIES_GROUPS = {
   all: { label: "全部" },
@@ -192,6 +203,9 @@ function initializeTimeRange() {
   timeStartInput.max = dateInputValue(addYears(now, 1));
   timeEndInput.min = state.timeStart;
   timeEndInput.max = dateInputValue(addYears(now, 1));
+  stravaClientIdInput.value = localStorage.getItem(STRAVA_CLIENT_ID_KEY) || "";
+  stravaTokenEndpointInput.value = localStorage.getItem(STRAVA_TOKEN_ENDPOINT_KEY) || "";
+  updateStravaStatus();
 }
 
 function syncTimeControls() {
@@ -211,14 +225,110 @@ function syncTimeControls() {
 function syncDatasetControls() {
   syncTimeControls();
   speciesSection.hidden = state.dataType !== "species";
+  stravaSection.hidden = state.dataType !== "strava";
   if (state.dataType === "species") {
     state.speciesGroup = speciesGroupSelect.value || "all";
   }
+  if (state.dataType === "strava") updateStravaStatus();
 }
 
 function timeRangeLabel() {
   if (!TIME_DATASETS.has(state.dataType)) return "";
   return `${state.timeStart} 至 ${state.timeEnd}`;
+}
+
+function redirectUri() {
+  return `${window.location.origin}${window.location.pathname}`;
+}
+
+function storedStravaToken() {
+  try {
+    return JSON.parse(localStorage.getItem(STRAVA_TOKEN_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function storeStravaToken(token) {
+  localStorage.setItem(STRAVA_TOKEN_KEY, JSON.stringify(token));
+  updateStravaStatus();
+}
+
+function updateStravaStatus(message = "") {
+  if (!stravaStatus) return;
+  const token = storedStravaToken();
+  if (message) {
+    stravaStatus.textContent = message;
+    return;
+  }
+  if (token?.access_token) {
+    const athlete = token.athlete ? [token.athlete.firstname, token.athlete.lastname].filter(Boolean).join(" ") : "";
+    stravaStatus.textContent = athlete ? `已連接 Strava：${athlete}` : "已連接 Strava";
+    return;
+  }
+  stravaStatus.textContent = "尚未連接 Strava。Token API 需要在後端安全保存 client secret。";
+}
+
+function persistStravaSettings() {
+  localStorage.setItem(STRAVA_CLIENT_ID_KEY, stravaClientIdInput.value.trim());
+  localStorage.setItem(STRAVA_TOKEN_ENDPOINT_KEY, stravaTokenEndpointInput.value.trim());
+}
+
+function connectStrava() {
+  persistStravaSettings();
+  const clientId = stravaClientIdInput.value.trim();
+  if (!clientId) {
+    updateStravaStatus("請先填入 Strava Client ID");
+    return;
+  }
+  const stateValue = crypto?.randomUUID?.() || String(Date.now());
+  sessionStorage.setItem("spatialTrace.stravaState", stateValue);
+  const url = new URL("https://www.strava.com/oauth/authorize");
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("redirect_uri", redirectUri());
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("approval_prompt", "auto");
+  url.searchParams.set("scope", STRAVA_SCOPE);
+  url.searchParams.set("state", stateValue);
+  window.location.href = url.toString();
+}
+
+async function exchangeStravaCode(code) {
+  const endpoint = localStorage.getItem(STRAVA_TOKEN_ENDPOINT_KEY) || "";
+  if (!endpoint) {
+    updateStravaStatus("已收到 Strava code，但需要 Token API endpoint 才能交換 token");
+    return;
+  }
+  updateStravaStatus("正在交換 Strava token");
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ code, redirect_uri: redirectUri() }),
+  });
+  if (!response.ok) throw new Error("Strava token exchange failed");
+  const token = await response.json();
+  if (!token.access_token) throw new Error("Strava token response missing access_token");
+  storeStravaToken(token);
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete("code");
+  cleanUrl.searchParams.delete("scope");
+  cleanUrl.searchParams.delete("state");
+  window.history.replaceState({}, "", cleanUrl.toString());
+}
+
+function handleStravaRedirect() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  if (!code) return;
+  const stateValue = params.get("state");
+  const expectedState = sessionStorage.getItem("spatialTrace.stravaState");
+  if (expectedState && stateValue !== expectedState) {
+    updateStravaStatus("Strava OAuth state 不一致，已取消連接");
+    return;
+  }
+  exchangeStravaCode(code).catch(() => {
+    updateStravaStatus("Strava token 交換失敗，請確認 Token API endpoint");
+  });
 }
 
 function setStatus(text, step, progress) {
@@ -840,6 +950,9 @@ function itemLabel(item, index) {
     const audioLabel = item.audioUrl?.startsWith("http") ? "有聲音" : "";
     return [audioLabel, item.displayName || item.commonName || item.name, item.scientificName && item.scientificName !== (item.displayName || item.commonName) ? item.scientificName : "", `${Math.round(item.distance)}m`].filter(Boolean).join(" · ");
   }
+  if (item.type === "strava") {
+    return ["Strava", item.name, item.activityType, item.startDate?.slice(0, 10), item.distanceMeters ? `${(item.distanceMeters / 1000).toFixed(1)} km` : ""].filter(Boolean).join(" · ");
+  }
   return [`${DATASET_LABELS[item.type]} #${index + 1}`, item.name, `${Math.round(item.distance)}m`, item.meta, item.source].filter(Boolean).join(" · ");
 }
 
@@ -854,6 +967,9 @@ function itemMeta(item) {
   }
   if (item.type === "species") {
     return [item.scientificName, item.meta, `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
+  }
+  if (item.type === "strava") {
+    return [item.activityType, item.startDate?.slice(0, 10), item.distanceMeters ? `${(item.distanceMeters / 1000).toFixed(2)} km` : "", item.elevationGain ? `爬升 ${Math.round(item.elevationGain)} m` : "", item.movingTime ? `${Math.round(item.movingTime / 60)} min` : ""].filter(Boolean).join(" · ");
   }
   return [item.meta, item.dateLabel, `${Math.round(item.distance)}m`, item.source].filter(Boolean).join(" · ");
 }
@@ -870,6 +986,7 @@ function iconLabelForItem(item) {
   if (item.type === "peak") return "山峰";
   if (item.type === "sports") return "賽事";
   if (item.type === "music") return "節慶";
+  if (item.type === "strava") return "Strava";
   return DATASET_LABELS[item.type] || "地圖集錦";
 }
 
@@ -916,7 +1033,7 @@ function representativeImage(item) {
 }
 
 function locationMapImage(item) {
-  const zoom = item.type === "trail" ? 13 : 14;
+  const zoom = item.type === "trail" || item.type === "strava" ? 13 : 14;
   return tileUrl(zoom, lon2tile(item.center.lon, zoom), lat2tile(item.center.lat, zoom));
 }
 
@@ -993,7 +1110,7 @@ function svgLinkText(parent, text, href, x, y, className) {
 }
 
 function renderItemMapOverlay(item) {
-  if (item.type === "trail" && item.geometry?.length) {
+  if ((item.type === "trail" || item.type === "strava") && item.geometry?.length) {
     const projected = projectMiniGeometry(item.geometry);
     if (projected) {
       const path = document.createElementNS(SVG_NS, "polyline");
@@ -1073,7 +1190,7 @@ function renderCollectionItemView(item) {
     lineY += 14;
   }
   if (item.website?.startsWith("http")) {
-    svgLinkText(floorPlan, "相關網站", item.website, 42, lineY, "item-view-link");
+    svgLinkText(floorPlan, item.type === "strava" ? "開啟 Strava 活動" : "相關網站", item.website, 42, lineY, "item-view-link");
     lineY += 14;
   } else if (item.type === "sports") {
     const search = sportsWebsiteSearch(item);
@@ -1920,6 +2037,111 @@ async function fetchGbifSpecies(place) {
   return enrichSpeciesNames(items);
 }
 
+function decodePolyline(encoded = "") {
+  let index = 0;
+  let lat = 0;
+  let lon = 0;
+  const points = [];
+  while (index < encoded.length) {
+    let result = 0;
+    let shift = 0;
+    let byte = 0;
+    do {
+      byte = encoded.charCodeAt(index) - 63;
+      index += 1;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20 && index < encoded.length);
+    lat += result & 1 ? ~(result >> 1) : result >> 1;
+    result = 0;
+    shift = 0;
+    do {
+      byte = encoded.charCodeAt(index) - 63;
+      index += 1;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20 && index < encoded.length);
+    lon += result & 1 ? ~(result >> 1) : result >> 1;
+    points.push({ lat: lat / 1e5, lon: lon / 1e5 });
+  }
+  return points.filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lon));
+}
+
+function activityGeometry(activity) {
+  const polyline = activity.map?.summary_polyline || activity.map?.polyline || "";
+  const geometry = polyline ? decodePolyline(polyline) : [];
+  if (geometry.length) return geometry;
+  const start = activity.start_latlng;
+  const end = activity.end_latlng;
+  return [start, end]
+    .filter((point) => Array.isArray(point) && Number.isFinite(point[0]) && Number.isFinite(point[1]))
+    .map(([lat, lon]) => ({ lat, lon }));
+}
+
+function stravaCenterForActivity(activity, geometry) {
+  if (geometry.length) return centroid(geometry) || geometry[0];
+  const start = activity.start_latlng;
+  if (Array.isArray(start) && Number.isFinite(start[0]) && Number.isFinite(start[1])) {
+    return { lat: start[0], lon: start[1] };
+  }
+  return null;
+}
+
+async function fetchStravaActivities(place) {
+  const token = storedStravaToken();
+  if (!token?.access_token) {
+    updateStravaStatus("請先連接 Strava");
+    return [];
+  }
+  const after = Math.floor(new Date(`${state.timeStart}T00:00:00`).getTime() / 1000);
+  const before = Math.floor(new Date(`${state.timeEnd}T23:59:59`).getTime() / 1000);
+  const items = [];
+  for (let page = 1; page <= 5; page += 1) {
+    const url = new URL("https://www.strava.com/api/v3/athlete/activities");
+    url.searchParams.set("after", String(after));
+    url.searchParams.set("before", String(before));
+    url.searchParams.set("page", String(page));
+    url.searchParams.set("per_page", "50");
+    const response = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${token.access_token}`, Accept: "application/json" },
+    });
+    if (response.status === 401) {
+      updateStravaStatus("Strava token 已失效，請重新連接");
+      localStorage.removeItem(STRAVA_TOKEN_KEY);
+      return [];
+    }
+    if (!response.ok) throw new Error("Strava activities failed");
+    const activities = await response.json();
+    if (!activities.length) break;
+    activities.forEach((activity) => {
+      const geometry = activityGeometry(activity);
+      const center = stravaCenterForActivity(activity, geometry);
+      if (!center) return;
+      items.push({
+        id: `strava-${activity.id}`,
+        type: "strava",
+        name: activity.name || `${activity.type || "Activity"} ${activity.id}`,
+        meta: [activity.type, activity.start_date_local?.slice(0, 10), activity.distance ? `${(activity.distance / 1000).toFixed(1)} km` : "", activity.moving_time ? `${Math.round(activity.moving_time / 60)} min` : ""].filter(Boolean).join(" · "),
+        source: "Strava",
+        center,
+        distance: distanceMeters(place, center),
+        geometry,
+        activityType: activity.type || "",
+        movingTime: activity.moving_time || 0,
+        elapsedTime: activity.elapsed_time || 0,
+        distanceMeters: activity.distance || 0,
+        elevationGain: activity.total_elevation_gain || 0,
+        startDate: activity.start_date_local || activity.start_date || "",
+        website: activity.id ? `https://www.strava.com/activities/${activity.id}` : "",
+        timeRange: timeRangeLabel(),
+      });
+    });
+    if (activities.length < 50) break;
+  }
+  updateStravaStatus(`已讀取 Strava 活動 ${items.length} 筆`);
+  return items.sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).slice(0, 120);
+}
+
 async function fetchOsmCollection(place, dataset) {
   if (dataset === "trail") return fetchOsmTrailCollection(place);
   if (dataset === "sports") return fetchSportsCityCollection(place);
@@ -2124,6 +2346,7 @@ async function fetchOsmTrailCollection(place) {
 
 async function fetchCollectionItems(place) {
   if (state.dataType === "species") return fetchGbifSpecies(place);
+  if (state.dataType === "strava") return fetchStravaActivities(place);
   return fetchOsmCollection(place, state.dataType);
 }
 
@@ -3044,6 +3267,18 @@ dataTypeSelect.addEventListener("change", handleCollectionSettingsChange);
 speciesGroupSelect.addEventListener("change", handleCollectionSettingsChange);
 timeStartInput.addEventListener("change", handleCollectionSettingsChange);
 timeEndInput.addEventListener("change", handleCollectionSettingsChange);
+stravaClientIdInput.addEventListener("change", persistStravaSettings);
+stravaTokenEndpointInput.addEventListener("change", persistStravaSettings);
+stravaConnectButton.addEventListener("click", connectStrava);
+stravaDisconnectButton.addEventListener("click", () => {
+  localStorage.removeItem(STRAVA_TOKEN_KEY);
+  updateStravaStatus("已解除 Strava 連接");
+  if (state.dataType === "strava") {
+    state.dataItems = [];
+    renderCollectionMarkers([]);
+    renderCollectionSelect([]);
+  }
+});
 resultSelect.addEventListener("change", () => {
   activateResultOption(resultSelect.value);
 });
@@ -3098,4 +3333,5 @@ window.addEventListener("resize", () => {
 initializeTimeRange();
 syncDatasetControls();
 syncModeUi();
+handleStravaRedirect();
 boot();
