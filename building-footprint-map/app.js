@@ -305,23 +305,17 @@ function syncModeUi() {
   modeToggleButton.textContent = traceMode ? "Explore" : "Trace";
   modeToggleButton.title = traceMode ? "返回資料探索模式" : "切換 Trace 模式";
   if (!traceMode) {
-    mapPanel.style.removeProperty("--trace-heading");
     mapPanel.style.removeProperty("--trace-tilt");
-    mapPanel.style.removeProperty("--trace-roll");
     mapPanel.style.removeProperty("--trace-scale");
   }
 }
 
 function updateTraceMapOrientation() {
   if (state.mode !== "trace") return;
-  const heading = state.deviceHeading === null ? 0 : normalizeAngle(-state.deviceHeading);
   const pitch = Math.min(86, Math.abs(state.devicePitch || 0));
-  const roll = Math.max(-24, Math.min(24, (state.deviceRoll || 0) * 0.45));
   const tilt = Math.max(0, Math.min(64, pitch * 0.74));
-  const scale = 1 + (tilt / 64) * 0.62 + (Math.abs(roll) / 24) * 0.08;
-  mapPanel.style.setProperty("--trace-heading", `${heading}deg`);
+  const scale = 1 + (tilt / 64) * 0.68;
   mapPanel.style.setProperty("--trace-tilt", `${tilt}deg`);
-  mapPanel.style.setProperty("--trace-roll", `${roll}deg`);
   mapPanel.style.setProperty("--trace-scale", scale.toFixed(3));
 }
 
