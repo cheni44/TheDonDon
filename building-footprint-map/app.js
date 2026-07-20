@@ -46,6 +46,7 @@ let renderToken = 0;
 const LONG_PRESS_MOVE_TOLERANCE = 12;
 const MIN_MAP_ZOOM = 6;
 const MAX_MAP_ZOOM = 19;
+const TRACE_MAP_ANCHOR = { x: 0.5, y: 0.78 };
 const SVG_NS = "http://www.w3.org/2000/svg";
 const BASE_LAYOUT_VIEWBOX = { x: 0, y: 0, width: 420, height: 300 };
 
@@ -376,7 +377,11 @@ async function toggleTraceMode() {
       return;
     }
     updateTraceMapOrientation();
-    setStatus(cameraReady && orientationReady ? "Trace 模式：地圖角度會跟著手機擺放與方向校正" : "Trace 模式：相機或方向權限未完整開啟，仍可用半透明地圖追蹤", 2, 54);
+    renderTiles(state.center);
+    renderActiveMapLayer();
+    markSelection(TRACE_MAP_ANCHOR.x, TRACE_MAP_ANCHOR.y);
+    await startLayoutTracking();
+    setStatus(cameraReady && orientationReady ? "Trace 模式：GPS 目前位置會固定在畫面中間下方，地圖會往前方延伸" : "Trace 模式：相機或方向權限未完整開啟，仍會盡量用 GPS 顯示目前位置", 2, 54);
     return;
   }
   stopLayoutTracking();
@@ -636,6 +641,16 @@ function gpsToLayoutPoint(coords) {
 }
 
 function handleTracePosition(position) {
+  if (state.mode === "trace") {
+    state.center = {
+      lat: position.coords.latitude,
+      lon: position.coords.longitude,
+      label: "目前 GPS 位置",
+    };
+    renderTiles(state.center);
+    renderActiveMapLayer();
+    markSelection(TRACE_MAP_ANCHOR.x, TRACE_MAP_ANCHOR.y);
+  }
   const nextPoint = gpsToLayoutPoint(position.coords);
   const previous = state.tracePoints[state.tracePoints.length - 1];
   if (!previous || Math.hypot(nextPoint.x - previous.x, nextPoint.y - previous.y) > 0.4) {
@@ -721,7 +736,7 @@ async function startLayoutTracking() {
     } else {
       setStatus("此瀏覽器沒有提供定位追蹤", 4, 88);
     }
-    setStatus(state.layoutHasDirection ? "已自動啟動追蹤，會依手機方向與移動繪製軌跡" : "已自動啟動追蹤，會以目前手機朝向對準 layout 上方", 4, 100);
+    setStatus(state.mode === "trace" ? "已啟動 GPS：目前位置會固定在畫面中間下方" : state.layoutHasDirection ? "已自動啟動追蹤，會依手機方向與移動繪製軌跡" : "已自動啟動追蹤，會以目前手機朝向對準 layout 上方", 4, 100);
   } catch {
     state.tracking = false;
     setStatus("手機方向或定位權限未開啟，允許權限後重新長按定位即可", 4, 82);
@@ -1175,12 +1190,13 @@ function clampLon(lon) {
 function pointFromMapPosition(clientX, clientY) {
   const zoom = state.zoom;
   const rect = mapPanel.getBoundingClientRect();
+  const anchor = mapAnchorRatio();
   const xRatio = (clientX - rect.left) / rect.width;
   const yRatio = (clientY - rect.top) / rect.height;
   const centerX = lonToPixel(state.center.lon, zoom);
   const centerY = latToPixel(state.center.lat, zoom);
-  const targetX = centerX + clientX - rect.left - rect.width / 2;
-  const targetY = centerY + clientY - rect.top - rect.height / 2;
+  const targetX = centerX + clientX - rect.left - rect.width * anchor.x;
+  const targetY = centerY + clientY - rect.top - rect.height * anchor.y;
 
   return {
     xRatio: Math.max(0, Math.min(1, xRatio)),
@@ -1197,6 +1213,8 @@ function pointFromMapClick(event) {
 function renderTiles(center = state.center) {
   const token = ++renderToken;
   const zoom = state.zoom;
+  const anchor = mapAnchorRatio();
+  const tileRadius = state.mode === "trace" ? 6 : 3;
   const centerPixelX = lonToPixel(center.lon, zoom);
   const centerPixelY = latToPixel(center.lat, zoom);
   const centerTileX = Math.floor(centerPixelX / 256);
@@ -1204,10 +1222,12 @@ function renderTiles(center = state.center) {
   const centerOffsetX = centerPixelX - centerTileX * 256;
   const centerOffsetY = centerPixelY - centerTileY * 256;
   const rect = mapPanel.getBoundingClientRect();
-  const offsets = [-3, -2, -1, 0, 1, 2, 3];
+  const offsets = Array.from({ length: tileRadius * 2 + 1 }, (_, index) => index - tileRadius);
   tileGrid.style.transform = "";
-  tileGrid.style.left = `${rect.width / 2 - (3 * 256 + centerOffsetX)}px`;
-  tileGrid.style.top = `${rect.height / 2 - (3 * 256 + centerOffsetY)}px`;
+  tileGrid.style.width = `${offsets.length * 256}px`;
+  tileGrid.style.height = `${offsets.length * 256}px`;
+  tileGrid.style.left = `${rect.width * anchor.x - (tileRadius * 256 + centerOffsetX)}px`;
+  tileGrid.style.top = `${rect.height * anchor.y - (tileRadius * 256 + centerOffsetY)}px`;
   zoomBadge.textContent = `Z${zoom}`;
   tileGrid.replaceChildren();
 
@@ -1248,8 +1268,9 @@ function cacheTile(zoom, x, y) {
 function preloadTiles(center = state.center, zoom = state.zoom) {
   const centerX = lon2tile(center.lon, zoom);
   const centerY = lat2tile(center.lat, zoom);
-  for (let dy = -4; dy <= 4; dy += 1) {
-    for (let dx = -4; dx <= 4; dx += 1) {
+  const radius = state.mode === "trace" ? 7 : 4;
+  for (let dy = -radius; dy <= radius; dy += 1) {
+    for (let dx = -radius; dx <= radius; dx += 1) {
       cacheTile(zoom, centerX + dx, centerY + dy);
     }
   }
@@ -1272,6 +1293,10 @@ function markSelection(xRatio = 0.5, yRatio = 0.5) {
   selectionMarker.classList.remove("active");
   selectionMarker.offsetWidth;
   selectionMarker.classList.add("active");
+}
+
+function mapAnchorRatio() {
+  return state.mode === "trace" ? TRACE_MAP_ANCHOR : { x: 0.5, y: 0.5 };
 }
 
 function moveMapByScreenDelta(dx, dy) {
@@ -2295,14 +2320,15 @@ function renderActiveMapLayer() {
 }
 
 function latLonToScreenRatio(point) {
+  const anchor = mapAnchorRatio();
   const centerX = lonToPixel(state.center.lon, state.zoom);
   const centerY = latToPixel(state.center.lat, state.zoom);
   const itemX = lonToPixel(point.lon, state.zoom);
   const itemY = latToPixel(point.lat, state.zoom);
   const rect = mapPanel.getBoundingClientRect();
   return {
-    xRatio: 0.5 + (itemX - centerX) / rect.width,
-    yRatio: 0.5 + (itemY - centerY) / rect.height,
+    xRatio: anchor.x + (itemX - centerX) / rect.width,
+    yRatio: anchor.y + (itemY - centerY) / rect.height,
   };
 }
 
