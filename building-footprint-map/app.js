@@ -124,6 +124,7 @@ const state = {
   layoutPinch: null,
   layoutHasDirection: false,
   lastMotionAt: 0,
+  devicePitch: 0,
   autoHeadingCalibration: false,
   pickerTimer: null,
   trackingPrepared: false,
@@ -301,6 +302,18 @@ function syncModeUi() {
   modeToggleButton.setAttribute("aria-pressed", String(traceMode));
   modeToggleButton.textContent = traceMode ? "Explore" : "Trace";
   modeToggleButton.title = traceMode ? "返回資料探索模式" : "切換 Trace 模式";
+  if (!traceMode) {
+    mapPanel.style.removeProperty("--trace-heading");
+    mapPanel.style.removeProperty("--trace-tilt");
+  }
+}
+
+function updateTraceMapOrientation() {
+  if (state.mode !== "trace" || state.deviceHeading === null) return;
+  const heading = normalizeAngle(-state.deviceHeading);
+  const tilt = Math.max(48, Math.min(68, 58 + Math.abs(state.devicePitch || 0) * 0.18));
+  mapPanel.style.setProperty("--trace-heading", `${heading}deg`);
+  mapPanel.style.setProperty("--trace-tilt", `${tilt}deg`);
 }
 
 async function startTraceCamera() {
@@ -308,7 +321,7 @@ async function startTraceCamera() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: "user",
+        facingMode: { ideal: "environment" },
         width: { ideal: 1280 },
         height: { ideal: 720 },
       },
@@ -337,13 +350,14 @@ async function toggleTraceMode() {
   syncModeUi();
   if (state.mode === "trace") {
     prepareLayoutTracking();
-    setStatus("Trace 模式：正在啟動前鏡頭，地圖會以半透明疊在影像上", 2, 54);
+    setStatus("Trace 模式：正在啟動後鏡頭，地圖會依手機方向半透明疊在影像上", 2, 54);
     const cameraReady = await startTraceCamera();
     if (state.mode !== "trace") {
       stopTraceCamera();
       return;
     }
-    setStatus(cameraReady ? "Trace 模式：長按地圖或 layout 設定目前位置，影像上會疊加半透明地圖" : "Trace 模式：相機權限未開啟，仍可用半透明地圖進行軌跡追蹤", 2, 54);
+    updateTraceMapOrientation();
+    setStatus(cameraReady ? "Trace 模式：長按地圖或 layout 設定目前位置，地圖角度會跟著手機方向校正" : "Trace 模式：相機權限未開啟，仍可用方向校正的半透明地圖追蹤", 2, 54);
     return;
   }
   stopTraceCamera();
@@ -569,6 +583,8 @@ function setTraceAnchor(point, options = {}) {
 function handleDeviceOrientation(event) {
   const rawHeading = Number.isFinite(event.webkitCompassHeading) ? event.webkitCompassHeading : 360 - (event.alpha || 0);
   state.deviceHeading = normalizeAngle(rawHeading);
+  state.devicePitch = Number.isFinite(event.beta) ? event.beta : state.devicePitch;
+  updateTraceMapOrientation();
   if (state.tracking && state.autoHeadingCalibration && !state.layoutHasDirection) {
     state.headingOffset = normalizeAngle(-state.deviceHeading);
     state.autoHeadingCalibration = false;
