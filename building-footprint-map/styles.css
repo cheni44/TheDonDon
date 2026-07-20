@@ -1065,9 +1065,19 @@ h2 {
 }
 
 .stage.trace-mode .tile-grid {
-  opacity: 0.42;
-  filter: saturate(0.92) contrast(1.12) brightness(1.12);
+  opacity: 0.56;
+  filter: saturate(1.85) contrast(0.72) brightness(1.22) blur(0.2px);
   mix-blend-mode: screen;
+}
+
+.stage.trace-mode .map-panel::before {
+  display: block;
+  z-index: 4;
+  background:
+    linear-gradient(180deg, rgba(164, 255, 143, 0.18), rgba(85, 240, 255, 0.11) 45%, rgba(255, 209, 102, 0.12)),
+    radial-gradient(circle at 50% 78%, rgba(164, 255, 143, 0.28), transparent 0 18%, transparent 44%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 9px);
+  mix-blend-mode: soft-light;
 }
 
 .stage.trace-mode .flow-canvas {
