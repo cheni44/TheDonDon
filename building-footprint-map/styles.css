@@ -1084,13 +1084,21 @@ h2 {
   mix-blend-mode: screen;
 }
 
+.stage.vector-ready .vector-map {
+  opacity: 1;
+}
+
+.stage.vector-ready .tile-grid {
+  opacity: 0;
+}
+
 .stage.trace-mode.vector-ready .vector-map {
   opacity: 0.72;
   mix-blend-mode: screen;
 }
 
 .stage.trace-mode.vector-ready .tile-grid {
-  opacity: 0.18;
+  opacity: 0.16;
 }
 
 .stage.trace-mode .map-panel::before {

@@ -306,7 +306,6 @@ function showMapView() {
 function syncModeUi() {
   const traceMode = state.mode === "trace";
   stage.classList.toggle("trace-mode", traceMode);
-  if (!traceMode) stage.classList.remove("vector-ready");
   modeToggleButton.classList.toggle("active", traceMode);
   modeToggleButton.setAttribute("aria-pressed", String(traceMode));
   modeToggleButton.textContent = traceMode ? "Explore" : "Trace";
@@ -394,7 +393,6 @@ async function toggleTraceMode() {
   stopLayoutTracking();
   stopTraceOrientation();
   stopTraceCamera();
-  stage.classList.remove("vector-ready");
   setStatus("Explore 模式：可查詢地圖集錦、選擇資料與查看 layout", 2, 42);
 }
 
@@ -1339,6 +1337,7 @@ function renderTiles(center = state.center) {
   const zoom = state.zoom;
   const anchor = mapAnchorRatio();
   const tileRadius = state.mode === "trace" ? 6 : 3;
+  ensureTraceVectorMap();
   const centerPixelX = lonToPixel(center.lon, zoom);
   const centerPixelY = latToPixel(center.lat, zoom);
   const centerTileX = Math.floor(centerPixelX / 256);
