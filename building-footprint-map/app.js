@@ -1,4 +1,5 @@
 const tileGrid = document.querySelector("#tileGrid");
+const vectorMap = document.querySelector("#vectorMap");
 const flowCanvas = document.querySelector("#flowCanvas");
 const buildingLayer = document.querySelector("#buildingLayer");
 const cameraFeed = document.querySelector("#cameraFeed");
@@ -47,6 +48,7 @@ const LONG_PRESS_MOVE_TOLERANCE = 12;
 const MIN_MAP_ZOOM = 6;
 const MAX_MAP_ZOOM = 19;
 const TRACE_MAP_ANCHOR = { x: 0.5, y: 0.78 };
+const VECTOR_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const BASE_LAYOUT_VIEWBOX = { x: 0, y: 0, width: 420, height: 300 };
 
@@ -132,6 +134,9 @@ const state = {
   trackingPrepared: false,
   cameraStream: null,
   orientationActive: false,
+  vectorMap: null,
+  vectorMapReady: false,
+  vectorMapFailed: false,
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -301,6 +306,7 @@ function showMapView() {
 function syncModeUi() {
   const traceMode = state.mode === "trace";
   stage.classList.toggle("trace-mode", traceMode);
+  if (!traceMode) stage.classList.remove("vector-ready");
   modeToggleButton.classList.toggle("active", traceMode);
   modeToggleButton.setAttribute("aria-pressed", String(traceMode));
   modeToggleButton.textContent = traceMode ? "Explore" : "Trace";
@@ -377,6 +383,7 @@ async function toggleTraceMode() {
       return;
     }
     updateTraceMapOrientation();
+    ensureTraceVectorMap();
     renderTiles(state.center);
     renderActiveMapLayer();
     markSelection(TRACE_MAP_ANCHOR.x, TRACE_MAP_ANCHOR.y);
@@ -387,6 +394,7 @@ async function toggleTraceMode() {
   stopLayoutTracking();
   stopTraceOrientation();
   stopTraceCamera();
+  stage.classList.remove("vector-ready");
   setStatus("Explore 模式：可查詢地圖集錦、選擇資料與查看 layout", 2, 42);
 }
 
@@ -1187,6 +1195,122 @@ function clampLon(lon) {
   return ((((lon + 180) % 360) + 360) % 360) - 180;
 }
 
+function traceVectorCameraCenter(center = state.center) {
+  if (state.mode !== "trace") return center;
+  const rect = mapPanel.getBoundingClientRect();
+  const gpsX = lonToPixel(center.lon, state.zoom);
+  const gpsY = latToPixel(center.lat, state.zoom);
+  const cameraY = gpsY - (TRACE_MAP_ANCHOR.y - 0.5) * rect.height;
+  return {
+    lat: clampLat(pixelToLat(cameraY, state.zoom)),
+    lon: center.lon,
+  };
+}
+
+function setLayerPaint(map, id, property, value) {
+  try {
+    map.setPaintProperty(id, property, value);
+  } catch {
+    // Layer type or provider style may not support this property.
+  }
+}
+
+function setLayerLayout(map, id, property, value) {
+  try {
+    map.setLayoutProperty(id, property, value);
+  } catch {
+    // Layer type or provider style may not support this property.
+  }
+}
+
+function applyCartoonVectorStyle(map) {
+  const layers = map.getStyle()?.layers || [];
+  layers.forEach((layer) => {
+    const id = layer.id;
+    const signature = `${id} ${layer["source-layer"] || ""}`.toLowerCase();
+    if (layer.type === "background") {
+      setLayerPaint(map, id, "background-color", "#bdf7d5");
+      return;
+    }
+    if (layer.type === "fill") {
+      if (/water|river|lake|ocean/.test(signature)) {
+        setLayerPaint(map, id, "fill-color", "#7fdcff");
+        setLayerPaint(map, id, "fill-opacity", 0.78);
+      } else if (/park|wood|forest|grass|landuse|green|garden|nature/.test(signature)) {
+        setLayerPaint(map, id, "fill-color", "#98f28f");
+        setLayerPaint(map, id, "fill-opacity", 0.62);
+      } else if (/building/.test(signature)) {
+        setLayerPaint(map, id, "fill-color", "#ffe18a");
+        setLayerPaint(map, id, "fill-opacity", 0.7);
+      } else if (/land|earth/.test(signature)) {
+        setLayerPaint(map, id, "fill-color", "#c9f7bb");
+        setLayerPaint(map, id, "fill-opacity", 0.48);
+      }
+      return;
+    }
+    if (layer.type === "line") {
+      if (/road|street|transport|path|track|highway/.test(signature)) {
+        setLayerPaint(map, id, "line-color", "#fff0a8");
+        setLayerPaint(map, id, "line-opacity", 0.9);
+        setLayerPaint(map, id, "line-width", ["interpolate", ["linear"], ["zoom"], 10, 1.2, 14, 4.2, 17, 9.5]);
+        setLayerPaint(map, id, "line-blur", 0.25);
+      } else if (/water|river|stream/.test(signature)) {
+        setLayerPaint(map, id, "line-color", "#69d8ff");
+        setLayerPaint(map, id, "line-opacity", 0.72);
+        setLayerPaint(map, id, "line-width", ["interpolate", ["linear"], ["zoom"], 10, 1, 16, 5]);
+      }
+      return;
+    }
+    if (layer.type === "symbol") {
+      if (/poi|place|label|name/.test(signature)) {
+        setLayerLayout(map, id, "text-size", ["interpolate", ["linear"], ["zoom"], 10, 12, 15, 17, 18, 22]);
+        setLayerLayout(map, id, "icon-size", ["interpolate", ["linear"], ["zoom"], 10, 0.9, 16, 1.35]);
+        setLayerPaint(map, id, "text-color", "#163524");
+        setLayerPaint(map, id, "text-halo-color", "#f8ffe7");
+        setLayerPaint(map, id, "text-halo-width", 2.2);
+      }
+    }
+  });
+}
+
+function syncTraceVectorMap(center = state.center) {
+  if (!state.vectorMap || !state.vectorMapReady) return;
+  const cameraCenter = traceVectorCameraCenter(center);
+  state.vectorMap.resize();
+  state.vectorMap.jumpTo({
+    center: [cameraCenter.lon, cameraCenter.lat],
+    zoom: Math.max(MIN_MAP_ZOOM, Math.min(MAX_MAP_ZOOM, state.zoom)),
+    bearing: 0,
+    pitch: 0,
+  });
+}
+
+function ensureTraceVectorMap() {
+  if (state.vectorMap || state.vectorMapFailed || typeof window.maplibregl === "undefined") return;
+  try {
+    state.vectorMap = new window.maplibregl.Map({
+      container: vectorMap,
+      style: VECTOR_STYLE_URL,
+      center: [state.center.lon, state.center.lat],
+      zoom: state.zoom,
+      interactive: false,
+      attributionControl: false,
+    });
+    state.vectorMap.on("load", () => {
+      applyCartoonVectorStyle(state.vectorMap);
+      state.vectorMapReady = true;
+      stage.classList.add("vector-ready");
+      syncTraceVectorMap(state.center);
+    });
+    state.vectorMap.on("error", () => {
+      state.vectorMapFailed = true;
+      stage.classList.remove("vector-ready");
+    });
+  } catch {
+    state.vectorMapFailed = true;
+  }
+}
+
 function pointFromMapPosition(clientX, clientY) {
   const zoom = state.zoom;
   const rect = mapPanel.getBoundingClientRect();
@@ -1230,6 +1354,7 @@ function renderTiles(center = state.center) {
   tileGrid.style.top = `${rect.height * anchor.y - (tileRadius * 256 + centerOffsetY)}px`;
   zoomBadge.textContent = `Z${zoom}`;
   tileGrid.replaceChildren();
+  syncTraceVectorMap(center);
 
   offsets.forEach((dy, row) => {
     offsets.forEach((dx, col) => {
@@ -2968,6 +3093,7 @@ window.addEventListener("resize", () => {
   drawFlow();
   renderTiles(state.center);
   renderActiveMapLayer();
+  syncTraceVectorMap(state.center);
 });
 
 initializeTimeRange();

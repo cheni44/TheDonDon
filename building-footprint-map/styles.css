@@ -114,6 +114,20 @@ button {
   will-change: transform;
 }
 
+.vector-map {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms ease;
+}
+
+.vector-map .maplibregl-ctrl,
+.vector-map .maplibregl-control-container {
+  display: none;
+}
+
 .tile {
   position: absolute;
   width: 256px;
@@ -1068,6 +1082,15 @@ h2 {
   opacity: 0.56;
   filter: saturate(1.85) contrast(0.72) brightness(1.22) blur(0.2px);
   mix-blend-mode: screen;
+}
+
+.stage.trace-mode.vector-ready .vector-map {
+  opacity: 0.72;
+  mix-blend-mode: screen;
+}
+
+.stage.trace-mode.vector-ready .tile-grid {
+  opacity: 0.18;
 }
 
 .stage.trace-mode .map-panel::before {
