@@ -92,8 +92,57 @@ const SPECIES_GROUPS = {
   mammal: { label: "哺乳類", param: "classKey", key: "359" },
   bird: { label: "鳥類", param: "classKey", key: "212" },
   reptile: { label: "爬蟲類", param: "classKey", key: "358" },
+  snake: { label: "蛇類", param: "classKey", key: "358", snakeOnly: true },
   insect: { label: "昆蟲", param: "classKey", key: "216" },
 };
+
+const SNAKE_FAMILIES = new Set([
+  "Acrochordidae",
+  "Aniliidae",
+  "Anomalepididae",
+  "Atractaspididae",
+  "Boidae",
+  "Bolyeriidae",
+  "Calamariidae",
+  "Colubridae",
+  "Cylindrophiidae",
+  "Dipsadidae",
+  "Elapidae",
+  "Gerrhopilidae",
+  "Homalopsidae",
+  "Lamprophiidae",
+  "Leptotyphlopidae",
+  "Loxocemidae",
+  "Natricidae",
+  "Pareidae",
+  "Prosymnidae",
+  "Psammophiidae",
+  "Pseudaspididae",
+  "Pseudoxenodontidae",
+  "Pythonidae",
+  "Sibynophiidae",
+  "Tropidophiidae",
+  "Typhlopidae",
+  "Uropeltidae",
+  "Viperidae",
+  "Xenodermidae",
+  "Xenopeltidae",
+  "Xenotyphlopidae",
+]);
+
+function isSnakeOccurrence(item) {
+  const family = item.family || "";
+  if (SNAKE_FAMILIES.has(family)) return true;
+  const classification = [
+    item.order,
+    item.family,
+    item.genus,
+    item.species,
+    item.acceptedScientificName,
+    item.scientificName,
+  ].filter(Boolean).join(" ");
+  return /(^|\s)Serpentes(\s|$)/i.test(classification);
+}
 
 const state = {
   center: { lat: 25.033, lon: 121.5654, label: "台北 101 周邊" },
@@ -1998,15 +2047,17 @@ async function enrichSpeciesNames(items) {
 async function fetchGbifSpecies(place) {
   const url = new URL("https://api.gbif.org/v1/occurrence/search");
   url.searchParams.set("hasCoordinate", "true");
-  url.searchParams.set("limit", "60");
-  url.searchParams.set("geometry", bboxPolygonWkt(place, Math.min(currentRadiusMeters(), 1000000)));
   const group = SPECIES_GROUPS[state.speciesGroup] || SPECIES_GROUPS.all;
+  url.searchParams.set("limit", group.snakeOnly ? "200" : "60");
+  url.searchParams.set("geometry", bboxPolygonWkt(place, Math.min(currentRadiusMeters(), 1000000)));
   if (group.param && group.key) {
     url.searchParams.set(group.param, group.key);
   }
   const data = await fetchJsonWithTimeout(url.toString(), 12000);
-  const items = (data.results || [])
+  const results = (data.results || [])
     .filter((item) => Number.isFinite(item.decimalLatitude) && Number.isFinite(item.decimalLongitude))
+    .filter((item) => !group.snakeOnly || isSnakeOccurrence(item));
+  const items = results
     .map((item, index) => {
       const media = Array.isArray(item.media) ? item.media : [];
       const image = media.find((entry) => entry.type === "StillImage" || entry.format?.startsWith("image"))?.identifier;
@@ -2019,7 +2070,7 @@ async function fetchGbifSpecies(place) {
         name: scientificName,
         displayName: scientificName,
         scientificName,
-        meta: [item.kingdom, item.country, item.eventDate?.slice(0, 10)].filter(Boolean).join(" · "),
+        meta: [item.kingdom, item.family, item.country, item.eventDate?.slice(0, 10)].filter(Boolean).join(" · "),
         source: "GBIF",
         center: { lat: item.decimalLatitude, lon: item.decimalLongitude },
         distance: distanceMeters(place, { lat: item.decimalLatitude, lon: item.decimalLongitude }),
